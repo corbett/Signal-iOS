@@ -3446,8 +3446,8 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__ARC_BRIDGE_CAST_NONARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -3489,8 +3489,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fobjc-arc-exceptions";
-				PROVISIONING_PROFILE = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
+				PROVISIONING_PROFILE = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -3516,8 +3516,8 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__ARC_BRIDGE_CAST_NONARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
@@ -3555,8 +3555,8 @@
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-fobjc-arc-exceptions",
 				);
-				PROVISIONING_PROFILE = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
+				PROVISIONING_PROFILE = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -3566,8 +3566,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C71793B33D9C45079F74487E /* Pods.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
 				CURRENT_PROJECT_VERSION = 1;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3605,7 +3605,7 @@
 				LLVM_LTO = NO;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = Signal;
-				PROVISIONING_PROFILE = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
+				PROVISIONING_PROFILE = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 				TEST_AFTER_BUILD = YES;
@@ -3618,8 +3618,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C71793B33D9C45079F74487E /* Pods.xcconfig */;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Christine Corbett Moran (6CM4CU2RWQ)";
 				CURRENT_PROJECT_VERSION = 1;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3653,7 +3653,7 @@
 				LLVM_LTO = NO;
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = Signal;
-				PROVISIONING_PROFILE = "25E52683-9ADD-415E-A1E0-63A1C7ECF872";
+				PROVISIONING_PROFILE = "93C0EB7E-BB96-48CE-9F6A-65CC2BE78DB3";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 				TEST_AFTER_BUILD = YES;
