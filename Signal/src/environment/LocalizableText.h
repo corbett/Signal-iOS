@@ -102,6 +102,18 @@
 #define SETTINGS_LOG_CLEAR_MESSAGE NSLocalizedString(@"SETTINGS_LOG_CLEAR_MESSAGE", @"")
 #define SETTINGS_LOG_CLEAR_CONFIRM NSLocalizedString(@"OK", @"")
 
+#define SETTINGS_SENDLOG NSLocalizedString(@"SETTINGS_SENDLOG", @"")
+
+#define SETTINGS_SENDLOG_WAITING NSLocalizedString(@"SETTINGS_SENDLOGS_WAITING", @"")
+#define SETTINGS_SENDLOG_ALERT_TITLE NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_TITLE", @"")
+#define SETTINGS_SENDLOG_ALERT_BODY NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_BODY",@"")
+#define SETTINGS_SENDLOG_ALERT_PASTE NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_PASTE", @"")
+#define SETTINGS_SENDLOG_ALERT_EMAIL NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_EMAIL", @"")
+#define SETTINGS_SENDLOG_FAILED_TITLE NSLocalizedString(@"SETTINGS_SENDLOG_FAILED_TITLE", @"")
+#define SETTINGS_SENDLOG_FAILED_BODY NSLocalizedString(@"SETTINGS_SENDLOG_FAILED_BODY", @"")
+#define SETTINGS_SENDLOG_FAILED_DISMISS NSLocalizedString(@"OK", @"")
+
+
 #pragma mark - Registration
 
 #define REGISTER_CC_ERR_ALERT_VIEW_TITLE NSLocalizedString(@"REGISTER_CC_ERR_ALERT_VIEW_TITLE", @"")
@@ -115,6 +127,15 @@
 #define END_CALL_BUTTON_TITLE NSLocalizedString(@"END_CALL_BUTTON_TITLE", @"")
 #define ANSWER_CALL_BUTTON_TITLE NSLocalizedString(@"ANSWER_CALL_BUTTON_TITLE", @"")
 #define REJECT_CALL_BUTTON_TITLE NSLocalizedString(@"REJECT_CALL_BUTTON_TITLE", @"")
+
+#define REGISTER_ERROR_ALERT_VIEW_TITLE NSLocalizedString(@"REGISTRATION_ERROR", @"")
+#define REGISTER_ERROR_ALERT_VIEW_BODY  NSLocalizedString(@"REGISTRATION_BODY", @"")
+#define REGISTER_ERROR_ALERT_VIEW_DISMISS NSLocalizedString(@"OK", @"")
+
+#define REGISTER_CHALLENGE_ALERT_VIEW_TITLE NSLocalizedString(@" REGISTER_CHALLENGE_ALERT_VIEW_TITLE", @"")
+#define REGISTER_CHALLENGE_ALERT_VIEW_BODY NSLocalizedString(@"REGISTER_CHALLENGE_ALERT_VIEW_BODY", @"")
+
+#define REGISTER_CHALLENGE_ALERT_DISMISS NSLocalizedString(@"OK", @"")
 
 #pragma mark - Invite Users
 
@@ -132,7 +153,6 @@
 
 #define TIMEOUT                         NSLocalizedString(@"TIMEOUT",@"")
 #define TIMEOUT_CONTACTS_DETAIL         NSLocalizedString(@"TIMEOUT_CONTACTS_DETAIL", @"")
-
 
 NSDictionary* makeCallProgressLocalizedTextDictionary(void);
 NSDictionary* makeCallTerminationLocalizedTextDictionary(void);

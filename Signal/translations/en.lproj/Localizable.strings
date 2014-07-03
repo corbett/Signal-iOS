@@ -94,13 +94,18 @@
 "REGISTER_CHALLENGE_TEXTBLOCK_PART1" = "Let’s make sure you’re real. We've sent you a SMS with a six digit code to:";
 "REGISTER_CHALLENGE_TEXTBLOCK_PART2" = "To complete your phone number verification, please enter the code below.";
 "REGISTER_CHALLENGE_VOICECALL_TEXT" = "If you are unable to recieve an SMS, we will call you in";
+"REGISTER_CHALLENGE_ALERT_VIEW_TITLE" = "Incorrect code";
+"REGISTER_CHALLENGE_ALERT_VIEW_BODY" = "Please verify the code and try again";
 "REGISTER_ENTER_COUNTRY_CODE" = "Your number's country code";
 "REGISTER_ENTER_NUMBER" = "Your phone number";
 "REGISTER_SUCCESS_TEXTBLOCK" = "Congratulations! Your registration was successful. You may start using Signal to make secure phone calls.";
 "REGISTER_TEXTBLOCK" = "To get started making secure calls, please confirm your country code and enter your device's phone number.";
 "REGISTER_VALIDATION_ENTER_CODE" = "Validation Code";
 "REGISTER_VALIDATION_SENT" = "We sent your validation code";
+
 "REGISTER_WELCOME_TEXT" = "Welcome to Signal";
+"REGISTRATION_ERROR" = "Registration Error";
+"REGISTRATION_BODY" = "We couldn't reach the Signal server. Please try again.";
 "REJECT_CALL_BUTTON_TITLE" = "Reject";
 "SETTINGS_ANONYMOUS_FEEDBACK" = "Send Anonymous Feedback";
 "SETTINGS_CALL_QUALITY" = "Call Quality";
@@ -119,6 +124,14 @@
 "SETTINGS_NUMBER_PREFIX" = "Your Number:";
 "SETTINGS_PRIVACY_AND_SECURITY" = "Privacy and Security";
 "SETTINGS_RINGTONE" = "Ringtone";
+"SETTINGS_SENDLOG" = "Submit Debug Log"; 
+"SETTINGS_SENDLOGS_WAITING" = "Sending anonymized log file\n Please wait...";
+"SETTINGS_SENDLOG_ALERT_TITLE" = "Submit debug log";
+"SETTINGS_SENDLOG_ALERT_BODY" = "Do you want to copy the log URL to the pasteboard or submit it by email?";
+"SETTINGS_SENDLOG_ALERT_PASTE" = "Pasteboard";
+"SETTINGS_SENDLOG_ALERT_EMAIL" = "Email";
+"SETTINGS_SENDLOG_FAILED_TITLE" = "Failed to submit debug log";
+"SETTINGS_SENDLOG_FAILED_BODY" = "The debug log could not be submitted. Please try again.";
 "SETTINGS_VIBRATE_ON_RING" = "Vibrate on Ring";
 "SETTINGS_VIBRATE_ON_SILENT" = "Vibrate on Silent";
 "SPEAKER_BUTTON_TITLE" = "Speaker";

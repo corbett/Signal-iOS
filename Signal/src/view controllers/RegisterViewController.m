@@ -11,6 +11,8 @@
 #import "ThreadManager.h"
 #import "Util.h"
 
+
+
 #define REGISTER_VIEW_NUMBER 0
 #define CHALLENGE_VIEW_NUMBER 1
 
@@ -36,11 +38,6 @@
     [super viewDidLoad];
 
     [self populateDefaultCountryNameAndCode];
-
-    [futureApnId catchDo:^(id error) {
-        // todo: remove this; just here for testing purposes to catch apn not being set
-        _registerErrorLabel.text = [error description];
-    }];
     
     _scrollView.contentSize = _containerView.bounds.size;
 
@@ -131,7 +128,7 @@
                                             andErrorHandler:[Environment errorNoter]];
     };
     Future *futurePhoneRegistrationStarted = [AsyncUtil raceCancellableOperation:regStarter
-                                                                  againstTimeout:30.0
+                                                                  againstTimeout:20.0
                                                                   untilCancelled:cancelToken];
 
     Future *futurePhoneRegistrationVerified = [futurePhoneRegistrationStarted then:^(id _) {
@@ -172,12 +169,17 @@
     Future* futureFinished = [self asyncRegister:localNumber untilCancelled:[life getToken]];
     [_registerActivityIndicator startAnimating];
     _registerButton.enabled = NO;
-    _registerErrorLabel.text = @"";
+    
     [futureFinished catchDo:^(id error) {
-        [_challengeActivityIndicator stopAnimating];
+        NSError *err = ((NSError*)error);
+        [_registerActivityIndicator stopAnimating];
         _registerButton.enabled = YES;
-        // todo: localize
-        _registerErrorLabel.text = [error description];
+        
+        DDLogError(@"Registration failed with information %@", err.description);
+        
+        UIAlertView *registrationErrorAV = [[UIAlertView alloc]initWithTitle:REGISTER_ERROR_ALERT_VIEW_TITLE message:REGISTER_ERROR_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_ERROR_ALERT_VIEW_DISMISS otherButtonTitles:nil, nil];
+        
+        [registrationErrorAV show];
     }];
 }
 
@@ -189,25 +191,22 @@
     [_challengeTextField resignFirstResponder];
     _challengeButton.enabled = NO;
     [_challengeActivityIndicator startAnimating];
-
+    
     HttpRequest *verifyRequest = [HttpRequest httpRequestToVerifyAccessToPhoneNumberWithChallenge:_challengeTextField.text];
     Future *futureDone = [HttpManager asyncOkResponseFromMasterServer:verifyRequest
                                                       unlessCancelled:nil
                                                       andErrorHandler:[Environment errorNoter]];
-
-    _challengeErrorLabel.text = @"";
+    
     [futureDone catchDo:^(id error) {
         if ([error isKindOfClass:[HttpResponse class]]) {
             HttpResponse* badResponse = error;
             if ([badResponse getStatusCode] == 401) {
-                // @todo: human readable, localizable
-                _challengeErrorLabel.text = @"Incorrect Challenge Code";
+                UIAlertView *incorrectChallengeCodeAV = [[UIAlertView alloc]initWithTitle:REGISTER_CHALLENGE_ALERT_VIEW_TITLE message:REGISTER_CHALLENGE_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_CHALLENGE_ALERT_DISMISS otherButtonTitles:nil, nil];
+                [incorrectChallengeCodeAV show];
                 return;
             }
         }
         [Environment errorNoter](error, @"While Verifying Challenge.", NO);
-        // @todo: human readable, localizable
-        _challengeErrorLabel.text = [NSString stringWithFormat:@"Unexpected failure: %@", error];
     }];
 
     [futureDone thenDo:^(id result) {

@@ -26,6 +26,7 @@
 
 @property (nonatomic, strong) MMDrawerController *drawerController;
 @property (nonatomic, strong) NotificationTracker *notificationTracker;
+@property (nonatomic) DDFileLogger *fileLogger;
 
 @end
 
@@ -68,16 +69,22 @@
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    
+    [DDLog addLogger:[DDTTYLogger sharedInstance]];
+    self.fileLogger = [[DDFileLogger alloc] init]; //Logging to file, because it's in the Cache folder, they are not uploaded in iTunes/iCloud backups.
+    self.fileLogger.rollingFrequency = 60 * 60 * 24; // 24 hour rolling.
+    self.fileLogger.logFileManager.maximumNumberOfLogFiles = 3; // Keep three days of logs.
+    [DDLog addLogger:self.fileLogger];
+    
     [self performUpdateCheck];
     [self disableCallLogBackup];
+    
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.notificationTracker = [NotificationTracker notificationTracker];
     
     // start register for apn id
     futureApnIdSource = [FutureSource new];
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge
-                                                                           | UIRemoteNotificationTypeSound
-                                                                           | UIRemoteNotificationTypeAlert)];
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeSound| UIRemoteNotificationTypeAlert)];
 
     CategorizingLogger* logger = [CategorizingLogger categorizingLogger];
     [logger addLoggingCallback:^(NSString *category, id details, NSUInteger index) {}];
@@ -90,8 +97,7 @@
     leftSideMenuViewController.centerTabBarViewController.inboxFeedViewController.apnId = futureApnIdSource;
     leftSideMenuViewController.centerTabBarViewController.settingsViewController.apnId = futureApnIdSource;
 
-    self.drawerController = [[MMDrawerController alloc] initWithCenterViewController:leftSideMenuViewController.centerTabBarViewController
-                                                            leftDrawerViewController:leftSideMenuViewController];
+    self.drawerController = [[MMDrawerController alloc] initWithCenterViewController:leftSideMenuViewController.centerTabBarViewController leftDrawerViewController:leftSideMenuViewController];
     self.window.rootViewController = _drawerController;
     [self.window makeKeyAndVisible];
 
@@ -113,21 +119,21 @@
 }
 
 - (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken {
+    DDLogDebug(@"Device registered for push");
     [futureApnIdSource trySetResult:deviceToken];
 }
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error {
+    DDLogError(@"Failed to register for push notifications: %@", error);
     [futureApnIdSource trySetFailure:error];
 }
 
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-    id<ConditionLogger> apnLogger = [[Environment logging] getConditionLoggerForSender:application];
-
     ResponderSessionDescriptor* call;
     @try {
         call = [ResponderSessionDescriptor responderSessionDescriptorFromEncryptedRemoteNotification:userInfo];
-        [apnLogger logNotice:[NSString stringWithFormat:@"Received remote notification. Parsed session descriptor: %@. Notication: %@.", call, userInfo]];
+        DDLogDebug(@"Received remote notification. Parsed session descriptor: %@.", call);
     } @catch (OperationFailed* ex) {
-        [apnLogger logWarning:[NSString stringWithFormat:@"Error parsing remote notification. Error: %@. Notifaction: %@.", ex, userInfo]];
+        DDLogError(@"Error parsing remote notification. Error: %@.", ex);
         return;
     }
 
@@ -137,6 +143,8 @@
 -(void) application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     if([self.notificationTracker shouldProcessNotification:userInfo]){
         [self application:application didReceiveRemoteNotification:userInfo];
+    } else{
+        DDLogDebug(@"Push already processed. Skipping.");
     }
     completionHandler(UIBackgroundFetchResultNewData);
 }
