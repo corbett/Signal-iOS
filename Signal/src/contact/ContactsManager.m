@@ -10,9 +10,6 @@
 #import "PreferencesUtil.h"
 #import "Util.h"
 
-
-//@TODO: Split Up into Seperate components.
-
 #define ADDRESSBOOK_QUEUE dispatch_get_main_queue()
 
 static NSString *const FAVOURITES_DEFAULT_KEY = @"FAVOURITES_DEFAULT_KEY";
@@ -174,14 +171,34 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 -(NSArray*) getContactsFromAddressBook:(ABAddressBookRef)addressBook {
-    ABRecordRef source = ABAddressBookCopyDefaultSource(addressBook);
-
-    NSArray *allPeople = (__bridge_transfer NSArray *)
-                         (ABAddressBookCopyArrayOfAllPeopleInSourceWithSortOrdering(addressBook,
-                                                                                    source,
-                                                                                    kABPersonSortByFirstName));
-
-    return [allPeople map:^id(id item) {
+    CFArrayRef allPeople = ABAddressBookCopyArrayOfAllPeople(addressBook);
+    CFMutableArrayRef allPeopleMutable = CFArrayCreateMutableCopy(kCFAllocatorDefault,
+                                                                  CFArrayGetCount(allPeople),allPeople);
+    
+    CFArraySortValues(allPeopleMutable,CFRangeMake(0, CFArrayGetCount(allPeopleMutable)),
+                      (CFComparatorFunction)ABPersonComparePeopleByName,
+                      (void*)(unsigned long)ABPersonGetSortOrdering());
+    
+    NSArray *sortedPeople = (__bridge_transfer NSArray *)allPeopleMutable;
+    
+    NSPredicate* predicate = [NSPredicate predicateWithBlock: ^BOOL(id record, NSDictionary *bindings) {
+        ABMultiValueRef phoneNumbers = ABRecordCopyValue( (__bridge ABRecordRef)record, kABPersonPhoneProperty);
+        BOOL result = NO;
+        
+        for (CFIndex i = 0; i < ABMultiValueGetCount(phoneNumbers); i++) {
+            NSString* phoneNumber = (__bridge_transfer NSString*) ABMultiValueCopyValueAtIndex(phoneNumbers, i);
+            if ([phoneNumber length]>0) {
+                result = YES;
+                break;
+                }
+            }
+        CFRelease(phoneNumbers);
+        return result;
+        }];
+    CFRelease(allPeople);
+    NSArray* filteredContacts = [sortedPeople filteredArrayUsingPredicate:predicate];
+    
+    return [filteredContacts map:^id(id item) {
         return [self contactForRecord:(__bridge ABRecordRef)item];
     }];
 }
@@ -375,7 +392,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 -(NSArray*) contactsForContactIds:(NSArray *)contactIds {
     NSMutableArray *contacts = [NSMutableArray array];
     for (NSNumber *favouriteId in contactIds) {
-        Contact *contact = [self latestContactWithRecordId:[favouriteId integerValue]];
+        Contact *contact = [self latestContactWithRecordId:[favouriteId intValue]];
         
         if (contact) {
             [contacts addObject:contact];
@@ -427,7 +444,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 
 #pragma mark - Whisper User Management
 
--(unsigned int) checkForNewWhisperUsers {
+-(NSUInteger) checkForNewWhisperUsers {
 	NSArray *currentUsers = [self getWhisperUsersFromContactsArray:[latestContactsById allValues]];
 	NSArray *newUsers     = [self getNewItemsFrom:currentUsers comparedTo:[latestWhisperUsersById allValues]];
     

@@ -2,11 +2,13 @@
 
 Signal allows you to make private phone calls and we are working on bringing secure messaging to it soon.
 
+[![Available on the AppStore](http://cl.ly/WouG/Download_on_the_App_Store_Badge_US-UK_135x40.svg)](https://itunes.apple.com/app/id874139669)
+
 ## Building
 
 1) Clone the repo to a working directory
 
-2) [CocoaPods](http://cocoapods.org) is used to manage dependencies. Pods are setup easily and are distributed via a ruby gem. Follow the simple instructions on the website to setup. After setup, run the following command from the toplevel directory of TextSecureiOS to download the dependencies for TextSecure iOS:
+2) [CocoaPods](http://cocoapods.org) is used to manage dependencies. Pods are setup easily and are distributed via a ruby gem. Follow the simple instructions on the website to setup. After setup, run the following command from the toplevel directory of Signal-iOS to download the dependencies for Signal-iOS:
 
 ```
 pod install
@@ -22,6 +24,10 @@ sudo gem update
 ```
 
 3) Open the `Signal.xcworkspace` in Xcode. Build and Run and you are ready to go!
+
+## Translation
+
+Help us translate Signal! The translation effort happens on [Transifex](https://www.transifex.com/projects/p/signal-ios/)
 
 ## Interoperability 
 

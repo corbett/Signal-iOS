@@ -1,20 +1,28 @@
-#import "HttpRequestResponseTest.h"
+#import <XCTest/XCTest.h>
 #import "TestUtil.h"
 #import "Util.h"
 #import "HttpSocket.h"
 #import "HttpRequestUtil.h"
 #import "PreferencesUtil.h"
 #import "SignalUtil.h"
+#import "SGNKeychainUtil.h"
+#import <UICKeyChainStore/UICKeyChainStore.h>
+
+@interface HttpRequestResponseTest : XCTestCase
+
+@end
 
 @implementation HttpRequestResponseTest
+
 -(void) testRequestToInitiate {
     [Environment setCurrent:testEnv];
-    [[[Environment getCurrent] preferences] setLocalNumberTo:[PhoneNumber phoneNumberFromE164:@"+19027778888"]];
-    [[[Environment getCurrent] preferences] setValueForKey:@"Password" toValue:@"shall_not_password"];
-    [[[Environment getCurrent] preferences] setValueForKey:@"PasswordCounter" toValue:@2357];
+    [SGNKeychainUtil setLocalNumberTo:[PhoneNumber phoneNumberFromE164:@"+19025555555"]];
+    [UICKeyChainStore setString:@"shall_not_password" forKey:@"Password"];
+    [[Environment preferences] setValueForKey:@"PasswordCounter" toValue:@2357];
     HttpRequest* h = [HttpRequest httpRequestToInitiateToRemoteNumber:[PhoneNumber phoneNumberFromE164:@"+19023334444"]];
     test([[h method] isEqualToString:@"GET"]);
     test([[h location] isEqualToString:@"/session/1/+19023334444"]);
+    NSLog(@"HTTP rep: %@", [h toHttp]);
     test([[h toHttp] isEqualToString:@"GET /session/1/+19023334444 HTTP/1.0\r\nAuthorization: OTP KzE5MDI3Nzc4ODg4OmluQ3lLcE1ZaFRQS0ZwN3BITlN3bUxVMVpCTT06MjM1Nw==\r\n\r\n"]);
     test([h isEqualToHttpRequest:[HttpRequest httpRequestFromData:[h serialize]]]);
 }
@@ -27,9 +35,9 @@
 }
 -(void) testRequestToRing {
     [Environment setCurrent:testEnv];
-    [[[Environment getCurrent] preferences] setLocalNumberTo:[PhoneNumber phoneNumberFromE164:@"+19025555555"]];
-    [[[Environment getCurrent] preferences] setValueForKey:@"Password" toValue:@"shall_not_password"];
-    [[[Environment getCurrent] preferences] setValueForKey:@"PasswordCounter" toValue:@0];
+    [SGNKeychainUtil setLocalNumberTo:[PhoneNumber phoneNumberFromE164:@"+19025555555"]];
+    [UICKeyChainStore setString:@"shall_not_password" forKey:@"Password"];
+    [UICKeyChainStore setString:[@0 stringValue] forKey:@"PasswordCounter"];
     HttpRequest* h = [HttpRequest httpRequestToRingWithSessionId:458847238];
     test([[h method] isEqualToString:@"RING"]);
     test([[h location] isEqualToString:@"/session/458847238"]);

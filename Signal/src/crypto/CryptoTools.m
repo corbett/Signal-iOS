@@ -1,6 +1,6 @@
 #import "CryptoTools.h"
 
-#import <OpenSSL/hmac.h>
+#import <openssl/hmac.h>
 
 #import "Constraints.h"
 #import "Conversions.h"
@@ -30,7 +30,7 @@
 
 @end
 
-@implementation NSData (CryptoUtil)
+@implementation NSData (CryptoTools)
 
 -(NSData*)hmacWithSha1WithKey:(NSData*)key {
     return [EvpMessageDigest hmacUsingSha1Data:self withKey:key];

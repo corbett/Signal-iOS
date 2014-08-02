@@ -1,5 +1,7 @@
+"ACTION_REQUIRED_TITLE" = "Action Required";
 "ANSWER_CALL_BUTTON_TITLE" = "Answer";
 "APN" = "Incoming Call";
+"AUDIO_PERMISSION_MESSAGE" = "Signal requires access to your microphone to work properly. You can restore the permission in the Settings app >> Privacy >> Microphone >> Signal";
 "CALL_BUTTON_TITLE" = "Call";
 "CHALLENGE_CODE_BUTTON_TITLE" = "VERIFY";
 "CHOOSE_COUNTRY_CODE" = "Choose Country Code";
@@ -33,7 +35,6 @@
 "DIALER_NUMBER_8" = "8";
 "DIALER_NUMBER_9" = "9";
 "DIALER_NUMBER_PLUS" = "+";
-"DIALER_NUMBER_PLUS" = "+";
 "DIALER_NUMBER_POUND" = "#";
 "DISABLING_BACKUP_FAILED" = "We encountered an issue while disabling the backup of your call log. Call logs might leak in your iTunes/iCloud backups.";
 "END_CALL_BAD_INTERACTION_WITH_SERVER" = "Server Failed!";
@@ -59,7 +60,7 @@
 "HOME_FOOTER_SECOND_MESSAGE_CALLS_NIL" = "No calls";
 "HOME_FOOTER_SECOND_MESSAGE_CALL_UNSORTED" = "unsorted call";
 "INBOX_VIEW_TUTORIAL_LABEL_MIDDLE" = "Check your contacts to see which of your friends support secure calls";
-"INBOX_VIEW_TUTORIAL_LABEL_TOP" = "You haven't recieved a call from a Signal user yet.";
+"INBOX_VIEW_TUTORIAL_LABEL_TOP" = "You haven't received a call from a Signal user yet.";
 "INVITE_USERS_ACTION_SHEET_TITLE" = "Invite Number";
 "INVITE_USERS_MESSAGE" = "I'd like to call you securely using Signal. You can install Signal from the App Store:";
 "INVITE_USER_MODAL_TITLE" = "Unregistered Contact";
@@ -79,12 +80,13 @@
 "MAIN_MENU_OPTION_DIALER" = "Dialer";
 "MAIN_MENU_OPTION_FAVOURITES" = "Favorites";
 "MAIN_MENU_OPTION_RECENT_CALLS" = "Recents";
-"MAIN_MENU_OPTION_REPORT_BUG" = "Report Bug";
+"MAIN_MENU_OPTION_REPORT_BUG" = "Support";
 "MAIN_MENU_OPTION_SETTINGS" = "Settings";
 "MUTE_BUTTON_TITLE" = "Mute";
-"NOTIFICATION_TEXT" = "Some of your contacts have recently registered numbers with Signal!";
-"NO_FAVOURITES_TEXT" = "To favourite a contact, tap the star on a contact page.";
+"NOTIFICATION_TEXT" = "Some of your contacts have recently registered numbers with Signal!";
+"NO_FAVOURITES_TEXT" = "To favorite a contact, tap the star on a contact page.";
 "OK" = "Ok";
+"PUSH_SETTINGS_MESSAGE" = "Signal requires push notification alerts and sounds to be enabled to work properly. Please change it in the Settings app >> Notification Center >> Signal.";
 "QUICK_LINKS_TITLE" = "Quick Links";
 "RECENT_CALLS_SORTING_TITLE" = "Sorting Method";
 "RECENT_NAV_BAR_TITLE" = "Call Log";
@@ -93,7 +95,7 @@
 "REGISTER_CC_ERR_ALERT_VIEW_TITLE" = "Country Code Error";
 "REGISTER_CHALLENGE_TEXTBLOCK_PART1" = "Let’s make sure you’re real. We've sent you a SMS with a six digit code to:";
 "REGISTER_CHALLENGE_TEXTBLOCK_PART2" = "To complete your phone number verification, please enter the code below.";
-"REGISTER_CHALLENGE_VOICECALL_TEXT" = "If you are unable to recieve an SMS, we will call you in";
+"REGISTER_CHALLENGE_VOICECALL_TEXT" = "If you are unable to receive an SMS, we will call you in";
 "REGISTER_CHALLENGE_ALERT_VIEW_TITLE" = "Incorrect code";
 "REGISTER_CHALLENGE_ALERT_VIEW_BODY" = "Please verify the code and try again";
 "REGISTER_ENTER_COUNTRY_CODE" = "Your number's country code";
@@ -102,12 +104,10 @@
 "REGISTER_TEXTBLOCK" = "To get started making secure calls, please confirm your country code and enter your device's phone number.";
 "REGISTER_VALIDATION_ENTER_CODE" = "Validation Code";
 "REGISTER_VALIDATION_SENT" = "We sent your validation code";
-
 "REGISTER_WELCOME_TEXT" = "Welcome to Signal";
 "REGISTRATION_ERROR" = "Registration Error";
 "REGISTRATION_BODY" = "We couldn't reach the Signal server. Please try again.";
 "REJECT_CALL_BUTTON_TITLE" = "Reject";
-"SETTINGS_ANONYMOUS_FEEDBACK" = "Send Anonymous Feedback";
 "SETTINGS_CALL_QUALITY" = "Call Quality";
 "SETTINGS_CHANGE_VOLUME" = "Change Volume With Buttons";
 "SETTINGS_CLEAR_HISTORY_LOG" = "Clear History Log";
@@ -125,11 +125,10 @@
 "SETTINGS_PRIVACY_AND_SECURITY" = "Privacy and Security";
 "SETTINGS_RINGTONE" = "Ringtone";
 "SETTINGS_SENDLOG" = "Submit Debug Log"; 
-"SETTINGS_SENDLOGS_WAITING" = "Sending anonymized log file\n Please wait...";
-"SETTINGS_SENDLOG_ALERT_TITLE" = "Submit debug log";
-"SETTINGS_SENDLOG_ALERT_BODY" = "Do you want to copy the log URL to the pasteboard or submit it by email?";
-"SETTINGS_SENDLOG_ALERT_PASTE" = "Pasteboard";
-"SETTINGS_SENDLOG_ALERT_EMAIL" = "Email";
+"SETTINGS_SENDLOGS_WAITING" = "Sending log file\n Please wait...";
+"SETTINGS_SENDLOG_ALERT_BODY" = "Bugs can be reported by email or by copying the log in a GitHub Issue (advanced).";
+"SETTINGS_SENDLOG_ALERT_PASTE" = "Email";
+"SETTINGS_SENDLOG_ALERT_EMAIL" = "GitHub Issue";
 "SETTINGS_SENDLOG_FAILED_TITLE" = "Failed to submit debug log";
 "SETTINGS_SENDLOG_FAILED_BODY" = "The debug log could not be submitted. Please try again.";
 "SETTINGS_VIBRATE_ON_RING" = "Vibrate on Ring";

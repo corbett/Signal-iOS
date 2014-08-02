@@ -1,6 +1,10 @@
-#import "SequenceCounterTest.h"
+#import <XCTest/XCTest.h>
 #import "SequenceCounter.h"
 #import "TestUtil.h"
+
+@interface SequenceCounterTest : XCTestCase
+
+@end
 
 @implementation SequenceCounterTest
 -(void)testCountingForwards {
@@ -38,7 +42,7 @@
         uint16_t nextShortId = (uint16_t)(nextLongId & 0xFFFF);
         int64_t actualNextLongId = [s convertNext:nextShortId];
         if (nextLongId != actualNextLongId) {
-            STFail(@"Bad transition: %lld, %lld + %lld -> %lld, %lld != %lld", (long long)prevShortId, (long long)prevLongId, (long long)delta, (long long)nextShortId, (long long)actualNextLongId, (long long)nextLongId);
+            XCTFail(@"Bad transition: %lld, %lld + %lld -> %lld, %lld != %lld", (long long)prevShortId, (long long)prevLongId, (long long)delta, (long long)nextShortId, (long long)actualNextLongId, (long long)nextLongId);
             return;
         }
         prevLongId = nextLongId;

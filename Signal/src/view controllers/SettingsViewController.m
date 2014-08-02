@@ -4,19 +4,17 @@
 #import "Operation.h"
 #import "PreferencesUtil.h"
 #import "PhoneNumber.h"
-#import "PreferenceListViewController.h"
 #import "RecentCallManager.h"
 #import "RegisterViewController.h"
 #import "SettingsViewController.h"
-#import "LogSubmit.h"
+#import "Pastelog.h"
 #import "SGNKeychainUtil.h"
 
 #import "UIViewController+MMDrawerController.h"
 
 #define SECTION_HEADER_VIEW_HEIGHT 27
 #define PRIVACY_SECTION_INDEX 0
-#define LOCALIZATION_SECTION_INDEX 1
-#define CALL_QUALITY_SECTION_INDEX 2
+#define CALL_QUALITY_SECTION_INDEX 1
 
 static NSString *const CHECKBOX_CHECKMARK_IMAGE_NAME = @"checkbox_checkmark";
 static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
@@ -24,7 +22,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 @interface SettingsViewController () {
     NSArray *_sectionHeaderViews;
     NSArray *_privacyTableViewCells;
-    NSArray *_localizationTableViewCells;
     NSArray *_callQualityTableViewCells;
     
     NSString *gistURL;
@@ -37,8 +34,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    _sectionHeaderViews = @[_privacyAndSecurityHeaderView,
-                            _locationOverridesHeaderView];
+    _sectionHeaderViews = @[_privacyAndSecurityHeaderView];
 
     _titleLabel.text = SETTINGS_NAV_BAR_TITLE;
 }
@@ -101,8 +97,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 - (void)configureCheckboxPreferences {
     NSArray *buttons = @[_hideContactImagesButton,
                          _disableAutocorrectButton,
-                         _disableHistoryButton,
-                         _sendFeedbackButton];
+                         _disableHistoryButton];
 
     for (UIButton *button in buttons) {
         [button setImage:[UIImage imageNamed:CHECKBOX_EMPTY_IMAGE_NAME]
@@ -111,26 +106,15 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
         [button setImage:[UIImage imageNamed:CHECKBOX_CHECKMARK_IMAGE_NAME]
                 forState:UIControlStateSelected];
     }
-    PropertyListPreferences *prefs = [[Environment getCurrent] preferences];
+    PropertyListPreferences *prefs = [Environment preferences];
     _hideContactImagesButton.selected = ![prefs getContactImagesEnabled];
     _disableAutocorrectButton.selected = ![prefs getAutocorrectEnabled];
     _disableHistoryButton.selected = ![prefs getHistoryLogEnabled];
-    _sendFeedbackButton.selected = [prefs getAnonymousFeedbackEnabled];
 }
 
 - (void)configureAllCells {
-    PropertyListPreferences *prefs = [[Environment getCurrent] preferences];
-    NSArray *expandedSectionPrefs = [prefs getOrGenerateSettingsRowExpandedPrefs];
-
-    BOOL privacyExpanded = [expandedSectionPrefs[PRIVACY_SECTION_INDEX] boolValue];
-    _privacyTableViewCells = privacyExpanded ? [self privacyAndSecurityCells] : nil;
-    [_privacyAndSecurityHeaderView setColumnStateExpanded:privacyExpanded andIsAnimated:NO];
-        
-    BOOL localizationExpanded = [expandedSectionPrefs[LOCALIZATION_SECTION_INDEX] boolValue];
-    _localizationTableViewCells = localizationExpanded ? [self localizationCells] : nil;
-    [_locationOverridesHeaderView setColumnStateExpanded:localizationExpanded andIsAnimated:NO];
-
-    _currentDateFormatLabel.text = [[prefs getDateFormat] lowercaseString];
+    _privacyTableViewCells = [self privacyAndSecurityCells];
+    [_privacyAndSecurityHeaderView setColumnStateExpanded:YES andIsAnimated:NO];
 }
 
 - (void)saveExpandedSectionPreferences {
@@ -139,8 +123,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     NSNumber *numberBoolNo = [NSNumber numberWithBool:NO];
 
     [expandedSectionPrefs addObject:(_privacyTableViewCells ? numberBoolYes : numberBoolNo)];
-    [expandedSectionPrefs addObject:(_localizationTableViewCells ? numberBoolYes : numberBoolNo)];
-    [[[Environment getCurrent] preferences] setSettingsRowExpandedPrefs:expandedSectionPrefs];
 }
 
 #pragma mark - Table View Helpers
@@ -151,10 +133,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
              _disableHistoryCell,
              _clearHistoryLogCell,
              _sendDebugLog];
-}
-
-- (NSArray *)localizationCells {
-    return @[_dateFormatCell];
 }
 
 - (NSArray *)indexPathsForCells:(NSArray *)cells forRow:(NSInteger)row {
@@ -169,8 +147,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 - (NSArray *)cellsForRow:(NSInteger)row {
     if (row == PRIVACY_SECTION_INDEX) {
         return [self privacyAndSecurityCells];
-    } else if(row == LOCALIZATION_SECTION_INDEX) {
-        return [self localizationCells];
     } else {
         return @[];
     }
@@ -179,7 +155,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 #pragma mark - Actions
 
 - (void)registerTapped {
-    RegisterViewController *registerViewController = [RegisterViewController registerViewControllerForApn:_apnId];
+    RegisterViewController *registerViewController = [RegisterViewController registerViewController];
     [self presentViewController:registerViewController animated:YES completion:nil];
 }
 
@@ -187,12 +163,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     [self toggleCells:&_privacyTableViewCells forRow:PRIVACY_SECTION_INDEX];
     BOOL columnExpanded = _privacyTableViewCells != nil;
     [_privacyAndSecurityHeaderView setColumnStateExpanded:columnExpanded andIsAnimated:YES];
-}
-
-- (void)localizationTapped {
-    [self toggleCells:&_localizationTableViewCells forRow:LOCALIZATION_SECTION_INDEX];
-    BOOL columnExpanded = _localizationTableViewCells != nil;
-    [_locationOverridesHeaderView setColumnStateExpanded:columnExpanded andIsAnimated:YES];
 }
 
 - (void)toggleCells:(NSArray *__strong*)cells forRow:(NSInteger)row {
@@ -211,22 +181,17 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (IBAction)hideContactImagesButtonTapped {
     _hideContactImagesButton.selected = !_hideContactImagesButton.selected;
-    [[[Environment getCurrent] preferences] setContactImagesEnabled:!_hideContactImagesButton.selected];
+    [[Environment preferences] setContactImagesEnabled:!_hideContactImagesButton.selected];
 }
 
 - (IBAction)disableAutocorrectButtonTapped {
     _disableAutocorrectButton.selected = !_disableAutocorrectButton.selected;
-    [[[Environment getCurrent] preferences] setAutocorrectEnabled:!_disableAutocorrectButton.selected];
+    [[Environment preferences] setAutocorrectEnabled:!_disableAutocorrectButton.selected];
 }
 
 - (IBAction)disableHistoryButtonTapped {
     _disableHistoryButton.selected = !_disableHistoryButton.selected;
-    [[[Environment getCurrent] preferences] setHistoryLogEnabled:!_disableHistoryButton.selected];
-}
-
-- (IBAction)sendFeedbackButtonTapped {
-    _sendFeedbackButton.selected = !_sendFeedbackButton.selected;
-    [[[Environment getCurrent] preferences] setAnonymousFeedbackEnabled:_sendFeedbackButton.selected];
+    [[Environment preferences] setHistoryLogEnabled:!_disableHistoryButton.selected];
 }
 
 - (void)clearHistory {
@@ -237,18 +202,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
                                               cancelButtonTitle:nil
                                               otherButtonTitles:SETTINGS_LOG_CLEAR_CONFIRM, nil];
     [alertView show];
-}
-
-- (void)showDateFormatPicker {
-    NSArray *dateFormats = [[[Environment getCurrent] preferences] getAvailableDateFormats];
-
-    PreferenceListViewController *prefPicker = [PreferenceListViewController preferenceListViewControllerForSelectedValue:^NSString *{
-        return [[Environment preferences] getDateFormat];
-    } andOptions:dateFormats andSelectedBlock:^(NSString *newValue) {
-        [[Environment preferences] setDateFormat:newValue];
-    }];
-                                                
-    [self.navigationController pushViewController:prefPicker animated:YES];
 }
 
 #pragma mark - UITableViewDelegate
@@ -269,8 +222,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     UIView *headerView = _sectionHeaderViews[(NSUInteger)section];
     if (headerView == _privacyAndSecurityHeaderView) {
         return (NSInteger)[_privacyTableViewCells count];
-    } else if (headerView == _locationOverridesHeaderView) {
-        return (NSInteger)[_localizationTableViewCells count];
     } else {
         return 0;
     }
@@ -281,10 +232,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     UITableViewCell *cell = nil;
     if (headerView == _privacyAndSecurityHeaderView) {
         cell = _privacyTableViewCells[(NSUInteger)indexPath.row];
-    } else if (headerView == _locationOverridesHeaderView) {
-        cell = _localizationTableViewCells[(NSUInteger)indexPath.row];
     }
-
     [self findAndLocalizeLabelsForView:cell];
 
     return cell;
@@ -297,9 +245,6 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     if (cell == _clearHistoryLogCell) {
         [self clearHistory];
     }
-    if (cell == _dateFormatCell) {
-        [self showDateFormatPicker];
-    }
     
     if (cell == _sendDebugLog) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:SETTINGS_SENDLOG_WAITING
@@ -307,9 +252,9 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
         
         [alert show];
         
-        [LogSubmit submitLogsWithCompletion:^(BOOL success, NSString *urlString) {
+        [Pastelog submitLogsWithCompletion:^(NSError *error, NSString *urlString) {
             [alert dismissWithClickedButtonIndex:0 animated:YES];
-            if (success) {
+            if (!error) {
                 gistURL = urlString;
                 UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:SETTINGS_SENDLOG_ALERT_TITLE message:SETTINGS_SENDLOG_ALERT_BODY delegate:self cancelButtonTitle:SETTINGS_SENDLOG_ALERT_PASTE otherButtonTitles:SETTINGS_SENDLOG_ALERT_EMAIL, nil];
                 [alertView show];
@@ -324,20 +269,30 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
     if (buttonIndex == 0) {
-        [self pasteBoardCopy:gistURL];
-    } else{
         [self submitEmail:gistURL];
+    } else{
+        [self pasteBoardCopy:gistURL];
     }
 }
 
 - (void)submitEmail:(NSString*)url{
-    NSString *urlString = [NSString stringWithString: [@"mailto:support@whispersystems.org?subject=iOS%20Debug%20Log&body=" stringByAppendingString:[[NSString stringWithFormat:@"Log URL: %@ \n Tell us about the issue: ", url]stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]]];
+    NSString *emailAddress;
+    
+#ifdef ADHOC
+    emailAddress = @"signal-beta@fredericjacobs.com";
+#else
+    emailAddress = @"support@whispersystems.org";
+#endif
+    
+    NSString *urlString = [NSString stringWithString: [[NSString stringWithFormat:@"mailto:%@?subject=iOS%%20Debug%%20Log&body=", emailAddress] stringByAppendingString:[[NSString stringWithFormat:@"Log URL: %@ \n Tell us about the issue: ", url]stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]]];
+    
     [[UIApplication sharedApplication] openURL: [NSURL URLWithString: urlString]];
 }
 
 - (void)pasteBoardCopy:(NSString*)url{
     UIPasteboard *pb = [UIPasteboard generalPasteboard];
     [pb setString:url];
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/WhisperSystems/Signal-iOS/issues"]];
 }
 
 - (void)findAndLocalizeLabelsForView:(UIView *)view {

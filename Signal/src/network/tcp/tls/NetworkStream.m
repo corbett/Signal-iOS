@@ -82,15 +82,16 @@
     
     while ([writeBuffer enqueuedLength] > 0 && [outputStream hasSpaceAvailable]) {
         NSData* data = [writeBuffer peekVolatileHeadOfData];
-        int d = [outputStream write:[data bytes] maxLength:[data length]];
+        NSInteger d = [outputStream write:[data bytes] maxLength:[data length]];
         
         // reached destination buffer capacity?
         if (d == 0) break;
         
-        // error?
         if (d < 0) {
             id error = [outputStream streamError];
-            if (error == nil) error = @"Unknown error when writing to stream.";
+            if (error == nil){
+                error = @"Unknown error when writing to stream.";
+            }
             [rawDataHandler handleError:error relatedInfo:nil causedTermination:false];
             return;
         }
@@ -123,6 +124,7 @@
         [futureOpenedSource trySetFailure:error];
         [futureConnectedAndWritableSource trySetFailure:error];
         [rawDataHandler handleError:error relatedInfo:nil causedTermination:true];
+        DDLogError(@"Network failure happened on network stream: %@", error);
         [self terminate];
     }
 }
@@ -159,9 +161,20 @@
 }
 
 -(void) onErrorOccurred:(id)fallbackError {
-    id error = [inputStream streamError];
-    if (error == nil) error = [outputStream streamError];
-    if (error == nil) error = fallbackError;
+    NSError *error;
+    
+    DDLogError(@"Stream status: %@", self.description);
+    
+    if ([inputStream streamError]) {
+        error = [inputStream streamError];
+        DDLogError(@"Error on incoming stream : %@", error);
+    } else if ([outputStream streamError]){
+        error = [outputStream streamError];
+        DDLogError(@"Error on outgoing stream: %@", error);
+    } else{
+        error = fallbackError;
+        DDLogError(@"Fallback error: %@", fallbackError);
+    }
     [self onNetworkFailure:error];
 }
 
@@ -171,7 +184,7 @@
     if (![[futureConnectedAndWritableSource forceGetResult] isEqual:@YES]) return;
     
     while ([inputStream hasBytesAvailable]) {
-        int numRead = [inputStream read:[readBuffer mutableBytes] maxLength:[readBuffer length]];
+        NSInteger numRead = [inputStream read:[readBuffer mutableBytes] maxLength:[readBuffer length]];
         
         if (numRead < 0) [self onErrorOccurred:@"Read Error"];
         if (numRead <= 0) break;
@@ -217,9 +230,9 @@
                 break;
                 
             default:
-                [self onErrorOccurred:[NSString stringWithFormat:@"Unexpected %@ stream event: %d.",
+                [self onErrorOccurred:[NSString stringWithFormat:@"Unexpected %@ stream event: %lu.",
                                        isInputStream ? @"input" : @"output",
-                                       event]];
+                                       (unsigned long)event]];
         }
     }
 }

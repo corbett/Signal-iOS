@@ -21,7 +21,6 @@
 #define TXT_END_CALL_HANGUP_REMOTE                  NSLocalizedString(@"END_CALL_HANGUP_REMOTE", @"")
 #define TXT_END_CALL_HANGUP_LOCAL                   NSLocalizedString(@"END_CALL_HANGUP_LOCAL", @"")
 #define TXT_END_CALL_REPLACED_BY_NEXT               NSLocalizedString(@"END_CALL_REPLACED_BY_NEXT", @"")
-// @todo: some languages probably don't prefix this sort of thing
 #define TXT_END_CALL_MESSAGE_FROM_SERVER_PREFIX     NSLocalizedString(@"END_CALL_MESSAGE_FROM_SERVER_PREFIX", @"")
 
 #pragma mark - Menu Table Cell Titles
@@ -105,7 +104,7 @@
 #define SETTINGS_SENDLOG NSLocalizedString(@"SETTINGS_SENDLOG", @"")
 
 #define SETTINGS_SENDLOG_WAITING NSLocalizedString(@"SETTINGS_SENDLOGS_WAITING", @"")
-#define SETTINGS_SENDLOG_ALERT_TITLE NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_TITLE", @"")
+#define SETTINGS_SENDLOG_ALERT_TITLE NSLocalizedString(@"SETTINGS_SENDLOG", @"")
 #define SETTINGS_SENDLOG_ALERT_BODY NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_BODY",@"")
 #define SETTINGS_SENDLOG_ALERT_PASTE NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_PASTE", @"")
 #define SETTINGS_SENDLOG_ALERT_EMAIL NSLocalizedString(@"SETTINGS_SENDLOG_ALERT_EMAIL", @"")

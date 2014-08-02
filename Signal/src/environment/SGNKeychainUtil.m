@@ -35,9 +35,7 @@
     [self storeData:[CryptoTools generateSecureRandomData:SIGNALING_MAC_KEY_LENGTH] forKey:SIGNALING_MAC_KEY];
     [self storeData:[CryptoTools generateSecureRandomData:SIGNALING_CIPHER_KEY_LENGTH] forKey:SIGNALING_CIPHER_KEY];
     [self storeData:[CryptoTools generateSecureRandomData:SIGNALING_EXTRA_KEY_LENGTH] forKey:SIGNALING_EXTRA_KEY];
-    
     [self storeData:[CryptoTools generateSecureRandomData:ZID_LENGTH] forKey:ZID_KEY];
-    
 }
 
 +(void)wipeKeychain{
@@ -112,7 +110,7 @@
     NSData *data = [self dataForKey:key];
     
     if ([data length] != length) {
-        DDLogError(@"Length of data not matching. Got %lu, expected %u", [data length], length);
+        DDLogError(@"Length of data not matching. Got %lu, expected %u", (unsigned long)[data length], length);
     }
     
     return data;
@@ -136,6 +134,7 @@
 
 +(BOOL)storeString:(NSString*)string forKey:(NSString*)key{
     BOOL success = [UICKeyChainStore setString:string forKey:key];
+    
     if (!success) {
         DDLogError(@"Failed to set value for key: %@", key);
     }

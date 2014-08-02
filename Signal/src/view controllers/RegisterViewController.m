@@ -6,6 +6,7 @@
 #import "PhoneNumberDirectoryFilterManager.h"
 #import "PhoneNumberUtil.h"
 #import "PreferencesUtil.h"
+#import "PushManager.h"
 #import "RegisterViewController.h"
 #import "SignalUtil.h"
 #import "SGNKeychainUtil.h"
@@ -52,11 +53,8 @@
     _enteredPhoneNumber = [NSMutableString string];
 }
 
-+ (RegisterViewController*)registerViewControllerForApn:(Future *)apnId {
-    require(apnId != nil);
-
++ (RegisterViewController*)registerViewController {
     RegisterViewController *viewController = [RegisterViewController new];
-    viewController->futureApnId = apnId;
     viewController->registered = [FutureSource new];
     viewController->life = [CancelTokenSource cancelTokenSource];
     [[viewController->life getToken] whenCancelledTryCancel:viewController->registered];
@@ -133,7 +131,7 @@
                                                                   againstTimeout:20.0
                                                                   untilCancelled:cancelToken];
 
-    Future *futurePhoneRegistrationVerified = [futurePhoneRegistrationStarted then:^(id _) {
+    return [futurePhoneRegistrationStarted then:^(id _) {
         [self showViewNumber:CHALLENGE_VIEW_NUMBER];
         [Environment setRegistered:YES];
         [self.challengeNumberLabel setText:[phoneNumber description]];
@@ -143,24 +141,6 @@
         return futureChallengeAcceptedSource;
     }];
 
-    Future *futureApnToRegister = [futurePhoneRegistrationVerified then:^(HttpResponse* okResponse) {
-        return [futureApnId catch:^id(id error) {
-            DDLogError(@"Could not get APN. Runs in Simulator?");
-            return nil;
-        }];
-    }];
-
-    return [futureApnToRegister then:^Future*(NSData* deviceToken) {
-        if (deviceToken == nil){
-            DDLogError(@"Couldn't get a device token for APN. Runs in Simulator?");
-            return futureApnToRegister;
-        }
-        
-        HttpRequest* request = [HttpRequest httpRequestToRegisterForApnSignalingWithDeviceToken:deviceToken];
-        return [HttpManager asyncOkResponseFromMasterServer:request
-                                            unlessCancelled:cancelToken
-                                            andErrorHandler:[Environment errorNoter]];
-    }];    
 }
 
 - (void)registerPhoneNumberTapped {
@@ -214,11 +194,16 @@
     }];
 
     [futureDone thenDo:^(id result) {
-        [Environment setRegistered:YES];
-        [[[Environment getCurrent] phoneDirectoryManager] forceUpdate];
-        [registered trySetResult:@YES];
-        [self dismissView];
-        [futureChallengeAcceptedSource trySetResult:result];
+        [[PushManager sharedManager] askForPushRegistrationWithSuccess:^{
+            [Environment setRegistered:YES];
+            [[[Environment getCurrent] phoneDirectoryManager] forceUpdate];
+            [registered trySetResult:@YES];
+            [self dismissView];
+            [futureChallengeAcceptedSource trySetResult:result];
+        } failure:^{
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:REGISTER_ERROR_ALERT_VIEW_TITLE message:REGISTER_ERROR_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_ERROR_ALERT_VIEW_DISMISS otherButtonTitles:nil, nil];
+            [alertView show];
+        }];
     }];
 
     [futureDone finallyDo:^(Future *completed) {
@@ -371,7 +356,7 @@
                        forCountry:(NSString *)country {
     _countryCodeLabel.text = code;
     _countryNameLabel.text = country;
-    [self updatePhoneNumberFieldWithString:code];
+    [self updatePhoneNumberFieldWithString:code cursorposition:_enteredPhoneNumber.length];
     [vc dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -381,26 +366,61 @@
 
 #pragma mark - UITextFieldDelegate
 
+- (NSUInteger) calculateLocationOffset:(NSUInteger)location {
+    NSUInteger offset = 0, phonenumberposition = 0;
+    for (NSUInteger i = 0; i < location; i++) {
+        if ([_phoneNumberTextField.text characterAtIndex:i] != [_enteredPhoneNumber characterAtIndex:phonenumberposition]) {
+            offset++;
+        } else {
+            phonenumberposition++;
+        }
+    }
+    return offset;
+}
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
                                                        replacementString:(NSString *)string {
-    
+    NSUInteger offset = [self calculateLocationOffset:range.location];
+    unichar currentPoschar = 0;
+    range.location -= offset;
     BOOL handleBackspace = range.length == 1;
     if (handleBackspace) {
-        NSRange backspaceRange = NSMakeRange([_enteredPhoneNumber length] - 1, 1);
+        if ((range.location + offset) <  _phoneNumberTextField.text.length) {
+            currentPoschar = [_phoneNumberTextField.text characterAtIndex:(range.location + offset)];
+        }
+        if ((currentPoschar < '0' || currentPoschar > '9') && currentPoschar != 0) {
+            range.location--;
+        }
+        NSRange backspaceRange = NSMakeRange(range.location, 1);
         [_enteredPhoneNumber replaceCharactersInRange:backspaceRange withString:string];
+        range.location++;
     } else {
         NSString* sanitizedString = [[string componentsSeparatedByCharactersInSet:[[NSCharacterSet decimalDigitCharacterSet ] invertedSet]] componentsJoinedByString:@""];
-        [_enteredPhoneNumber appendString:sanitizedString];
+        NSMutableString* mutablePhoneNumber = [NSMutableString stringWithString:_enteredPhoneNumber];
+        [mutablePhoneNumber insertString:sanitizedString atIndex:range.location];
+        _enteredPhoneNumber = mutablePhoneNumber;
+        if ((range.location + offset + 1) <  _phoneNumberTextField.text.length) {
+            currentPoschar = [_phoneNumberTextField.text characterAtIndex:(range.location + offset + 1)];
+        }
+        if ((currentPoschar < '0' || currentPoschar > '9') && currentPoschar != 0) {
+            range.location++;
+        }
     }
 
-    [self updatePhoneNumberFieldWithString:_enteredPhoneNumber];
+    [self updatePhoneNumberFieldWithString:_enteredPhoneNumber cursorposition:range.location+offset];
     return NO;
 }
 
--(void) updatePhoneNumberFieldWithString:(NSString*) input {
+-(void) updatePhoneNumberFieldWithString:(NSString*)input
+                          cursorposition:(NSUInteger)cursorpos {
     NSString* result = [PhoneNumber bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:_enteredPhoneNumber
                                                                     withSpecifiedCountryCodeString:_countryCodeLabel.text];
+    cursorpos += result.length - _phoneNumberTextField.text.length;
     _phoneNumberTextField.text = result;
+    UITextPosition *position = [_phoneNumberTextField positionFromPosition:[_phoneNumberTextField beginningOfDocument]
+                                                                    offset:(NSInteger)cursorpos];
+    [_phoneNumberTextField setSelectedTextRange:[_phoneNumberTextField textRangeFromPosition:position
+                                                                                  toPosition:position]];
 }
 
 @end

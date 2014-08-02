@@ -45,18 +45,16 @@ static unsigned char DH3K_PRIME[]={
 @implementation Release
 
 +(Environment*) releaseEnvironmentWithLogging:(id<Logging>)logging {
-    // @todo: turn off error notification
     //ErrorHandlerBlock errorDiscarder = ^(id error, id relatedInfo, bool causedTermination) {};
     ErrorHandlerBlock errorNoter = ^(id error, id relatedInfo, bool causedTermination) { DDLogError(@"%@: %@, %d", error, relatedInfo, causedTermination); };
     
-    return [Environment environmentWithPreferences:[PropertyListPreferences propertyListPreferencesWithName:@"RedPhone-Data"]
-                                        andLogging:logging
+    return [Environment environmentWithLogging:logging
                                      andErrorNoter:errorNoter
                                      andServerPort:31337
                            andMasterServerHostName:@"master.whispersystems.org"
                                andDefaultRelayName:@"relay"
                       andRelayServerHostNameSuffix:@"whispersystems.org"
-                                    andCertificate:[Certificate certificateFromResourcePath:@"whisperReal" ofType:@"der"]
+                                    andCertificate:[Certificate certificateFromResourcePath:@"whisperReal" ofType:@"cer"]
                andCurrentRegionCodeForPhoneNumbers:[(NSLocale*)[NSLocale currentLocale] objectForKey:NSLocaleCountryCode]
                  andSupportedKeyAgreementProtocols:[self supportedKeyAgreementProtocols]
                                    andPhoneManager:[PhoneManager phoneManagerWithErrorHandler:errorNoter]
@@ -69,8 +67,7 @@ static unsigned char DH3K_PRIME[]={
 }
 
 +(Environment*) unitTestEnvironment:(NSArray*)testingAndLegacyOptions {
-    return [Environment environmentWithPreferences:[PropertyListPreferences propertyListPreferencesWithName:@"RedPhone-Test-Data"]
-                                        andLogging:[DiscardingLog discardingLog]
+    return [Environment environmentWithLogging:[DiscardingLog discardingLog]
                                      andErrorNoter:^(id error, id relatedInfo, bool causedTermination) {}
                                      andServerPort:31337
                            andMasterServerHostName:@"testing.whispersystems.org"

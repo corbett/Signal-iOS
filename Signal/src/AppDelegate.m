@@ -4,18 +4,19 @@
 #import "CategorizingLogger.h"
 #import "DialerViewController.h"
 #import "DiscardingLog.h"
+#import "Environment.h"
 #import "InCallViewController.h"
 #import "LeftSideMenuViewController.h"
 #import "MMDrawerController.h"
 #import "NotificationTracker.h"
+#import "PushManager.h"
 #import "PriorityQueue.h"
 #import "RecentCallManager.h"
 #import "Release.h"
 #import "SettingsViewController.h"
 #import "TabBarParentViewController.h"
 #import "Util.h"
-#import <UICKeyChainStore/UICKeyChainStore.h>
-#import "Environment.h"
+#import "VersionMigrations.h"
 
 #define kSignalVersionKey @"SignalUpdateVersionKey"
 
@@ -31,9 +32,7 @@
 
 @end
 
-@implementation AppDelegate {
-    FutureSource* futureApnIdSource;
-}
+@implementation AppDelegate
 
 #pragma mark Detect updates - perform migrations
 
@@ -45,30 +44,51 @@
     if (!previousVersion) {
         DDLogError(@"No previous version found. Possibly first launch since install.");
         [Environment resetAppData]; // We clean previous keychain entries in case their are some entries remaining.
-    } else if ([currentVersion compare:previousVersion options:NSNumericSearch] == NSOrderedDescending) {
-        // The application was updated
-        DDLogWarn(@"Application was updated from %@ to %@", previousVersion, currentVersion);
+    } else if ([currentVersion compare:previousVersion options:NSNumericSearch] == NSOrderedDescending){
+        // Application was updated, let's see if we have a migration scheme for it.
+        if ([previousVersion isEqualToString:@"1.0.2"]) {
+            // Migrate from custom preferences to NSUserDefaults
+            [VersionMigrations migrationFrom1Dot0Dot2toLarger];
+        }
+        
     }
     
     [[NSUserDefaults standardUserDefaults] setObject:currentVersion forKey:kSignalVersionKey];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
-#pragma mark Disable cloud/iTunes syncing of call log
 
-- (void)disableCallLogBackup{
-    NSString *preferencesPath = [[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingString:@"/Preferences"];
-    NSString *userDefaultsString = [NSString stringWithFormat:@"%@/%@.plist", preferencesPath,[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"]];
+/**
+ *  Protects the preference and logs file with disk encryption and prevents them to leak to iCloud.
+ */
+
+- (void)protectPreferenceFiles{
+    NSMutableArray *pathsToExclude = [NSMutableArray array];
     
-    NSURL *userDefaultsURL = [NSURL fileURLWithPath:userDefaultsString];
+    [pathsToExclude addObject:[[[NSHomeDirectory() stringByAppendingString:@"/Library/Preferences/"] stringByAppendingString:[[NSBundle mainBundle] bundleIdentifier]] stringByAppendingString:@".plist"]];
+    
     NSError *error;
-    [userDefaultsURL setResourceValue: [NSNumber numberWithBool: YES]
-                   forKey: NSURLIsExcludedFromBackupKey error: &error];
+    
+    NSString *logPath    = [NSHomeDirectory() stringByAppendingString:@"/Library/Caches/Logs/"];
+    NSArray  *logsFiles  = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:logPath error:&error];
+    
+    for (NSUInteger i = 0; i < [logsFiles count]; i++) {
+        [pathsToExclude addObject:[logPath stringByAppendingString:[logsFiles objectAtIndex:i]]];
+    }
+    
+    for (NSUInteger i = 0; i < [pathsToExclude count]; i++) {
+        [[NSURL fileURLWithPath:[pathsToExclude objectAtIndex:i]] setResourceValue: [NSNumber numberWithBool: YES]
+                                                                            forKey: NSURLIsExcludedFromBackupKey error: &error];
+    }
     
     if (error) {
+        DDLogError(@"Error while removing log files from backup: %@", error.description);
         UIAlertView *alert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"WARNING", @"") message:NSLocalizedString(@"DISABLING_BACKUP_FAILED", @"") delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"") otherButtonTitles:nil, nil];
         [alert show];
+        
+        return;
     }
+    
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -80,57 +100,52 @@
     [DDLog addLogger:self.fileLogger];
     
     [self performUpdateCheck];
-    [self disableCallLogBackup];
+    [self protectPreferenceFiles];
     
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.notificationTracker = [NotificationTracker notificationTracker];
     
-    // start register for apn id
-    futureApnIdSource = [FutureSource new];
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeSound| UIRemoteNotificationTypeAlert)];
-
     CategorizingLogger* logger = [CategorizingLogger categorizingLogger];
     [logger addLoggingCallback:^(NSString *category, id details, NSUInteger index) {}];
     [Environment setCurrent:[Release releaseEnvironmentWithLogging:logger]];
     [[Environment getCurrent].phoneDirectoryManager startUntilCancelled:nil];
     [[Environment getCurrent].contactsManager doAfterEnvironmentInitSetup];
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
-
+    
     LeftSideMenuViewController *leftSideMenuViewController = [LeftSideMenuViewController new];
-    leftSideMenuViewController.centerTabBarViewController.inboxFeedViewController.apnId = futureApnIdSource;
-    leftSideMenuViewController.centerTabBarViewController.settingsViewController.apnId = futureApnIdSource;
-
+    
     self.drawerController = [[MMDrawerController alloc] initWithCenterViewController:leftSideMenuViewController.centerTabBarViewController leftDrawerViewController:leftSideMenuViewController];
     self.window.rootViewController = _drawerController;
     [self.window makeKeyAndVisible];
-
+    
     //Accept push notification when app is not open
     NSDictionary *remoteNotif = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     if (remoteNotif) {
+        DDLogInfo(@"Application was launched by tapping a push notification.");
         [self application:application didReceiveRemoteNotification:remoteNotif];
     }
-
+    
     [[[Environment phoneManager] currentCallObservable] watchLatestValue:^(CallState* latestCall) {
         if (latestCall == nil){
-            DDLogError(@"Latest Call is nil.");
             return;
         }
         
         InCallViewController *callViewController = [InCallViewController inCallViewControllerWithCallState:latestCall
-                    andOptionallyKnownContact:[latestCall potentiallySpecifiedContact]];
+                                                                                 andOptionallyKnownContact:[latestCall potentiallySpecifiedContact]];
         [_drawerController.centerViewController presentViewController:callViewController animated:YES completion:nil];
     } onThread:[NSThread mainThread] untilCancelled:nil];
-
+    
+    
     return YES;
 }
 
 - (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData*)deviceToken {
-    DDLogDebug(@"Device registered for push");
-    [futureApnIdSource trySetResult:deviceToken];
+    [[PushManager sharedManager] registerForPushWithToken:deviceToken];
 }
+
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError*)error {
+    [[PushManager sharedManager]verifyPushActivated];
     DDLogError(@"Failed to register for push notifications: %@", error);
-    [futureApnIdSource trySetFailure:error];
 }
 
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
@@ -142,7 +157,7 @@
         DDLogError(@"Error parsing remote notification. Error: %@.", ex);
         return;
     }
-
+    
     [[Environment phoneManager] incomingCallWithSession:call];
 }
 
@@ -158,6 +173,11 @@
 -(void) applicationDidBecomeActive:(UIApplication *)application {
     [[AppAudioManager sharedInstance] awake];
     application.applicationIconBadgeNumber = 0;
+    
+    if ([Environment isRegistered]) {
+        [[PushManager sharedManager] verifyPushActivated];
+        [[AppAudioManager sharedInstance] requestRequiredPermissionsIfNeeded];
+    }
 }
 
 @end
