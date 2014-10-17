@@ -10,57 +10,57 @@
 
 @implementation CallConnectUtil_Initiator
 
-+(Future*) asyncConnectCallToRemoteNumber:(PhoneNumber*)remoteNumber
++(TOCFuture*) asyncConnectCallToRemoteNumber:(PhoneNumber*)remoteNumber
                        withCallController:(CallController*)callController {
     
     require(remoteNumber != nil);
     require(callController != nil);
-    require([callController isInitiator]);
+    require(callController.isInitiator);
     
-    Future* futureInitiatorSessionDescriptor = [self asyncConnectToSignalServerAndGetInitiatorSessionDescriptorWithCallController:callController];
+    TOCFuture* futureInitiatorSessionDescriptor = [self asyncConnectToSignalServerAndGetInitiatorSessionDescriptorWithCallController:callController];
     
-    return [futureInitiatorSessionDescriptor then:^(InitiatorSessionDescriptor* session) {
+    return [futureInitiatorSessionDescriptor thenTry:^(InitiatorSessionDescriptor* session) {
         return [CallConnectUtil_Server asyncConnectCallOverRelayDescribedInInitiatorSessionDescriptor:session
                                                                                    withCallController:callController
                                                                                     andInteropOptions:@[]];
     }];
 }
 
-+(Future*) asyncConnectToSignalServerAndGetInitiatorSessionDescriptorWithCallController:(CallController*)callController {
++(TOCFuture*) asyncConnectToSignalServerAndGetInitiatorSessionDescriptorWithCallController:(CallController*)callController {
     require(callController != nil);
     
-    Future* futureSignalConnection = [CallConnectUtil_Server asyncConnectToDefaultSignalingServerUntilCancelled:[callController untilCancelledToken]];
+    TOCFuture* futureSignalConnection = [CallConnectUtil_Server asyncConnectToDefaultSignalingServerUntilCancelled:callController.untilCancelledToken];
     
-    return [futureSignalConnection then:^(HttpManager* httpManager) {
-        requireState([httpManager isKindOfClass:[HttpManager class]]);
+    return [futureSignalConnection thenTry:^(HttpManager* httpManager) {
+        requireState([httpManager isKindOfClass:HttpManager.class]);
         
-        FutureSource* predeclaredFutureSession = [FutureSource new];
+        TOCFutureSource* predeclaredFutureSession = [TOCFutureSource new];
         
         HttpResponse*(^serverRequestHandler)(HttpRequest*) = ^(HttpRequest* remoteRequest) {
             return [self respondToServerRequest:remoteRequest
-                        usingEventualDescriptor:predeclaredFutureSession
+                        usingEventualDescriptor:predeclaredFutureSession.future
                               andCallController:callController];
         };
         
         [httpManager startWithRequestHandler:serverRequestHandler
-                             andErrorHandler:[callController errorHandler]
+                             andErrorHandler:callController.errorHandler
                               untilCancelled:[callController untilCancelledToken]];
         
-        HttpRequest* initiateRequest = [HttpRequest httpRequestToInitiateToRemoteNumber:[callController callState].remoteNumber];
-        Future* futureResponseToInitiate = [httpManager asyncOkResponseForRequest:initiateRequest
-                                                                  unlessCancelled:[callController untilCancelledToken]];
-        Future* futureResponseToInitiateWithInterpretedFailures = [futureResponseToInitiate catch:^(id error) {
-            if ([error isKindOfClass:[HttpResponse class]]) {
+        HttpRequest* initiateRequest = [HttpRequest httpRequestToInitiateToRemoteNumber:callController.callState.remoteNumber];
+        TOCFuture* futureResponseToInitiate = [httpManager asyncOkResponseForRequest:initiateRequest
+                                                                     unlessCancelled:[callController untilCancelledToken]];
+        TOCFuture* futureResponseToInitiateWithInterpretedFailures = [futureResponseToInitiate catchTry:^(id error) {
+            if ([error isKindOfClass:HttpResponse.class]) {
                 HttpResponse* badResponse = error;
-                return [Future failed:[self callTerminationForBadResponse:badResponse
-                                                        toInitiateRequest:initiateRequest]];
+                return [TOCFuture futureWithFailure:[self callTerminationForBadResponse:badResponse
+                                                                      toInitiateRequest:initiateRequest]];
             }
             
-            return [Future failed:error];
+            return [TOCFuture futureWithFailure:error];
         }];
         
-        Future* futureSession = [futureResponseToInitiateWithInterpretedFailures then:^(HttpResponse* response) {
-            return [InitiatorSessionDescriptor initiatorSessionDescriptorFromJson:[response getOptionalBodyText]];
+        TOCFuture* futureSession = [futureResponseToInitiateWithInterpretedFailures thenTry:^(HttpResponse* response) {
+            return [InitiatorSessionDescriptor initiatorSessionDescriptorFromJson:response.getOptionalBodyText];
         }];
         [predeclaredFutureSession trySetResult:futureSession];
         
@@ -73,7 +73,7 @@
     require(badResponse != nil);
     require(initiateRequest != nil);
     
-    switch ([badResponse getStatusCode]) {
+    switch (badResponse.getStatusCode) {
         case SIGNAL_STATUS_CODE_NO_SUCH_USER:
             return [CallTermination callTerminationOfType:CallTerminationType_NoSuchUser
                                               withFailure:badResponse
@@ -81,7 +81,7 @@
         case SIGNAL_STATUS_CODE_SERVER_MESSAGE:
             return [CallTermination callTerminationOfType:CallTerminationType_ServerMessage
                                               withFailure:badResponse
-                                           andMessageInfo:[badResponse getOptionalBodyText]];
+                                           andMessageInfo:badResponse.getOptionalBodyText];
         case SIGNAL_STATUS_CODE_LOGIN_FAILED:
             return [CallTermination callTerminationOfType:CallTerminationType_LoginFailed
                                               withFailure:badResponse
@@ -94,19 +94,19 @@
 }
 
 +(HttpResponse*) respondToServerRequest:(HttpRequest*)request
-                usingEventualDescriptor:(Future*)futureInitiatorSessionDescriptor
+                usingEventualDescriptor:(TOCFuture*)futureInitiatorSessionDescriptor
                       andCallController:(CallController*)callController {
     require(request != nil);
     require(futureInitiatorSessionDescriptor != nil);
     require(callController != nil);
     
     // heart beat?
-    if ([request isKeepAlive]) {
+    if (request.isKeepAlive) {
         return [HttpResponse httpResponse200Ok];
     }
     
     // too soon?
-    if (![futureInitiatorSessionDescriptor hasSucceeded]) {
+    if (!futureInitiatorSessionDescriptor.hasResult) {
         [callController terminateWithReason:CallTerminationType_BadInteractionWithServer
                             withFailureInfo:[IgnoredPacketFailure new:@"Didn't receive session id from signaling server. Not able to understand request."]
                              andRelatedInfo:request];

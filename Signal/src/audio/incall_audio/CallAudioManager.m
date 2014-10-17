@@ -10,7 +10,7 @@
 
 +(CallAudioManager*) callAudioManagerStartedWithAudioSocket:(AudioSocket*)audioSocket
                                             andErrorHandler:(ErrorHandlerBlock)errorHandler
-                                             untilCancelled:(id<CancelToken>)untilCancelledToken {
+                                             untilCancelled:(TOCCancelToken*)untilCancelledToken {
     require(audioSocket != nil);
     
     AudioProcessor* processor = [AudioProcessor audioProcessor];
@@ -24,13 +24,13 @@
     return newCallAudioManagerInstance;
 }
 
--(void) startWithErrorHandler:(ErrorHandlerBlock)errorHandler untilCancelled:(id<CancelToken>)untilCancelledToken {
+-(void) startWithErrorHandler:(ErrorHandlerBlock)errorHandler untilCancelled:(TOCCancelToken*)untilCancelledToken {
     require(errorHandler != nil);
     require(untilCancelledToken != nil);
     @synchronized(self) {
         requireState(!started);
         started = true;
-        if ([untilCancelledToken isAlreadyCancelled]) return;
+        if (untilCancelledToken.isAlreadyCancelled) return;
         audioInterface = [RemoteIOAudio remoteIOInterfaceStartedWithDelegate:self untilCancelled:untilCancelledToken];
         PacketHandlerBlock handler = ^(EncodedAudioPacket* packet) {
             [audioProcessor receivedPacket:packet];
@@ -52,7 +52,7 @@
         NSData* decodedAudioData = [audioProcessor tryDecodeOrInferFrame];
         if (decodedAudioData == nil) break;
         [audioInterface populatePlaybackQueueWithData:decodedAudioData];
-        bytesInPlaybackBuffer += [decodedAudioData length];
+        bytesInPlaybackBuffer += decodedAudioData.length;
     }
 }
 

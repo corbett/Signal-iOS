@@ -1,9 +1,7 @@
-#import "HttpSocket.h"
-#import "Constraints.h"
 #import "HttpRequest.h"
-#import "Util.h"
 #import "HttpResponse.h"
-#import "CancelTokenSource.h"
+#import "HttpSocket.h"
+#import "Util.h"
 
 @implementation HttpSocket
 
@@ -13,8 +11,8 @@
     HttpSocket* h = [HttpSocket new];
     h->rawDataChannelTcp = rawDataChannel;
     h->partialDataBuffer = [NSMutableData data];
-    h->sentPacketsLogger = [[Environment logging] getOccurrenceLoggerForSender:self withKey:@"sent"];
-    h->receivedPacketsLogger = [[Environment logging] getOccurrenceLoggerForSender:self withKey:@"received"];
+    h->sentPacketsLogger = [Environment.logging getOccurrenceLoggerForSender:self withKey:@"sent"];
+    h->receivedPacketsLogger = [Environment.logging getOccurrenceLoggerForSender:self withKey:@"received"];
     return h;
 }
 +(HttpSocket*) httpSocketOverUdp:(UdpSocket*)rawDataChannel {
@@ -23,8 +21,8 @@
     HttpSocket* h = [HttpSocket new];
     h->rawDataChannelUdp = rawDataChannel;
     h->partialDataBuffer = [NSMutableData data];
-    h->sentPacketsLogger = [[Environment logging] getOccurrenceLoggerForSender:self withKey:@"sent"];
-    h->receivedPacketsLogger = [[Environment logging] getOccurrenceLoggerForSender:self withKey:@"received"];
+    h->sentPacketsLogger = [Environment.logging getOccurrenceLoggerForSender:self withKey:@"sent"];
+    h->receivedPacketsLogger = [Environment.logging getOccurrenceLoggerForSender:self withKey:@"received"];
     return h;
 }
 
@@ -52,23 +50,20 @@
     [self sendHttpRequestOrResponse:packet];
 }
 -(void) startWithHandler:(PacketHandler*)handler
-          untilCancelled:(id<CancelToken>)untilCancelledToken {
+          untilCancelled:(TOCCancelToken*)untilCancelledToken {
     
     require(handler != nil);
     requireState(httpSignalResponseHandler == nil);
     httpSignalResponseHandler = handler;
     
-    CancelTokenSource* lifetime = [CancelTokenSource cancelTokenSource];
-    [untilCancelledToken whenCancelled:^{
-        [lifetime cancel];
-    }];
+    TOCCancelTokenSource* lifetime = [TOCCancelTokenSource cancelTokenSourceUntil:untilCancelledToken];
     
     PacketHandler* packetHandler = [PacketHandler packetHandler:^(id packet) {
         require(packet != nil);
-        require([packet isKindOfClass:[NSData class]]);
+        require([packet isKindOfClass:NSData.class]);
         NSData* data = packet;
         
-        [partialDataBuffer replaceBytesInRange:NSMakeRange([partialDataBuffer length], [data length]) withBytes:[data bytes]];
+        [partialDataBuffer replaceBytesInRange:NSMakeRange(partialDataBuffer.length, data.length) withBytes:[data bytes]];
         
         while (true) {
             NSUInteger usedDataLength;
@@ -87,14 +82,14 @@
             [receivedPacketsLogger markOccurrence:s];
             [handler handlePacket:s];
         }
-    } withErrorHandler:[handler errorHandler]];
+    } withErrorHandler:handler.errorHandler];
     
     if (rawDataChannelTcp != nil) {
         [rawDataChannelTcp startWithHandler:packetHandler];
-        [[lifetime getToken] whenCancelledTerminate:rawDataChannelTcp];
+        [lifetime.token whenCancelledTerminate:rawDataChannelTcp];
     } else {
         [rawDataChannelUdp startWithHandler:packetHandler
-                             untilCancelled:[lifetime getToken]];
+                             untilCancelled:lifetime.token];
     }
 }
 

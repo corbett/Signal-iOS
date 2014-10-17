@@ -4,26 +4,27 @@
 #import "Util.h"
 #import "HostNameEndPoint.h"
 #import "TestUtil.h"
-#import "Future.h"
-#import "CancelledToken.h"
 #import "ThreadManager.h"
 
 @interface LowLatencyConnectorTest : XCTestCase
-
 @end
 
 @implementation LowLatencyConnectorTest
+
+- (void)setUp{
+    [Environment setCurrent:[Release unitTestEnvironment:@[]]];
+}
 
 -(void) testLowLatencyConnect_example {
     [Environment setCurrent:testEnvWith(ENVIRONMENT_TESTING_OPTION_ALLOW_NETWORK_STREAM_TO_NON_SECURE_END_POINTS)];
 
     NSString* reliableHostName = @"example.com";
     
-    Future* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostName
-                                                                                                             andPort:80]
-                                                       untilCancelled:nil];
+    TOCFuture* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostName
+                                                                                                                andPort:80]
+                                                          untilCancelled:nil];
     
-    testChurnUntil(![f isIncomplete], 5.0);
+    testChurnUntil(!f.isIncomplete, 5.0);
     
     LowLatencyCandidate* r = [f forceGetResult];
     NetworkStream* channel = [r networkStream];
@@ -50,11 +51,11 @@
     
     NSString* reliableHostNameKnownToHaveMultipleIps = @"google.com";
     
-    Future* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostNameKnownToHaveMultipleIps
-                                                                                                             andPort:80]
-                                                       untilCancelled:nil];
+    TOCFuture* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostNameKnownToHaveMultipleIps
+                                                                                                                andPort:80]
+                                                          untilCancelled:nil];
     
-    testChurnUntil(![f isIncomplete], 5.0);
+    testChurnUntil(!f.isIncomplete, 5.0);
     
     LowLatencyCandidate* r = [f forceGetResult];
     NetworkStream* channel = [r networkStream];
@@ -80,12 +81,12 @@
 -(void) testCancelledLowLatencyConnect {
     NSString* reliableHostName = @"example.com";
     
-    Future* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostName andPort:80]
-                                                       untilCancelled:[CancelledToken cancelledToken]];
+    TOCFuture* f = [LowLatencyConnector asyncLowLatencyConnectToEndPoint:[HostNameEndPoint hostNameEndPointWithHostName:reliableHostName andPort:80]
+                                                          untilCancelled:TOCCancelToken.cancelledToken];
     
-    testChurnUntil(![f isIncomplete], 5.0);
+    testChurnUntil(!f.isIncomplete, 5.0);
     
-    test([f hasFailed]);
+    test(f.hasFailed);
 }
 
 @end

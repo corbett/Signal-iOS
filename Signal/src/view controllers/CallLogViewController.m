@@ -55,11 +55,11 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 }
 
 - (void)observeRecentCalls {
-    ObservableValue *observableRecents = [[[Environment getCurrent] recentCallManager] getObservableRecentCalls];
+    ObservableValue *observableRecents = Environment.getCurrent.recentCallManager.getObservableRecentCalls;
 
     [observableRecents watchLatestValue:^(NSArray *latestRecents) {
         if (_searchTerm) {
-            _recents = [[[Environment getCurrent] recentCallManager] recentsForSearchString:_searchTerm
+            _recents = [Environment.getCurrent.recentCallManager recentsForSearchString:_searchTerm
                                                                          andExcludeArchived:NO];
         } else {
             _recents = latestRecents;
@@ -68,18 +68,18 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
         if (!_tableViewContentMutating) {
             [_recentCallsTableView reloadData];
         }
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 - (void)deleteRecentCallAtIndexPath:(NSIndexPath *)indexPath {
     [_recentCallsTableView beginUpdates];
-    [_recentCallsTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+    [_recentCallsTableView deleteRowsAtIndexPaths:@[indexPath]
                                  withRowAnimation:UITableViewRowAnimationLeft];
 
     RecentCall *recent;
 
 
-    [[[Environment getCurrent] recentCallManager] removeRecentCall:recent];
+    [Environment.getCurrent.recentCallManager removeRecentCall:recent];
 
     [_recentCallsTableView endUpdates];
 }
@@ -87,7 +87,7 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 #pragma mark - UITableViewDelegate
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return (NSInteger)[_recents count];
+    return (NSInteger)_recents.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -114,11 +114,11 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
     NSIndexPath *indexPath = [_recentCallsTableView indexPathForCell:cell];
 
     [_recentCallsTableView beginUpdates];
-    [_recentCallsTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+    [_recentCallsTableView deleteRowsAtIndexPaths:@[indexPath]
                                  withRowAnimation:UITableViewRowAnimationLeft];
 
     RecentCall *recent = _recents[(NSUInteger)indexPath.row];
-    [[[Environment getCurrent] recentCallManager] removeRecentCall:recent];
+    [Environment.getCurrent.recentCallManager removeRecentCall:recent];
 
     [_recentCallsTableView endUpdates];
     _tableViewContentMutating = NO;
@@ -134,7 +134,7 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 
 - (void)searchBarTitleView:(SearchBarTitleView *)view didSearchForTerm:(NSString *)term {
     _searchTerm = term;
-    _recents = [[[Environment getCurrent] recentCallManager] recentsForSearchString:term
+    _recents = [Environment.getCurrent.recentCallManager recentsForSearchString:term
                                                                  andExcludeArchived:NO];
     [_recentCallsTableView reloadData];
 }
@@ -147,7 +147,7 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 
 - (void)searchBarTitleViewDidEndSearching:(SearchBarTitleView *)view {
     _searchTerm = nil;
-    _recents = [[[Environment getCurrent] recentCallManager] recentsForSearchString:nil
+    _recents = [Environment.getCurrent.recentCallManager recentsForSearchString:nil
                                                                  andExcludeArchived:NO];
     [_recentCallsTableView reloadData];
 }
@@ -155,9 +155,9 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 #pragma mark - Keyboard
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
         CGFloat height = CGRectGetHeight(_recentCallsTableView.frame) - (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
         _recentCallsTableView.frame = CGRectMake(CGRectGetMinX(_recentCallsTableView.frame),
                                                  CGRectGetMinY(_recentCallsTableView.frame),
@@ -167,7 +167,7 @@ typedef NSComparisonResult (^CallComparator)(RecentCall*, RecentCall*);
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     CGFloat height = CGRectGetHeight(_recentCallsTableView.frame) + (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
     _recentCallsTableView.frame = CGRectMake(CGRectGetMinX(_recentCallsTableView.frame),
                                              CGRectGetMinY(_recentCallsTableView.frame),

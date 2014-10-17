@@ -43,17 +43,17 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
 }
 
 - (void)observeLatestFavourites {
-    ObservableValue *observableFavourites = [[[Environment getCurrent] contactsManager] getObservableFavourites];
+    ObservableValue *observableFavourites = Environment.getCurrent.contactsManager.getObservableFavourites;
 
     [observableFavourites watchLatestValue:^(NSArray *latestFavourites) {
         _favourites = latestFavourites;
         [_favouriteTableView reloadData];
         [self hideTableViewIfNoFavourites];
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 - (void)hideTableViewIfNoFavourites {
-    BOOL hideFavourites = [_favourites count] == 0;
+    BOOL hideFavourites = _favourites.count == 0;
     _favouriteTableView.hidden = hideFavourites;
 }
 
@@ -80,7 +80,7 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
 
 - (void)favouriteTapped:(Contact *)contact {
 
-    PhoneNumberDirectoryFilter *filter = [[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter];
+    PhoneNumberDirectoryFilter *filter = Environment.getCurrent.phoneDirectoryManager.getCurrentFilter;
 
     for (PhoneNumber *number in contact.parsedPhoneNumbers) {
         if ([filter containsPhoneNumber:number]) {
@@ -89,13 +89,13 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
         }
     }
 
-    [[UIApplication sharedApplication] openURL:[contact.parsedPhoneNumbers[0] toUrl]];
+    [UIApplication.sharedApplication openURL:[contact.parsedPhoneNumbers[0] toSystemDialerURL]];
 }
 
 #pragma mark - UITableViewDelegate
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return _isSearching ? (NSInteger)[_searchFavourites count] : (NSInteger)[_favourites count];
+    return _isSearching ? (NSInteger)_searchFavourites.count : (NSInteger)_favourites.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -142,7 +142,7 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
 
 - (NSArray *)favouritesForSearchTerm:(NSString *)searchTerm {
     return [_favourites filter:^int(Contact *contact) {
-        return [searchTerm length] == 0 || [ContactsManager name:[contact fullName] matchesQuery:searchTerm];
+        return searchTerm.length == 0 || [ContactsManager name:contact.fullName matchesQuery:searchTerm];
     }];
 }
 
@@ -157,9 +157,9 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
 #pragma mark - Keyboard
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
         CGFloat height = CGRectGetHeight(_favouriteTableView.frame) - (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
         _favouriteTableView.frame = CGRectMake(CGRectGetMinX(_favouriteTableView.frame),
                                                CGRectGetMinY(_favouriteTableView.frame),
@@ -169,7 +169,7 @@ static NSString *const CONTACT_TABLE_VIEW_CELL_IDENTIFIER = @"ContactTableViewCe
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     CGFloat height = CGRectGetHeight(_favouriteTableView.frame) + (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
     _favouriteTableView.frame = CGRectMake(CGRectGetMinX(_favouriteTableView.frame),
                                            CGRectGetMinY(_favouriteTableView.frame),

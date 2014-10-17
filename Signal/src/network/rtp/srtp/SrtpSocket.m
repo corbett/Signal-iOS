@@ -23,7 +23,7 @@
     s->incomingContext = [SrtpStream srtpStreamWithCipherKey:incomingCipherKey andMacKey:incomingMacKey andCipherIvSalt:incomingSalt];
     s->outgoingContext = [SrtpStream srtpStreamWithCipherKey:outgoingCipherKey andMacKey:outgoingMacKey andCipherIvSalt:outgoingSalt];
     s->rtpSocket = rtpSocket;
-    s->badPacketLogger = [[Environment logging] getOccurrenceLoggerForSender:self withKey:@"Bad Packet"];
+    s->badPacketLogger = [Environment.logging getOccurrenceLoggerForSender:self withKey:@"Bad Packet"];
     return s;
 }
 
@@ -36,14 +36,14 @@
     return [outgoingContext encryptAndAuthenticateNormalRtpPacket:normalRtpPacket];
 }
 
--(void) startWithHandler:(PacketHandler*)handler untilCancelled:(id<CancelToken>)untilCancelledToken {
+-(void) startWithHandler:(PacketHandler*)handler untilCancelled:(TOCCancelToken*)untilCancelledToken {
     require(handler != nil);
     requireState(!hasBeenStarted);
     hasBeenStarted = true;
     
     PacketHandlerBlock packetHandler = ^(id packet) {
         require(packet != nil);
-        require([packet isKindOfClass:[RtpPacket class]]);
+        require([packet isKindOfClass:RtpPacket.class]);
         
         RtpPacket* decryptedPacket;
         @try {

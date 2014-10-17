@@ -71,24 +71,24 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 }
 
 - (void)setupContacts {
-    ObservableValue *observableContacts = [[[Environment getCurrent] contactsManager] getObservableContacts];
+    ObservableValue *observableContacts = Environment.getCurrent.contactsManager.getObservableContacts;
     
     [observableContacts watchLatestValue:^(NSArray *latestContacts) {
         _latestContacts = [self getUnregisteredUsersFromAllUsers:latestContacts searchTerm:nil];
         _displayedContacts = _latestContacts;
         [_contactTableView reloadData];
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 - (NSArray *)getUnregisteredUsersFromAllUsers:(NSArray *)users searchTerm:(NSString *)searchTerm {
-    ContactsManager *contactsManager = [[Environment getCurrent] contactsManager];
+    ContactsManager *contactsManager = Environment.getCurrent.contactsManager;
     
     return [users filter:^int(Contact *contact) {
     
         BOOL matchesSearchQuery = YES;
      
         if (searchTerm != nil) {
-            matchesSearchQuery = [ContactsManager name:[contact fullName] matchesQuery:searchTerm];
+            matchesSearchQuery = [ContactsManager name:contact.fullName matchesQuery:searchTerm];
         }
      
         return ![contactsManager isContactRegisteredWithWhisper:contact] && matchesSearchQuery;
@@ -104,7 +104,7 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
     actionSheet.title = INVITE_USERS_ACTION_SHEET_TITLE;
     
     for (PhoneNumber *number in _selectedContactNumbers) {
-        [actionSheet addButtonWithTitle:[number localizedDescriptionForUser]];
+        [actionSheet addButtonWithTitle:number.localizedDescriptionForUser];
     }
     actionSheet.cancelButtonIndex = [actionSheet addButtonWithTitle:TXT_CANCEL_TITLE];
     
@@ -118,7 +118,7 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 
     NSMutableArray *indexPaths = [NSMutableArray array];
     
-    for (int i = 0; i < (NSInteger)[_newWhisperUsers count]; i++) {
+    for (int i = 0; i < (NSInteger)_newWhisperUsers.count; i++) {
         [indexPaths addObject:[NSIndexPath indexPathForRow:i inSection:FIRST_TABLE_SECTION]];
     }
     [_contactTableView deleteRowsAtIndexPaths:indexPaths withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -139,9 +139,9 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == FIRST_TABLE_SECTION) {
-        return _isSearching ? 0 : (NSInteger)[_newWhisperUsers count];
+        return _isSearching ? 0 : (NSInteger)_newWhisperUsers.count;
     } else {
-        return (NSInteger)[_displayedContacts count];
+        return (NSInteger)_displayedContacts.count;
     }
 }
 
@@ -187,7 +187,7 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    if (section == FIRST_TABLE_SECTION  && !_isSearching && [_newWhisperUsers count] > 0) {
+    if (section == FIRST_TABLE_SECTION  && !_isSearching && _newWhisperUsers.count > 0) {
         return _unseenWhisperUsersHeaderView;
     } else if (section == SECOND_TABLE_SECTION) {
         return _regularContactsHeaderView;
@@ -197,7 +197,7 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    if (_isSearching || ([_newWhisperUsers count] == 0 && section == FIRST_TABLE_SECTION)) {
+    if (_isSearching || (_newWhisperUsers.count == 0 && section == FIRST_TABLE_SECTION)) {
         return 0.0f;
     } else {
 
@@ -242,9 +242,9 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 #pragma mark - Keyboard
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
         CGFloat height = CGRectGetHeight(_contactTableView.frame) - (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
         _contactTableView.frame = CGRectMake(CGRectGetMinX(_contactTableView.frame),
                                                CGRectGetMinY(_contactTableView.frame),
@@ -254,7 +254,7 @@ static NSString *const INVITE_CONTACTS_TABLE_CELL_IDENTIFIER = @"ContactTableVie
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     CGFloat height = CGRectGetHeight(_contactTableView.frame) + (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
     _contactTableView.frame = CGRectMake(CGRectGetMinX(_contactTableView.frame),
                                            CGRectGetMinY(_contactTableView.frame),

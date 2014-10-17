@@ -1,3 +1,4 @@
+#import "DebugLogger.h"
 #import "Environment.h"
 #import "FutureUtil.h"
 #import "LocalizableText.h"
@@ -14,7 +15,7 @@
 
 #define SECTION_HEADER_VIEW_HEIGHT 27
 #define PRIVACY_SECTION_INDEX 0
-#define CALL_QUALITY_SECTION_INDEX 1
+#define DEBUG_SECTION_INDEX 1
 
 static NSString *const CHECKBOX_CHECKMARK_IMAGE_NAME = @"checkbox_checkmark";
 static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
@@ -22,7 +23,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 @interface SettingsViewController () {
     NSArray *_sectionHeaderViews;
     NSArray *_privacyTableViewCells;
-    NSArray *_callQualityTableViewCells;
+    NSArray *_debuggingTableViewCells;
     
     NSString *gistURL;
 }
@@ -33,9 +34,9 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
-    _sectionHeaderViews = @[_privacyAndSecurityHeaderView];
-
+    
+    _sectionHeaderViews = @[_privacyAndSecurityHeaderView , self.debuggingHeaderView];
+    
     _titleLabel.text = SETTINGS_NAV_BAR_TITLE;
 }
 
@@ -49,11 +50,11 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (void)viewWillDisappear:(BOOL)animated {
     [self saveExpandedSectionPreferences];
-
-    if ([self.navigationController.viewControllers count] > 1) {
+    
+    if (self.navigationController.viewControllers.count > 1) {
         [self.navigationController setNavigationBarHidden:NO animated:YES];
     }
-
+    
     [super viewWillDisappear:animated];
 }
 
@@ -64,7 +65,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 #pragma mark - Local number
 
 - (void)configureLocalNumber {
-    PhoneNumber *localNumber = [SGNKeychainUtil localNumber];
+    PhoneNumber *localNumber = SGNKeychainUtil.localNumber;
     if (localNumber) {
         _phoneNumberLabel.attributedText = [self localNumberAttributedStringForNumber:localNumber];
     } else {
@@ -74,21 +75,21 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (NSAttributedString *)localNumberAttributedStringForNumber:(PhoneNumber *)number {
     NSString *numberPrefixString = SETTINGS_NUMBER_PREFIX;
-    NSString *localNumberString = [number toE164];
-
+    NSString *localNumberString = number.toE164;
+    
     NSString *displayString = [NSString stringWithFormat:@"%@ %@", numberPrefixString, localNumberString];
     NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:displayString];
-
+    
     UIFont *prefixFont = [UIUtil helveticaNeueLTStdLightFontWithSize:_phoneNumberLabel.font.pointSize];
     UIFont *numberFont = [UIUtil helveticaNeueLTStdBoldFontWithSize:_phoneNumberLabel.font.pointSize];
-
+    
     [attributedString addAttribute:NSFontAttributeName
                              value:prefixFont
-                             range:NSMakeRange(0, [numberPrefixString length])];
-
+                             range:NSMakeRange(0, numberPrefixString.length)];
+    
     [attributedString addAttribute:NSFontAttributeName
                              value:numberFont
-                             range:NSMakeRange([numberPrefixString length] + 1, [localNumberString length])];
+                             range:NSMakeRange(numberPrefixString.length + 1, localNumberString.length)];
     return attributedString;
 }
 
@@ -96,9 +97,11 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (void)configureCheckboxPreferences {
     NSArray *buttons = @[_hideContactImagesButton,
+                         _enableScreenSecurityButton,
                          _disableAutocorrectButton,
-                         _disableHistoryButton];
-
+                         _disableHistoryButton,
+                         _disableDebugLogsButton];
+    
     for (UIButton *button in buttons) {
         [button setImage:[UIImage imageNamed:CHECKBOX_EMPTY_IMAGE_NAME]
                 forState:UIControlStateNormal];
@@ -106,22 +109,26 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
         [button setImage:[UIImage imageNamed:CHECKBOX_CHECKMARK_IMAGE_NAME]
                 forState:UIControlStateSelected];
     }
-    PropertyListPreferences *prefs = [Environment preferences];
-    _hideContactImagesButton.selected = ![prefs getContactImagesEnabled];
-    _disableAutocorrectButton.selected = ![prefs getAutocorrectEnabled];
-    _disableHistoryButton.selected = ![prefs getHistoryLogEnabled];
+    PropertyListPreferences *prefs       = Environment.preferences;
+    _hideContactImagesButton.selected    = !prefs.getContactImagesEnabled;
+    _enableScreenSecurityButton.selected = prefs.screenSecurityIsEnabled;
+    _disableAutocorrectButton.selected   = !prefs.getAutocorrectEnabled;
+    _disableHistoryButton.selected       = !prefs.getHistoryLogEnabled;
+    _disableDebugLogsButton.selected     = !prefs.loggingIsEnabled;
 }
 
 - (void)configureAllCells {
-    _privacyTableViewCells = [self privacyAndSecurityCells];
+    _privacyTableViewCells   = [self privacyAndSecurityCells];
+    _debuggingTableViewCells = [self debugCells];
     [_privacyAndSecurityHeaderView setColumnStateExpanded:YES andIsAnimated:NO];
+    [_debuggingHeaderView setColumnStateExpanded:YES andIsAnimated:NO];
 }
 
 - (void)saveExpandedSectionPreferences {
     NSMutableArray *expandedSectionPrefs = [NSMutableArray array];
-    NSNumber *numberBoolYes = [NSNumber numberWithBool:YES];
-    NSNumber *numberBoolNo = [NSNumber numberWithBool:NO];
-
+    NSNumber *numberBoolYes = @YES;
+    NSNumber *numberBoolNo = @NO;
+    
     [expandedSectionPrefs addObject:(_privacyTableViewCells ? numberBoolYes : numberBoolNo)];
 }
 
@@ -129,15 +136,26 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (NSArray *)privacyAndSecurityCells {
     return @[_hideContactImagesCell,
+             _enableScreenSecurityCell,
              _disableAutocorrectCell,
              _disableHistoryCell,
-             _clearHistoryLogCell,
-             _sendDebugLog];
+             _clearHistoryLogCell];
+}
+
+- (NSArray *)debugCells{
+    
+    NSMutableArray *cells = [@[_disableLogsCell] mutableCopy];
+    
+    if (Environment.preferences.loggingIsEnabled) {
+        [cells addObject:_sendDebugLog];
+    }
+    
+    return cells;
 }
 
 - (NSArray *)indexPathsForCells:(NSArray *)cells forRow:(NSInteger)row {
     NSMutableArray *indexPaths = [NSMutableArray array];
-    for (NSUInteger i = 0; i < [cells count]; i++) {
+    for (NSUInteger i = 0; i < cells.count; i++) {
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:(NSInteger)i inSection:row];
         [indexPaths addObject:indexPath];
     }
@@ -147,7 +165,9 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 - (NSArray *)cellsForRow:(NSInteger)row {
     if (row == PRIVACY_SECTION_INDEX) {
         return [self privacyAndSecurityCells];
-    } else {
+    } else if (row == DEBUG_SECTION_INDEX){
+        return [self debugCells];
+    }else {
         return @[];
     }
 }
@@ -163,6 +183,12 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     [self toggleCells:&_privacyTableViewCells forRow:PRIVACY_SECTION_INDEX];
     BOOL columnExpanded = _privacyTableViewCells != nil;
     [_privacyAndSecurityHeaderView setColumnStateExpanded:columnExpanded andIsAnimated:YES];
+}
+
+- (void)debuggingTapped:(id)sender{
+    [self toggleCells:&_debuggingTableViewCells forRow:DEBUG_SECTION_INDEX];
+    BOOL columnExpanded = _debuggingTableViewCells != nil;
+    [_debuggingHeaderView setColumnStateExpanded:columnExpanded andIsAnimated:YES];
 }
 
 - (void)toggleCells:(NSArray *__strong*)cells forRow:(NSInteger)row {
@@ -181,21 +207,43 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 
 - (IBAction)hideContactImagesButtonTapped {
     _hideContactImagesButton.selected = !_hideContactImagesButton.selected;
-    [[Environment preferences] setContactImagesEnabled:!_hideContactImagesButton.selected];
+    [Environment.preferences setContactImagesEnabled:!_hideContactImagesButton.selected];
 }
 
 - (IBAction)disableAutocorrectButtonTapped {
     _disableAutocorrectButton.selected = !_disableAutocorrectButton.selected;
-    [[Environment preferences] setAutocorrectEnabled:!_disableAutocorrectButton.selected];
+    [Environment.preferences setAutocorrectEnabled:!_disableAutocorrectButton.selected];
 }
 
 - (IBAction)disableHistoryButtonTapped {
     _disableHistoryButton.selected = !_disableHistoryButton.selected;
-    [[Environment preferences] setHistoryLogEnabled:!_disableHistoryButton.selected];
+    [Environment.preferences setHistoryLogEnabled:!_disableHistoryButton.selected];
+}
+
+- (IBAction)enableScreenSecurityTapped:(id)sender{
+    _enableScreenSecurityButton.selected = !_enableScreenSecurityButton.selected;
+    [Environment.preferences setScreenSecurity:_enableScreenSecurityButton.selected];
+}
+
+- (IBAction)disableLogTapped:(id)sender{
+    _disableDebugLogsButton.selected = !_disableDebugLogsButton.selected;
+    
+    BOOL loggingEnabled = !_disableDebugLogsButton.selected;
+    
+    if (!loggingEnabled) {
+        [DebugLogger.sharedInstance disableFileLogging];
+        [DebugLogger.sharedInstance wipeLogs];
+    } else{
+        [DebugLogger.sharedInstance enableFileLogging];
+    }
+
+    [Environment.preferences setLoggingEnabled:loggingEnabled];
+    _debuggingTableViewCells = [self debugCells];
+    [_settingsTableView reloadData];
 }
 
 - (void)clearHistory {
-    [[[Environment getCurrent] recentCallManager] clearRecentCalls];
+    [Environment.getCurrent.recentCallManager clearRecentCalls];
     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:SETTINGS_LOG_CLEAR_TITLE
                                                         message:SETTINGS_LOG_CLEAR_MESSAGE
                                                        delegate:nil
@@ -207,7 +255,7 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 #pragma mark - UITableViewDelegate
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return (NSInteger)[_sectionHeaderViews count];
+    return (NSInteger)_sectionHeaderViews.count;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
@@ -221,8 +269,10 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     UIView *headerView = _sectionHeaderViews[(NSUInteger)section];
     if (headerView == _privacyAndSecurityHeaderView) {
-        return (NSInteger)[_privacyTableViewCells count];
-    } else {
+        return (NSInteger)_privacyTableViewCells.count;
+    } else if (headerView == _debuggingHeaderView){
+        return (NSInteger)_debuggingTableViewCells.count;
+    }else {
         return 0;
     }
 }
@@ -232,68 +282,27 @@ static NSString *const CHECKBOX_EMPTY_IMAGE_NAME = @"checkbox_empty";
     UITableViewCell *cell = nil;
     if (headerView == _privacyAndSecurityHeaderView) {
         cell = _privacyTableViewCells[(NSUInteger)indexPath.row];
+    } else if (headerView ==_debuggingHeaderView){
+        cell = _debuggingTableViewCells[(NSUInteger)indexPath.row];
     }
     [self findAndLocalizeLabelsForView:cell];
-
+    
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-
+    
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if (cell == _clearHistoryLogCell) {
         [self clearHistory];
     }
     
     if (cell == _sendDebugLog) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:SETTINGS_SENDLOG_WAITING
-                                            message:nil delegate:self cancelButtonTitle:nil otherButtonTitles: nil];
-        
-        [alert show];
-        
-        [Pastelog submitLogsWithCompletion:^(NSError *error, NSString *urlString) {
-            [alert dismissWithClickedButtonIndex:0 animated:YES];
-            if (!error) {
-                gistURL = urlString;
-                UIAlertView *alertView = [[UIAlertView alloc]initWithTitle:SETTINGS_SENDLOG_ALERT_TITLE message:SETTINGS_SENDLOG_ALERT_BODY delegate:self cancelButtonTitle:SETTINGS_SENDLOG_ALERT_PASTE otherButtonTitles:SETTINGS_SENDLOG_ALERT_EMAIL, nil];
-                [alertView show];
-                
-            } else{
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:SETTINGS_SENDLOG_FAILED_TITLE message:SETTINGS_SENDLOG_FAILED_BODY delegate:nil cancelButtonTitle:SETTINGS_SENDLOG_FAILED_DISMISS otherButtonTitles:nil, nil];
-                [alertView show];
-            }
-        }];
+        [Pastelog submitLogs];
     }
 }
 
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
-    if (buttonIndex == 0) {
-        [self submitEmail:gistURL];
-    } else{
-        [self pasteBoardCopy:gistURL];
-    }
-}
-
-- (void)submitEmail:(NSString*)url{
-    NSString *emailAddress;
-    
-#ifdef ADHOC
-    emailAddress = @"signal-beta@fredericjacobs.com";
-#else
-    emailAddress = @"support@whispersystems.org";
-#endif
-    
-    NSString *urlString = [NSString stringWithString: [[NSString stringWithFormat:@"mailto:%@?subject=iOS%%20Debug%%20Log&body=", emailAddress] stringByAppendingString:[[NSString stringWithFormat:@"Log URL: %@ \n Tell us about the issue: ", url]stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding]]];
-    
-    [[UIApplication sharedApplication] openURL: [NSURL URLWithString: urlString]];
-}
-
-- (void)pasteBoardCopy:(NSString*)url{
-    UIPasteboard *pb = [UIPasteboard generalPasteboard];
-    [pb setString:url];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://github.com/WhisperSystems/Signal-iOS/issues"]];
-}
 
 - (void)findAndLocalizeLabelsForView:(UIView *)view {
     for (UIView *subview in view.subviews) {

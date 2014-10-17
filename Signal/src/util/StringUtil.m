@@ -5,9 +5,9 @@
 
 @implementation NSString (Util)
 -(NSData*) decodedAsHexString {
-    require([self length] % 2 == 0);
+    require(self.length % 2 == 0);
 
-    NSUInteger n = [self length] / 2;
+    NSUInteger n = self.length / 2;
     uint8_t result[n];
     for (NSUInteger i = 0; i < n; i++) {
         unsigned int r;
@@ -51,31 +51,31 @@
 -(NSString*) withMatchesAgainst:(NSRegularExpression*)regex replacedBy:(NSString*)replacement {
     require(regex != nil);
     require(replacement != nil);
-    NSMutableString* m = [self mutableCopy];
-    [regex replaceMatchesInString:m options:0 range:NSMakeRange(0, [m length]) withTemplate:replacement];
+    NSMutableString* m = self.mutableCopy;
+    [regex replaceMatchesInString:m options:0 range:NSMakeRange(0, m.length) withTemplate:replacement];
     return m;
 }
 -(bool) containsAnyMatches:(NSRegularExpression*)regex {
     require(regex != nil);
-    return [regex numberOfMatchesInString:self options:0 range:NSMakeRange(0, [self length])] > 0;
+    return [regex numberOfMatchesInString:self options:0 range:NSMakeRange(0, self.length)] > 0;
 }
 -(NSString*) withPrefixRemovedElseNull:(NSString*)prefix {
     require(prefix != nil);
-    if ([prefix length] > 0 && ![self hasPrefix:prefix]) return nil;
-    return [self substringFromIndex:[prefix length]];
+    if (prefix.length > 0 && ![self hasPrefix:prefix]) return nil;
+    return [self substringFromIndex:prefix.length];
 }
 -(NSData*) decodedAsJsonIntoData {
     NSError* jsonParseError = nil;
-    id parsedJson = [NSJSONSerialization dataWithJSONObject:[self encodedAsUtf8] options:0 error:&jsonParseError];
+    id parsedJson = [NSJSONSerialization dataWithJSONObject:self.encodedAsUtf8 options:0 error:&jsonParseError];
     checkOperationDescribe(jsonParseError == nil, ([NSString stringWithFormat:@"Invalid json: %@", self]));
-    checkOperationDescribe([parsedJson isKindOfClass:[NSData class]], @"Unexpected json data");
+    checkOperationDescribe([parsedJson isKindOfClass:NSData.class], @"Unexpected json data");
     return parsedJson;
 }
 -(NSDictionary*) decodedAsJsonIntoDictionary {
     NSError* jsonParseError = nil;
-    id parsedJson = [NSJSONSerialization JSONObjectWithData:[self encodedAsUtf8] options:0 error:&jsonParseError];
+    id parsedJson = [NSJSONSerialization JSONObjectWithData:self.encodedAsUtf8 options:0 error:&jsonParseError];
     checkOperationDescribe(jsonParseError == nil, ([NSString stringWithFormat:@"Json parse error: %@, on json: %@", jsonParseError, self]));
-    checkOperationDescribe([parsedJson isKindOfClass:[NSDictionary class]], @"Unexpected json data");
+    checkOperationDescribe([parsedJson isKindOfClass:NSDictionary.class], @"Unexpected json data");
     return parsedJson;
 }
 -(NSData*) decodedAsBase64Data {
@@ -93,16 +93,16 @@
 
     // Determine amount of information (based on length and padding)
     NSUInteger paddingCount = 0;
-    while (paddingCount < 2 && paddingCount < [self length] - 1 && [self characterAtIndex:[self length] - paddingCount - 1] == '=') {
+    while (paddingCount < 2 && paddingCount < self.length - 1 && [self characterAtIndex:self.length - paddingCount - 1] == '=') {
         paddingCount += 1;
     }
-    NSUInteger base64WordCount = [self length] - paddingCount;
-    NSUInteger bitCount = [self length]*BitsPerBase64Word - paddingCount*BitsPerByte;
+    NSUInteger base64WordCount = self.length - paddingCount;
+    NSUInteger bitCount = self.length*BitsPerBase64Word - paddingCount*BitsPerByte;
     NSUInteger byteCount = bitCount / BitsPerByte;
     checkOperation(bitCount % BitsPerByte == 0);
     
     // ASCII to base 64
-    NSData* asciiData = [self encodedAsAscii];
+    NSData* asciiData = self.encodedAsAscii;
     uint8_t base64Words[base64WordCount];
     for (NSUInteger i = 0; i < base64WordCount; i++) {
         base64Words[i] = CharToValueMap[[asciiData uint8At:i]];
@@ -134,11 +134,30 @@
 -(NSNumber*) tryParseAsDecimalNumber {
     NSNumberFormatter* formatter = [NSNumberFormatter new];
     [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
-    return [formatter numberFromString:self];
+
+    // NSNumberFormatter.numberFromString is good at noticing bad inputs, but loses precision for large values
+    // NSDecimalNumber.decimalNumberWithString has perfect precision, but lets bad inputs through sometimes (e.g. "88ffhih" -> 88)
+    // We use both to get both accuracy and detection of bad inputs
+    if ([formatter numberFromString:self] == nil) {
+        return nil;
+    }
+    return [NSDecimalNumber decimalNumberWithString:self];
 }
 -(NSNumber*) tryParseAsUnsignedInteger {
     NSNumber* value = [self tryParseAsDecimalNumber];
-    return [value hasUnsignedIntegerValue] ? value : nil;
+    return value.hasUnsignedIntegerValue ? value : nil;
+}
+-(NSString*) removeAllCharactersIn:(NSCharacterSet*)characterSet {
+    require(characterSet != nil);
+    return [[self componentsSeparatedByCharactersInSet:characterSet] componentsJoinedByString:@""];
+}
+-(NSString*) digitsOnly {
+    return [self removeAllCharactersIn:[NSCharacterSet.decimalDigitCharacterSet invertedSet]];
+}
+-(NSString*) withCharactersInRange:(NSRange)range replacedBy:(NSString*)substring {
+    NSMutableString* result = self.mutableCopy;
+    [result replaceCharactersInRange:range withString:substring];
+    return result;
 }
 
 @end

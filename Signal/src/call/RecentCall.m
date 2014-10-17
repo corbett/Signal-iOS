@@ -26,7 +26,7 @@ NSString *const CALL_TYPE_IMAGE_NAME_OUTGOING = @"outgoing_call_icon";
     recentCall->callType = type;
     recentCall->date = [NSDate date];
     recentCall->phoneNumber = number;
-    recentCall->userNotified = RPRecentCallTypeMissed ? false : true;
+    recentCall->userNotified = type == RPRecentCallTypeMissed ? false : true;
     return recentCall;
 }
 -(void)updateRecentCallWithContactId:(ABRecordID)contactID{
@@ -36,9 +36,9 @@ NSString *const CALL_TYPE_IMAGE_NAME_OUTGOING = @"outgoing_call_icon";
 #pragma mark - Serialization
 
 - (void)encodeWithCoder:(NSCoder *)encoder {
-    [encoder encodeObject:[NSNumber numberWithInt:callType] forKey:DEFAULTS_KEY_CALL_TYPE];
+    [encoder encodeObject:@(callType) forKey:DEFAULTS_KEY_CALL_TYPE];
     [encoder encodeObject:phoneNumber forKey:DEFAULTS_KEY_PHONE_NUMBER];
-    [encoder encodeObject:[NSNumber numberWithInt:(int)contactRecordID] forKey:DEFAULTS_KEY_CONTACT_ID];
+    [encoder encodeObject:@((int)contactRecordID) forKey:DEFAULTS_KEY_CONTACT_ID];
     [encoder encodeObject:date forKey:DEFAULTS_KEY_DATE];
     [encoder encodeBool:isArchived forKey:DEFAULTS_KEY_IS_ARCHIVED];
     [encoder encodeBool:userNotified forKey:DEFAULTS_KEY_USER_NOTIFIED];

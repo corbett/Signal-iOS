@@ -45,7 +45,7 @@
     @synchronized(self) {
         require(packet != nil);
         requireState(socket != nil);
-        requireState([self isRemoteEndPointKnown]);
+        requireState(self.isRemoteEndPointKnown);
         
         hasSentData = true;
         CFTimeInterval t = 2.0;
@@ -66,7 +66,7 @@
 }
 
 -(IpEndPoint *)remoteEndPoint {
-    requireState([self isRemoteEndPointKnown]);
+    requireState(self.isRemoteEndPointKnown);
     if (specifiedRemoteEndPoint != nil) return specifiedRemoteEndPoint;
     return clientConnectedFromRemoteEndPoint;
 }
@@ -79,7 +79,7 @@
 }
 
 -(in_port_t) localPort {
-    requireState([self isLocalPortKnown]);
+    requireState(self.isLocalPortKnown);
     if (specifiedLocalPort != 0) return specifiedLocalPort;
     return measuredLocalPort;
 }
@@ -101,8 +101,8 @@ void onReceivedData(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
         @try {
             checkOperation(type == kCFSocketDataCallBack);
             
-            bool waitingForClient = ![self isRemoteEndPointKnown];
-            bool packetHasContent = [data length] > 0;
+            bool waitingForClient = !self.isRemoteEndPointKnown;
+            bool packetHasContent = data.length > 0;
             bool haveNotSentPacketToBeBounced = !hasSentData;
             checkOperationDescribe(packetHasContent || waitingForClient || haveNotSentPacketToBeBounced,
                                    @"Received empty UDP packet. Probably indicates destination is unreachable.");
@@ -154,7 +154,7 @@ void onReceivedData(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
 }
 
 -(void) startWithHandler:(PacketHandler*)handler
-          untilCancelled:(id<CancelToken>)untilCancelledToken {
+          untilCancelled:(TOCCancelToken*)untilCancelledToken {
     
     require(handler != nil);
     
@@ -181,9 +181,9 @@ void onReceivedData(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
         [self setupRemoteEndPoint];
         
         NSRunLoop* runLoop = [ThreadManager lowLatencyThreadRunLoop];
-        CFRunLoopAddSource([runLoop getCFRunLoop], CFSocketCreateRunLoopSource(NULL, socket, 0), kCFRunLoopCommonModes);
+        CFRunLoopAddSource(runLoop.getCFRunLoop, CFSocketCreateRunLoopSource(NULL, socket, 0), kCFRunLoopCommonModes);
         
-        [untilCancelledToken whenCancelled:^{
+        [untilCancelledToken whenCancelledDo:^{
             @synchronized(self) {
                 currentHandler = nil;
                 CFSocketInvalidate(socket);

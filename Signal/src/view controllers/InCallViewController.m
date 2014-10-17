@@ -50,7 +50,7 @@ static NSInteger connectingFlashCounter = 0;
     [self pauseMusicIfPlaying];
     [self setupButtonBorders];
     [self localizeButtons];
-    [[UIDevice currentDevice] setProximityMonitoringEnabled:YES];
+    [UIDevice.currentDevice setProximityMonitoringEnabled:YES];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -62,11 +62,11 @@ static NSInteger connectingFlashCounter = 0;
     [super viewWillDisappear:animated];
     [self stopRingingAnimation];
     [self stopConnectingFlashAnimation];
-    [[AppAudioManager sharedInstance] cancellAllAudio];
+    [AppAudioManager.sharedInstance cancellAllAudio];
 }
 
 - (void)dealloc {
-    [[UIDevice currentDevice] setProximityMonitoringEnabled:NO];
+    [UIDevice.currentDevice setProximityMonitoringEnabled:NO];
 }
 
 -(void) showCallState {
@@ -83,7 +83,7 @@ static NSInteger connectingFlashCounter = 0;
 }
 
 - (void)startConnectingFlashAnimation {
-    if(![_ringingAnimationTimer isValid]){
+    if(!_ringingAnimationTimer.isValid){
         _connectingFlashTimer = [NSTimer scheduledTimerWithTimeInterval:CONNECTING_FLASH_DURATION
                                                                  target:self
                                                                selector:@selector(flashConnectingIndicator)
@@ -165,7 +165,7 @@ static NSInteger connectingFlashCounter = 0;
             [UIUtil applyRoundedBorderToImageView:&_contactImageView];
         }
         
-        _nameLabel.text = [_potentiallyKnownContact fullName];
+        _nameLabel.text = _potentiallyKnownContact.fullName;
     } else {
         _nameLabel.text = UNKNOWN_CONTACT_NAME;
     }
@@ -182,17 +182,17 @@ static NSInteger connectingFlashCounter = 0;
 }
 
 -(void) populateImmediateDetails {
-    _phoneNumberLabel.text = [_callState.remoteNumber localizedDescriptionForUser];
+    _phoneNumberLabel.text = _callState.remoteNumber.localizedDescriptionForUser;
 
     if (_potentiallyKnownContact) {
-        _nameLabel.text = [_potentiallyKnownContact fullName];
+        _nameLabel.text = _potentiallyKnownContact.fullName;
         if (_potentiallyKnownContact.image) {
             _contactImageView.image = _potentiallyKnownContact.image;
         }
     }
 }
 -(void) handleIncomingDetails {
-    [[_callState futureShortAuthenticationString] thenDo:^(NSString* sas) {
+    [_callState.futureShortAuthenticationString thenDo:^(NSString* sas) {
         _authenicationStringLabel.hidden = NO;
         _authenicationStringLabel.text = sas;
         [self performCallInSessionAnimation];
@@ -200,13 +200,13 @@ static NSInteger connectingFlashCounter = 0;
 
     [[_callState observableProgress] watchLatestValue:^(CallProgress* latestProgress) {
         [self onCallProgressed:latestProgress];
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 -(void) onCallProgressed:(CallProgress*)latestProgress {
     BOOL showAcceptRejectButtons = !_callState.initiatedLocally && [latestProgress type] <= CallProgressType_Ringing;
     [self displayAcceptRejectButtons:showAcceptRejectButtons];
-    [[AppAudioManager sharedInstance] respondToProgressChange:[latestProgress type]
+    [AppAudioManager.sharedInstance respondToProgressChange:[latestProgress type]
                                        forLocallyInitiatedCall:_callState.initiatedLocally];
     
     if ([latestProgress type] == CallProgressType_Ringing) {
@@ -214,18 +214,18 @@ static NSInteger connectingFlashCounter = 0;
     }
     
     if ([latestProgress type] == CallProgressType_Terminated) {
-        [[_callState futureTermination] thenDo:^(CallTermination* termination) {
+        [_callState.futureTermination thenDo:^(CallTermination* termination) {
             [self onCallEnded:termination];
-            [[AppAudioManager  sharedInstance] respondToTerminationType:[termination type]];
+            [AppAudioManager.sharedInstance respondToTerminationType:[termination type]];
         }];
     } else {
-        _callStatusLabel.text = [latestProgress localizedDescriptionForUser];
+        _callStatusLabel.text = latestProgress.localizedDescriptionForUser;
     }
 }
 
 -(void) onCallEnded:(CallTermination*)termination {
     [self updateViewForTermination:termination];
-    [[Environment phoneManager] hangupOrDenyCall];
+    [Environment.phoneManager hangupOrDenyCall];
     
     [self dismissViewWithOptionalDelay: [termination type] != CallTerminationType_ReplacedByNext ];
     
@@ -235,35 +235,34 @@ static NSInteger connectingFlashCounter = 0;
 }
 
 - (void)endCallTapped {
-    [[Environment phoneManager] hangupOrDenyCall];
+    [Environment.phoneManager hangupOrDenyCall];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)muteButtonTapped {
-	_muteButton.selected = [[Environment phoneManager] toggleMute];
+	_muteButton.selected = [Environment.phoneManager toggleMute];
 }
 
 - (void)speakerButtonTapped {
-    _speakerButton.selected = [[AppAudioManager sharedInstance] toggleSpeakerPhone];
+    _speakerButton.selected = [AppAudioManager.sharedInstance toggleSpeakerPhone];
 }
 
 - (void)answerButtonTapped {
     [self displayAcceptRejectButtons:NO];
-    [[Environment phoneManager] answerCall];
+    [Environment.phoneManager answerCall];
 }
 
 - (void)rejectButtonTapped {
     [self displayAcceptRejectButtons:NO];
-    [[Environment phoneManager] hangupOrDenyCall];
+    [Environment.phoneManager hangupOrDenyCall];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 -(void) updateViewForTermination:(CallTermination*) termination{
-    NSString* message = [termination localizedDescriptionForUser];
+    NSString* message = termination.localizedDescriptionForUser;
     
     if ([termination type] == CallTerminationType_ServerMessage) {
         CallFailedServerMessage* serverMessage = [termination messageInfo];
-        // @todo: forcing it to be a prefix is not particularly localizable
         message = [message stringByAppendingString:[serverMessage text]];
     }
     
@@ -275,7 +274,7 @@ static NSInteger connectingFlashCounter = 0;
 }
 
 -(void) dismissViewWithOptionalDelay:(BOOL) useDelay {
-    if(useDelay && UIApplicationStateActive == [[UIApplication sharedApplication] applicationState]){
+    if(useDelay && UIApplicationStateActive == [UIApplication.sharedApplication applicationState]){
         [self dismissViewControllerAfterDelay:END_CALL_CLEANUP_DELAY];
     }else{
         [self dismissViewControllerAnimated:NO completion:nil];

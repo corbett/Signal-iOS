@@ -48,10 +48,6 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
     [self observeKeyboardNotifications];
     [self setupLabelLocalizationAndStyles];
 
-    if (![Environment isRegistered]) {
-        RegisterViewController *registerViewController = [RegisterViewController registerViewController];
-        [self presentViewController:registerViewController animated:NO completion:nil];
-    }
     _inboxFeedTableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
 }
 
@@ -66,6 +62,12 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     [_searchBarTitleView updateAutoCorrectionType];
     [_inboxFeedTableView reloadData];
+    
+    if (!Environment.isRegistered) {
+        [Environment resetAppData];
+        RegisterViewController *registerViewController = [RegisterViewController registerViewController];
+        [self presentViewController:registerViewController animated:NO completion:nil];
+    }
 }
 
 - (void)dealloc {
@@ -77,14 +79,14 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 }
 
 - (void)observeRecentCalls {
-    ObservableValue *observableContacts = [[[Environment getCurrent] contactsManager] getObservableContacts];
+    ObservableValue *observableContacts = Environment.getCurrent.contactsManager.getObservableContacts;
 
     [observableContacts watchLatestValue:^(id latestValue) {
 
-        ObservableValue *observableRecents = [[[Environment getCurrent] recentCallManager] getObservableRecentCalls];
+        ObservableValue *observableRecents = Environment.getCurrent.recentCallManager.getObservableRecentCalls;
         
         [observableRecents watchLatestValue:^(NSArray *latestRecents) {
-            _inboxFeed = [[[Environment getCurrent] recentCallManager] recentsForSearchString:nil
+            _inboxFeed = [Environment.getCurrent.recentCallManager recentsForSearchString:nil
                                                                            andExcludeArchived:YES];
             [self updateTutorialVisibility];
             if (!_tableViewContentMutating) {
@@ -95,10 +97,10 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
                  shouldChangeCharactersInRange:NSMakeRange(0, 0)
                              replacementString:SEARCH_BAR_DEFAULT_EMPTY_STRING];
             }
-        } onThread:[NSThread mainThread] untilCancelled:nil];
+        } onThread:NSThread.mainThread untilCancelled:nil];
 
         
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 - (void)observeKeyboardNotifications {
@@ -130,7 +132,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
         }
     }
     if (needsSave) {
-        [[[Environment getCurrent] recentCallManager] saveContactsToDefaults];
+        [Environment.getCurrent.recentCallManager saveContactsToDefaults];
         [(TabBarParentViewController *)self.mm_drawerController.centerViewController updateMissedCallCountLabel];
         [_inboxFeedTableView reloadData];
     }
@@ -167,13 +169,13 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 
     if (delete) {
         animation = UITableViewRowAnimationLeft;
-        [[[Environment getCurrent] recentCallManager] removeRecentCall:recent];
+        [Environment.getCurrent.recentCallManager removeRecentCall:recent];
     } else {
         animation = UITableViewRowAnimationRight;
-        [[[Environment getCurrent] recentCallManager] archiveRecentCall:recent];
+        [Environment.getCurrent.recentCallManager archiveRecentCall:recent];
     }
 
-    [_inboxFeedTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+    [_inboxFeedTableView deleteRowsAtIndexPaths:@[indexPath]
                                withRowAnimation:animation];
 
     [_inboxFeedTableView endUpdates];
@@ -181,7 +183,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 }
 
 - (void)updateTutorialVisibility {
-    _freshInboxView.hidden = ![[Environment preferences] getFreshInstallTutorialsEnabled];
+    _freshInboxView.hidden = !Environment.preferences.getFreshInstallTutorialsEnabled;
     _inboxFeedTableView.hidden = !_freshInboxView.hidden;
 }
 
@@ -209,14 +211,14 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 
     if (_isSearching) {
         if (section == SEARCH_TABLE_SECTION_FEED) {
-            return (NSInteger)[_searchInboxFeed count];
+            return (NSInteger)_searchInboxFeed.count;
         } else if (section == SEARCH_TABLE_SECTION_REGISTERED) {
-            return (NSInteger)[_searchRegisteredContacts count];
+            return (NSInteger)_searchRegisteredContacts.count;
         } else {
-            return (NSInteger)[_searchUnregisteredContacts count];
+            return (NSInteger)_searchUnregisteredContacts.count;
         }
     } else {
-        NSInteger inboxFeedAndInfoCellCount = (NSInteger)[_inboxFeed count] + 1;
+        NSInteger inboxFeedAndInfoCellCount = (NSInteger)_inboxFeed.count + 1;
         return inboxFeedAndInfoCellCount;
     }
 }
@@ -242,7 +244,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
             [self showContactViewControllerWithContact:_searchUnregisteredContacts[(NSUInteger)indexPath.row]];
         }
     } else {
-        if (indexPath.row < (NSInteger)[_inboxFeed count]) {
+        if (indexPath.row < (NSInteger)_inboxFeed.count) {
             [self showRecentCallViewControllerWithRecentCall:_inboxFeed[(NSUInteger)indexPath.row]];
         }
     }
@@ -250,7 +252,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.section == SEARCH_TABLE_SECTION_FEED) {
-        if ((NSUInteger)indexPath.row == [_inboxFeed count]) {
+        if ((NSUInteger)indexPath.row == _inboxFeed.count) {
             return FOOTER_CELL_HEIGHT;
         } else {
             return INBOX_TABLE_VIEW_CELL_HEIGHT;
@@ -271,7 +273,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 }
 
 - (UITableViewCell *)inboxFeedCellForIndexPath:(NSIndexPath *)indexPath {
-    if (!_isSearching && (NSUInteger)[indexPath row] == [_inboxFeed count]) {
+    if (!_isSearching && (NSUInteger)[indexPath row] == _inboxFeed.count) {
         return [self inboxFeedFooterCell];
     } else {
         return [self inboxCellForIndexPath:indexPath andIsSearching:NO];
@@ -338,13 +340,13 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 #pragma mark - SearchBarTitleViewDelegate
 
 - (void)searchBarTitleView:(SearchBarTitleView *)view didSearchForTerm:(NSString *)term {
-    BOOL searching = [term length] > 0;
+    BOOL searching = term.length > 0;
     _isSearching = searching;
 
     if (searching) {
         _freshInboxView.hidden = YES;
         _inboxFeedTableView.hidden = NO;
-        _searchInboxFeed = [[[Environment getCurrent] recentCallManager] recentsForSearchString:term
+        _searchInboxFeed = [Environment.getCurrent.recentCallManager recentsForSearchString:term
                                                                              andExcludeArchived:YES];
         
         [self reloadSearchContactsForTerm:term];
@@ -370,7 +372,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 
 - (void)reloadSearchContactsForTerm:(NSString *)term {
 	
-    NSArray *contacts = [[[Environment getCurrent] contactsManager] latestContactsWithSearchString:term];
+    NSArray *contacts = [Environment.getCurrent.contactsManager latestContactsWithSearchString:term];
 
     NSMutableArray *registeredContacts = [NSMutableArray array];
     NSMutableArray *unregisteredContacts = [NSMutableArray array];
@@ -379,7 +381,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
         BOOL registeredContact = NO;
 
         for (PhoneNumber *phoneNumber in contact.parsedPhoneNumbers) {
-            if ([[[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter] containsPhoneNumber:phoneNumber]) {
+            if ([Environment.getCurrent.phoneDirectoryManager.getCurrentFilter containsPhoneNumber:phoneNumber]) {
                 registeredContact = YES;
             }
         }
@@ -391,16 +393,16 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
         }
     }
 
-    _searchRegisteredContacts = [registeredContacts copy];
-    _searchUnregisteredContacts = [unregisteredContacts copy];
+    _searchRegisteredContacts = registeredContacts.copy;
+    _searchUnregisteredContacts = unregisteredContacts.copy;
 }
 
 #pragma mark - Keyboard
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
         CGFloat height = CGRectGetHeight(_inboxFeedTableView.frame) - (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
         _inboxFeedTableView.frame = CGRectMake(CGRectGetMinX(_inboxFeedTableView.frame),
                                                CGRectGetMinY(_inboxFeedTableView.frame),
@@ -410,7 +412,7 @@ static NSString *const FOOTER_TABLE_CELL_IDENTIFIER = @"InboxFeedFooterCell";
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     CGFloat height = CGRectGetHeight(_inboxFeedTableView.frame) + (keyboardSize.height-BOTTOM_TAB_BAR_HEIGHT);
     _inboxFeedTableView.frame = CGRectMake(CGRectGetMinX(_inboxFeedTableView.frame),
                                            CGRectGetMinY(_inboxFeedTableView.frame),

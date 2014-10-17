@@ -2,7 +2,6 @@
 #import "RemoteIOAudio.h"
 #import "AnonymousAudioCallbackHandler.h"
 #import "TestUtil.h"
-#import "CancelTokenSource.h"
 
 @interface AudioRemoteIOTest : XCTestCase
 
@@ -10,7 +9,8 @@
 
 @implementation AudioRemoteIOTest
 
--(void) ______REMOVE_THIS_PREFIX_TO_ENABLE_ACTUAL_AUDIO_TEST______testPlaysAndRecordsAudio {
+// Disabled because won't work on Travis
+-(void)___testPlaysAndRecordsAudio {
     __block RemoteIOAudio* a = nil;
     
     __block double t = 0;
@@ -21,7 +21,7 @@
                 wave[i] = (int16_t)(sin(t)*INT16_MAX);
                 double curFrequency = (sin(t/400)+1)/2*500+200;
                 @synchronized(a) {
-                    t += 2*3.14159*curFrequency/[a getSampleRateInHertz];
+                    t += 2*3.14159*curFrequency/a.getSampleRateInHertz;
                 }
             }
             [a populatePlaybackQueueWithData:[NSData dataWithBytesNoCopy:wave length:sizeof(wave) freeWhenDone:NO]];
@@ -35,11 +35,11 @@
         }
     };
     
-    CancelTokenSource* life = [CancelTokenSource cancelTokenSource];
+    TOCCancelTokenSource* life = [TOCCancelTokenSource new];
     a = [RemoteIOAudio remoteIOInterfaceStartedWithDelegate:[AnonymousAudioCallbackHandler anonymousAudioInterfaceDelegateWithRecordingCallback:countCalls
                                                                                                                     andPlaybackOccurredCallback:generateWhooOOOoooOOOOooOOOOoooSineWave]
-                                             untilCancelled:[life getToken]];
-
+                                             untilCancelled:life.token];
+    
     // churn the run loop, to allow the audio to play and be recorded
     // YOU SHOULD HEAR A WOOOoooOOOOoooOOO TONE WHILE THIS IS HAPPENING (with the frequency going up and down)
     testChurnAndConditionMustStayTrue(true, 10);

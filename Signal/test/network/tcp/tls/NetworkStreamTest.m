@@ -6,20 +6,28 @@
 #import "SecureEndPoint.h"
 #import "ThreadManager.h"
 
-#define TEST_SERVER_HOST @"testing.whispersystems.org"
+#define TEST_SERVER_HOST @"master.whispersystems.org"
 #define TEST_SERVER_PORT 31337
 #define TEST_SERVER_CERT_PATH @"whisperReal"
-#define TEST_SERVER_CERT_TYPE @"der"
+#define TEST_SERVER_CERT_TYPE @"cer"
 
 #define TEST_SERVER_INCORRECT_HOST_TO_SAME_IP @"96.126.120.52"
-#define TEST_SERVER_INCORRECT_CERT_PATH @"whisperTest"
-#define TEST_SERVER_INCORRECT_CERT_TYPE @"der"
+#define TEST_SERVER_INCORRECT_CERT_PATH @"whisperFake"
+#define TEST_SERVER_INCORRECT_CERT_TYPE @"cer"
 
 @interface NetworkStreamTest : XCTestCase
 
 @end
 
+@interface Certificate ()
+@property SecCertificateRef secCertificateRef;
+@end
+
 @implementation NetworkStreamTest
+
+- (void)setUp{
+    [Environment setCurrent:[Release unitTestEnvironment:@[]]];
+}
 
 -(void) testReplies {
     [Environment setCurrent:testEnvWith(ENVIRONMENT_TESTING_OPTION_ALLOW_NETWORK_STREAM_TO_NON_SECURE_END_POINTS)];
@@ -81,20 +89,31 @@
     } withErrorHandler:^(id error, id relatedInfo, bool causedTermination) {
         test(false);
     }]];
-    Future* f = [s asyncConnectionCompleted];
+    TOCFuture* f = [s asyncConnectionCompleted];
     
-    testChurnUntil(![f isIncomplete], 5.0);
+    testChurnUntil(!f.isIncomplete, 5.0);
     
-    test([f hasSucceeded] && [[f forceGetResult] isEqual:@YES]);
+    test(f.hasResult && [[f forceGetResult] isEqual:@YES]);
     
     [s terminate];
 }
+
 -(void) testAuthenticationFail_WrongCert {
     [Environment setCurrent:testEnv];
     
+    NSString *certPath = [[[NSBundle bundleForClass:NetworkStream.class] resourcePath] stringByAppendingPathComponent:@"whisperFake.cer"];
+    NSData *certData = [[NSData alloc] initWithContentsOfFile:certPath];
+    checkOperation(certData != nil);
+    
+    SecCertificateRef cert = SecCertificateCreateWithData(NULL, (__bridge CFDataRef)certData);
+    checkOperation(cert != nil);
+    
+    Certificate* instance = [Certificate new];
+    instance.secCertificateRef = cert;
+
     SecureEndPoint* e = [SecureEndPoint secureEndPointForHost:[HostNameEndPoint hostNameEndPointWithHostName:TEST_SERVER_HOST andPort:TEST_SERVER_PORT]
-                                      identifiedByCertificate:[Certificate certificateFromResourcePath:TEST_SERVER_INCORRECT_CERT_PATH
-                                                                                                ofType:TEST_SERVER_INCORRECT_CERT_TYPE]];
+                                      identifiedByCertificate:instance];
+    
     NetworkStream* s = [NetworkStream networkStreamToEndPoint:e];
     
     __block bool terminated = false;
@@ -108,10 +127,11 @@
     
     testChurnUntil(terminated, 5.0);
     
-    test([[s asyncConnectionCompleted] hasFailed] && [[[s asyncConnectionCompleted] forceGetFailure] isKindOfClass:[SecurityFailure class]]);
+    test([[s asyncConnectionCompleted] hasFailed]);
     
     [s terminate];
 }
+
 -(void) testAuthenticationFail_WrongHostName {
     [Environment setCurrent:testEnv];
     
@@ -132,7 +152,7 @@
     
     testChurnUntil(terminated, 5.0);
     
-    test([[s asyncConnectionCompleted] hasFailed] && [[[s asyncConnectionCompleted] forceGetFailure] isKindOfClass:[SecurityFailure class]]);
+    test([[s asyncConnectionCompleted] hasFailed]);
     
     [s terminate];
 }

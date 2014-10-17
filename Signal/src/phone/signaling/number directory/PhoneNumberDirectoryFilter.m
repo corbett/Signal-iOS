@@ -32,19 +32,19 @@
     return expirationDate;
 }
 
-+(PhoneNumberDirectoryFilter*) phoneNumberDirectoryFilterFromHttpResponse:(HttpResponse*)response {
++(PhoneNumberDirectoryFilter*) phoneNumberDirectoryFilterFromURLResponse:(NSHTTPURLResponse*)response body:(NSData*)data {
     require(response != nil);
     
-    checkOperation([response isOkResponse]);
+    checkOperation(response.statusCode == 200);
     
-    NSString* hashCountHeader = [[response getHeaders] objectForKey:HASH_COUNT_HEADER_KEY];
+    NSString* hashCountHeader = response.allHeaderFields[HASH_COUNT_HEADER_KEY];
     checkOperation(hashCountHeader != nil);
     
     int hashCountValue = [hashCountHeader intValue];
     checkOperation(hashCountValue > 0);
     
-    NSData* responseBody = [response getOptionalBodyData];
-    checkOperation([responseBody length] > 0);
+    NSData* responseBody = data;
+    checkOperation(responseBody.length > 0);
     
     BloomFilter* bloomFilter = [BloomFilter bloomFilterWithHashCount:(NSUInteger)hashCountValue
                                                              andData:responseBody];
@@ -59,7 +59,7 @@
 
 -(bool) containsPhoneNumber:(PhoneNumber*)phoneNumber {
     if (phoneNumber == nil) return false;
-    return [bloomFilter contains:[phoneNumber toE164]];
+    return [bloomFilter contains:phoneNumber.toE164];
 }
 
 @end

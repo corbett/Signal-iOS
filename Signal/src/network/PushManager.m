@@ -8,14 +8,13 @@
 #import "PreferencesUtil.h"
 #import "PushManager.h"
 #import "Environment.h"
-#import "CallServerRequestsManager.h"
+#import "RPServerRequestsManager.h"
 
 @interface PushManager ()
 
-@property (nonatomic, copy) void (^PushRegisteringSuccessBlock)();
-@property (nonatomic, copy) void (^PushRegisteringFailureBlock)();
+@property TOCFutureSource *registerWithServerFutureSource;
 
-@property int retries;
+@property UIAlertView *missingPermissionsAlertView;
 
 @end
 
@@ -25,92 +24,213 @@
     static PushManager *sharedManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sharedManager = [[self alloc] init];
+        sharedManager = [self new];
+        sharedManager.missingPermissionsAlertView = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"ACTION_REQUIRED_TITLE", @"")
+                                                                               message:NSLocalizedString(@"PUSH_SETTINGS_MESSAGE", @"")
+                                                                              delegate:nil
+                                                                     cancelButtonTitle:NSLocalizedString(@"OK", @"")
+                                                                     otherButtonTitles:nil, nil];
     });
     return sharedManager;
 }
 
-- (void)verifyPushActivated{
-    UIRemoteNotificationType notificationTypes = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+
+- (void)verifyPushPermissions{
+    if (self.isMissingMandatoryNotificationTypes || self.needToRegisterForRemoteNotifications){
+        [self registrationWithSuccess:^{
+            DDLogError(@"Re-enabled push succesfully");
+        } failure:^{
+            DDLogError(@"Failed to re-enable push.");
+        }];
+    }
+}
+
+- (void)registrationWithSuccess:(void (^)())success failure:(void (^)())failure{
     
-    BOOL needsPushSettingChangeAlert = NO;
-    
-    // enhancement: do custom message depending on the setting?
-    
-    if (notificationTypes == UIRemoteNotificationTypeNone) {
-        needsPushSettingChangeAlert = YES;
-    } else if (notificationTypes == UIRemoteNotificationTypeBadge) {
-        needsPushSettingChangeAlert = YES;
-    } else if (notificationTypes == UIRemoteNotificationTypeAlert) {
-        needsPushSettingChangeAlert = YES;
-    } else if (notificationTypes == UIRemoteNotificationTypeSound) {
-        needsPushSettingChangeAlert = YES;
-    } else if (notificationTypes == (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeAlert)) {
-        needsPushSettingChangeAlert = YES;
-    } else if (notificationTypes == (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)) {
-        needsPushSettingChangeAlert = YES;
+    if (!self.wantRemoteNotifications) {
+        success();
+        return;
     }
     
-    if (needsPushSettingChangeAlert) {
-        [[Environment preferences] setRevokedPushPermission:YES];
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"ACTION_REQUIRED_TITLE", @"")  message:NSLocalizedString(@"PUSH_SETTINGS_MESSAGE", @"") delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"") otherButtonTitles:nil, nil];
-        [alertView show];
-    } else if (!needsPushSettingChangeAlert){
-        if ([[Environment preferences] encounteredRevokedPushPermission]) {
-            [self askForPushRegistration];
-        }
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        
+        // On iOS7, we just need to register for Push Notifications (user notifications are enabled with them)
+        [self registrationForPushWithSuccess:success failure:failure];
+        
+    } else{
+        
+        // On iOS 8+, both Push Notifications and User Notfications need to be registered.
+        
+        [self registrationForPushWithSuccess:^{
+            [self registrationForUserNotificationWithSuccess:success failure:^{
+                [self.missingPermissionsAlertView show];
+                failure();
+            }];
+        } failure:failure];
     }
-
 }
 
-- (void)askForPushRegistrationWithSuccess:(void (^)())success failure:(void (^)())failure{
-    self.PushRegisteringSuccessBlock  = success;
-    self.PushRegisteringFailureBlock = failure;
-    [self askForPushRegistration];
-}
 
-- (void)askForPushRegistration{
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge)];
-    self.retries = 3;
-}
+#pragma mark Private Methods
 
-- (void)registerForPushWithToken:(NSData*)token{
-    [[CallServerRequestsManager sharedManager] registerPushToken:token success:^(NSURLSessionDataTask *task, id responseObject) {
-        if ([task.response isKindOfClass: [NSHTTPURLResponse class]]){
+#pragma mark Register Push Notification Token with server
+
+-(TOCFuture*)registerForPushFutureWithToken:(NSData*)token{
+    self.registerWithServerFutureSource = [TOCFutureSource new];
+    
+    [RPServerRequestsManager.sharedInstance performRequest:[RPAPICall registerPushNotificationWithPushToken:token] success:^(NSURLSessionDataTask *task, id responseObject) {
+        if ([task.response isKindOfClass: NSHTTPURLResponse.class]){
             NSInteger statusCode = [(NSHTTPURLResponse*) task.response statusCode];
             if (statusCode == 200) {
-                DDLogInfo(@"Device sent push ID to server");
-                [[Environment preferences] setRevokedPushPermission:NO];
-                if (self.PushRegisteringSuccessBlock) {
-                    self.PushRegisteringSuccessBlock();
-                    self.PushRegisteringSuccessBlock = nil;
-                }
+                [self.registerWithServerFutureSource trySetResult:@YES];
             } else{
-                [self registerFailureWithToken:token];
+                DDLogError(@"The server returned %@ instead of a 200 status code", task.response);
+                [self.registerWithServerFutureSource trySetFailure:nil];
             }
+        } else{
+            [self.registerWithServerFutureSource trySetFailure:task.response];
         }
+        
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        [self registerForPushWithToken:token];
+        [self.registerWithServerFutureSource trySetFailure:error];
+    }];
+    
+    return self.registerWithServerFutureSource.future;
+}
+
+#pragma mark Register device for Push Notification locally
+
+-(TOCFuture*)registerPushNotificationFuture{
+    self.pushNotificationFutureSource = [TOCFutureSource new];
+    
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        [UIApplication.sharedApplication registerForRemoteNotificationTypes:(UIRemoteNotificationType)self.mandatoryNotificationTypes];
+    } else {
+        [UIApplication.sharedApplication registerForRemoteNotifications];
+    }
+    return self.pushNotificationFutureSource.future;
+}
+
+-(TOCFuture*)registerForUserNotificationsFuture{
+    self.userNotificationFutureSource = [TOCFutureSource new];
+    [UIApplication.sharedApplication registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationType)[self allNotificationTypes] categories:[NSSet setWithObject:[self userNotificationsCallCategory]]]];
+    return self.userNotificationFutureSource.future;
+}
+
+- (void)registrationForPushWithSuccess:(void (^)())success failure:(void (^)())failure{
+    TOCFuture       *requestPushTokenFuture = [self registerPushNotificationFuture];
+    
+    [requestPushTokenFuture catchDo:^(id failureObj) {
+        failure();
+        [self.missingPermissionsAlertView show];
+        DDLogError(@"This should not happen on iOS8. No push token was provided");
+    }];
+    
+    [requestPushTokenFuture thenDo:^(NSData* pushToken) {
+        TOCFuture *registerPushTokenFuture = [self registerForPushFutureWithToken:pushToken];
+        
+        [registerPushTokenFuture catchDo:^(id failureObj) {
+            UIAlertView *failureToRegisterWithServerAlert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"REGISTRATION_ERROR", @"")
+                                                                                       message:NSLocalizedString(@"REGISTRATION_BODY", nil)
+                                                                                      delegate:nil
+                                                                             cancelButtonTitle:NSLocalizedString(@"OK", nil)
+                                                                             otherButtonTitles:nil, nil];
+            [failureToRegisterWithServerAlert show];
+            failure();
+        }];
+        
+        [registerPushTokenFuture thenDo:^(id value) {
+            success();
+        }];
     }];
 }
 
-
-/**
- *  Token was not sucessfully register. Try again / deal with failure
- *
- *  @param token Token to register
- */
-
-- (void)registerFailureWithToken:(NSData*)token{
-    if (self.retries > 0) {
-        [self registerForPushWithToken:token];
-        self.retries--;
-    } else{
-        if (self.PushRegisteringFailureBlock) {
-            self.PushRegisteringFailureBlock();
-            self.PushRegisteringFailureBlock = nil;
+- (void)registrationForUserNotificationWithSuccess:(void (^)())success failure:(void (^)())failure{
+    TOCFuture *registrerUserNotificationFuture = [self registerForUserNotificationsFuture];
+    
+    [registrerUserNotificationFuture catchDo:^(id failureObj) {
+        [self.missingPermissionsAlertView show];
+        failure();
+    }];
+    
+    [registrerUserNotificationFuture thenDo:^(id types) {
+        if (self.isMissingMandatoryNotificationTypes) {
+            [self.missingPermissionsAlertView show];
+            failure();
+        } else{
+            success();
         }
-        [[Environment preferences] setRevokedPushPermission:YES];
+    }];
+}
+
+-(BOOL) needToRegisterForRemoteNotifications {
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        return self.wantRemoteNotifications;
+    } else{
+        return self.wantRemoteNotifications && (!UIApplication.sharedApplication.isRegisteredForRemoteNotifications);
+    }
+    
+    
+}
+
+-(BOOL) wantRemoteNotifications {
+    BOOL isSimulator = [UIDevice.currentDevice.model.lowercaseString rangeOfString:@"simulator"].location != NSNotFound;
+    
+    if (isSimulator) {
+        // Simulator is used for debugging but can't receive push notifications, so don't bother trying to get them
+        return NO;
+    }
+    
+    return YES;
+}
+
+-(UIUserNotificationCategory*)userNotificationsCallCategory{
+    UIMutableUserNotificationAction *action_accept = [UIMutableUserNotificationAction new];
+    action_accept.identifier = Signal_Accept_Identifier;
+    action_accept.title      = NSLocalizedString(@"ANSWER_CALL_BUTTON_TITLE", @"");
+    action_accept.activationMode = UIUserNotificationActivationModeForeground;
+    action_accept.destructive    = NO;
+    action_accept.authenticationRequired = NO;
+    
+    UIMutableUserNotificationAction *action_decline = [UIMutableUserNotificationAction new];
+    action_decline.identifier = Signal_Decline_Identifier;
+    action_decline.title      = NSLocalizedString(@"REJECT_CALL_BUTTON_TITLE", @"");
+    action_decline.activationMode = UIUserNotificationActivationModeBackground;
+    action_decline.destructive    = NO;
+    action_decline.authenticationRequired = NO;
+    
+    UIMutableUserNotificationCategory *callCategory = [UIMutableUserNotificationCategory new];
+    callCategory.identifier = @"Signal_IncomingCall";
+    [callCategory setActions:@[action_accept, action_decline] forContext:UIUserNotificationActionContextMinimal];
+    [callCategory setActions:@[action_accept, action_decline] forContext:UIUserNotificationActionContextDefault];
+    
+    return callCategory;
+}
+
+-(BOOL)isMissingMandatoryNotificationTypes {
+    int mandatoryTypes = self.mandatoryNotificationTypes;
+    int currentTypes;
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        currentTypes = UIApplication.sharedApplication.enabledRemoteNotificationTypes;
+    } else {
+        currentTypes = UIApplication.sharedApplication.currentUserNotificationSettings.types;
+    }
+    return (mandatoryTypes & currentTypes) != mandatoryTypes;
+}
+
+-(int)allNotificationTypes{
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        return UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge;
+    } else {
+        return UIUserNotificationTypeAlert | UIUserNotificationTypeSound | UIUserNotificationTypeBadge;
+    }
+}
+
+-(int)mandatoryNotificationTypes{
+    if (SYSTEM_VERSION_LESS_THAN(_iOS_8_0)) {
+        return UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound;
+    } else {
+        return UIUserNotificationTypeAlert | UIUserNotificationTypeSound;
     }
 }
 

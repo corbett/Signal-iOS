@@ -46,15 +46,15 @@
     __block int64_t oldCounter;
     oldCounter = [[UICKeyChainStore stringForKey:PASSWORD_COUNTER_KEY] longLongValue];
     int64_t newCounter = (oldCounter == INT64_MAX)?INT64_MIN:(oldCounter + 1);
-    [self storeString:[[NSNumber numberWithLongLong:newCounter] stringValue] forKey:PASSWORD_COUNTER_KEY];
+    [self storeString:[@(newCounter) stringValue] forKey:PASSWORD_COUNTER_KEY];
     return newCounter;
 }
 
 + (void)setLocalNumberTo:(PhoneNumber *)localNumber{
     require(localNumber != nil);
-    require([localNumber toE164]!= nil);
+    require(localNumber.toE164!= nil);
     
-    NSString *e164 = [localNumber toE164];
+    NSString *e164 = localNumber.toE164;
     [self storeString:e164 forKey:LOCAL_NUMBER_KEY];
 }
 
@@ -67,8 +67,8 @@
 
 +(Zid *)zid{
     NSData *data = [self dataForKey:ZID_KEY];
-    if ([data length] != ZID_LENGTH) {
-        DDLogError(@"ZID length is incorrect. Is %lu, should be %d", (unsigned long)[data length], ZID_LENGTH);
+    if (data.length != ZID_LENGTH) {
+        DDLogError(@"ZID length is incorrect. Is %lu, should be %d", (unsigned long)data.length, ZID_LENGTH);
     }
     Zid *zid = [Zid zidWithData:data];
     return zid;
@@ -90,8 +90,8 @@
 +(NSString *)serverAuthPassword{
     NSString *password = [self stringForKey:SAVED_PASSWORD_KEY];
     NSData *data = [password decodedAsBase64Data];
-    if ([data length] != SAVED_PASSWORD_LENGTH) {
-        DDLogError(@"The server password has incorrect length. Is %lu but should be %d", (unsigned long)[data length], SAVED_PASSWORD_LENGTH);
+    if (data.length != SAVED_PASSWORD_LENGTH) {
+        DDLogError(@"The server password has incorrect length. Is %lu but should be %d", (unsigned long)data.length, SAVED_PASSWORD_LENGTH);
     }
     return password;
 }
@@ -109,8 +109,8 @@
 +(NSData*)dataForKey:(NSString*)key andVerifyLength:(uint)length{
     NSData *data = [self dataForKey:key];
     
-    if ([data length] != length) {
-        DDLogError(@"Length of data not matching. Got %lu, expected %u", (unsigned long)[data length], length);
+    if (data.length != length) {
+        DDLogError(@"Length of data not matching. Got %lu, expected %u", (unsigned long)data.length, length);
     }
     
     return data;

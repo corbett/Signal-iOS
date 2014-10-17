@@ -1,6 +1,5 @@
 #import "Util.h"
 #import "Constraints.h"
-#import "FutureSource.h"
 
 @implementation Operation
 
@@ -20,20 +19,6 @@
     [[Operation operation:action] performOnThread:thread];
 }
 
-+(Future*) asyncEvaluate:(Function)function
-                   onThread:(NSThread*)thread {
-    
-    require(function != nil);
-    require(thread != nil);
-    
-    FutureSource* result = [FutureSource new];
-    Action evaler = ^() {
-        [result trySetResult:function()];
-    };
-    [[Operation operation:evaler] performOnThread:thread];
-    return result;
-}
-
 +(void) asyncRunAndWaitUntilDone:(Action)action
                         onThread:(NSThread*)thread {
     
@@ -48,25 +33,13 @@
     [[Operation operation:action] performOnNewThread];
 }
 
-+(Future*) asyncEvaluateOnNewThread:(Function)function {
-    
-    require(function != nil);
-    
-    FutureSource* result = [FutureSource new];
-    Action evaler = ^() {
-        [result trySetResult:function()];
-    };
-    [[Operation operation:evaler] performOnNewThread];
-    return result;
-}
-
 -(SEL) selectorToRun {
     return @selector(run);
 }
 
 -(void) performOnThread:(NSThread*)thread {
     require(thread != nil);
-    [self performSelector:@selector(run) onThread:thread withObject:nil waitUntilDone:thread == [NSThread currentThread]];
+    [self performSelector:@selector(run) onThread:thread withObject:nil waitUntilDone:thread == NSThread.currentThread];
 }
 
 -(void) performOnThreadAndWaitUntilDone:(NSThread*)thread {

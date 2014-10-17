@@ -6,11 +6,11 @@
 #import "RecentCallManager.h"
 #import "PhoneNumberDirectoryFilterManager.h"
 
-#define RELEASE_ZRTP_CLIENT_ID [@"Whisper 000     " encodedAsAscii]
-#define RELEASE_ZRTP_VERSION_ID [@"1.10" encodedAsAscii]
+#define RELEASE_ZRTP_CLIENT_ID @"Whisper 000     ".encodedAsAscii
+#define RELEASE_ZRTP_VERSION_ID @"1.10".encodedAsAscii
 
-#define TESTING_ZRTP_CLIENT_ID [@"RedPhone 019    " encodedAsAscii]
-#define TESTING_ZRTP_VERSION_ID [@"1.10" encodedAsAscii]
+#define TESTING_ZRTP_CLIENT_ID @"RedPhone 019    ".encodedAsAscii
+#define TESTING_ZRTP_VERSION_ID @"1.10".encodedAsAscii
 
 static unsigned char DH3K_PRIME[]={
     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xC9,0x0F,0xDA,0xA2,0x21,0x68,0xC2,
@@ -55,27 +55,32 @@ static unsigned char DH3K_PRIME[]={
                                andDefaultRelayName:@"relay"
                       andRelayServerHostNameSuffix:@"whispersystems.org"
                                     andCertificate:[Certificate certificateFromResourcePath:@"whisperReal" ofType:@"cer"]
-               andCurrentRegionCodeForPhoneNumbers:[(NSLocale*)[NSLocale currentLocale] objectForKey:NSLocaleCountryCode]
+               andCurrentRegionCodeForPhoneNumbers:[(NSLocale*)NSLocale.currentLocale objectForKey:NSLocaleCountryCode]
                  andSupportedKeyAgreementProtocols:[self supportedKeyAgreementProtocols]
                                    andPhoneManager:[PhoneManager phoneManagerWithErrorHandler:errorNoter]
                               andRecentCallManager:[RecentCallManager new]
                         andTestingAndLegacyOptions:@[ENVIRONMENT_LEGACY_OPTION_RTP_PADDING_BIT_IMPLIES_EXTENSION_BIT_AND_TWELVE_EXTRA_ZERO_BYTES_IN_HEADER]
                                    andZrtpClientId:RELEASE_ZRTP_CLIENT_ID
                                   andZrtpVersionId:RELEASE_ZRTP_VERSION_ID
-								andContactsManager:[[ContactsManager alloc] init]
+								andContactsManager:[ContactsManager new]
 						  andPhoneDirectoryManager:[PhoneNumberDirectoryFilterManager new]];
 }
 
 +(Environment*) unitTestEnvironment:(NSArray*)testingAndLegacyOptions {
+    NSArray* keyAgreementProtocols = self.supportedKeyAgreementProtocols;
+    if ([testingAndLegacyOptions containsObject:TESTING_OPTION_USE_DH_FOR_HANDSHAKE]) {
+        keyAgreementProtocols = @[[Release supportedDH3KKeyAgreementProtocol]];
+    }
+    
     return [Environment environmentWithLogging:[DiscardingLog discardingLog]
                                      andErrorNoter:^(id error, id relatedInfo, bool causedTermination) {}
                                      andServerPort:31337
-                           andMasterServerHostName:@"testing.whispersystems.org"
-                               andDefaultRelayName:@"testing"
+                           andMasterServerHostName:@"master.whispersystems.org"
+                               andDefaultRelayName:@"relay"
                       andRelayServerHostNameSuffix:@"whispersystems.org"
-                                    andCertificate:[Certificate certificateFromResourcePath:@"whisperReal" ofType:@"der"]
+                                    andCertificate:[Certificate certificateFromResourcePath:@"whisperReal" ofType:@"cer"]
                andCurrentRegionCodeForPhoneNumbers:@"US"
-                 andSupportedKeyAgreementProtocols:[self supportedKeyAgreementProtocols]
+                 andSupportedKeyAgreementProtocols:keyAgreementProtocols
                                    andPhoneManager:nil
                               andRecentCallManager:nil
                         andTestingAndLegacyOptions:testingAndLegacyOptions

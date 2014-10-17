@@ -18,8 +18,8 @@
     require(method != nil);
     require(location != nil);
     require(headers != nil);
-    require((optionalBody == nil) == ([headers objectForKey:@"Content-Length"] == nil));
-    require(optionalBody == nil || [[[NSNumber numberWithUnsignedInteger:[optionalBody length]] description] isEqualToString:[headers objectForKey:@"Content-Length"]]);
+    require((optionalBody == nil) == (headers[@"Content-Length"] == nil));
+    require(optionalBody == nil || [[@(optionalBody.length) description] isEqualToString:headers[@"Content-Length"]]);
     
     HttpRequest* s = [HttpRequest new];
     s->_method = method;
@@ -36,9 +36,9 @@
     
     NSMutableDictionary* headers = [NSMutableDictionary dictionary];
     if (optionalBody != nil) {
-        [headers setObject:[[NSNumber numberWithUnsignedInteger:[optionalBody length]] stringValue] forKey:@"Content-Length"];
+        headers[@"Content-Length"] = [@(optionalBody.length) stringValue];
     }
-
+    
     HttpRequest* s = [HttpRequest new];
     s->_method = method;
     s->_location = location;
@@ -58,9 +58,9 @@
     
     NSMutableDictionary* headers = [NSMutableDictionary dictionary];
     if (optionalBody != nil) {
-        [headers setObject:[[NSNumber numberWithUnsignedInteger:[optionalBody length]] stringValue] forKey:@"Content-Length"];
+        headers[@"Content-Length"] = [@(optionalBody.length) stringValue];
     }
-    [headers setObject:[HttpRequest computeBasicAuthorizationTokenForLocalNumber:localNumber andPassword:password] forKey:@"Authorization"];
+    headers[@"Authorization"] = [HttpRequest computeBasicAuthorizationTokenForLocalNumber:localNumber andPassword:password];
     
     HttpRequest* s = [HttpRequest new];
     s->_method = method;
@@ -81,9 +81,9 @@
     
     NSMutableDictionary* headers = [NSMutableDictionary dictionary];
     if (optionalBody != nil) {
-        [headers setObject:[[NSNumber numberWithUnsignedInteger:[optionalBody length]] stringValue] forKey:@"Content-Length"];
+        headers[@"Content-Length"] = [@(optionalBody.length) stringValue];
     }
-    [headers setObject:[HttpRequest computeOtpAuthorizationTokenForLocalNumber:localNumber andCounterValue:counter andPassword:password] forKey:@"Authorization"];
+    headers[@"Authorization"] = [HttpRequest computeOtpAuthorizationTokenForLocalNumber:localNumber andCounterValue:counter andPassword:password];
     
     HttpRequest* s = [HttpRequest new];
     s->_method = method;
@@ -97,7 +97,7 @@
     require(data != nil);
     NSUInteger requestSize;
     HttpRequestOrResponse* http = [HttpRequestOrResponse tryExtractFromPartialData:data usedLengthOut:&requestSize];
-    checkOperation([http isRequest] && requestSize == [data length]);
+    checkOperation(http.isRequest && requestSize == data.length);
     return [http request];
 }
 
@@ -108,16 +108,16 @@
     require(password != nil);
     
     NSString* rawToken = [NSString stringWithFormat:@"%@:%@:%lld",
-                          [localNumber toE164],
+                          localNumber.toE164,
                           [CryptoTools computeOtpWithPassword:password andCounter:counterValue],
                           counterValue];
-    return [@"OTP " stringByAppendingString:[[rawToken encodedAsUtf8] encodedAsBase64]];
+    return [@"OTP " stringByAppendingString:rawToken.encodedAsUtf8.encodedAsBase64];
 }
 +(NSString*) computeBasicAuthorizationTokenForLocalNumber:(PhoneNumber*)localNumber andPassword:(NSString*)password {
     NSString* rawToken = [NSString stringWithFormat:@"%@:%@",
-                          [localNumber toE164],
+                          localNumber.toE164,
                           password];
-    return [@"Basic " stringByAppendingString:[[rawToken encodedAsUtf8] encodedAsBase64]];
+    return [@"Basic " stringByAppendingString:rawToken.encodedAsUtf8.encodedAsBase64];
 }
 
 -(NSString*) toHttp {
@@ -131,7 +131,7 @@
     for (NSString* key in self.headers) {
         [r addObject:key];
         [r addObject:@": "];
-        [r addObject:[self.headers objectForKey:key]];
+        [r addObject:(self.headers)[key]];
         [r addObject:@"\r\n"];
     }
     
@@ -141,14 +141,14 @@
     return [r componentsJoinedByString:@""];
 }
 -(NSData*) serialize {
-    return [[self toHttp] encodedAsUtf8];
+    return self.toHttp.encodedAsUtf8;
 }
 -(bool) isEqualToHttpRequest:(HttpRequest *)other {
-    return [[self toHttp] isEqualToString:[other toHttp]]
-        && [self.method isEqualToString:other.method]
-        && [self.location isEqualToString:other.location]
-        && (self.optionalBody == other.optionalBody || [self.optionalBody isEqualToString:[other optionalBody]])
-        && [self.headers isEqualToDictionary:other.headers];
+    return [self.toHttp isEqualToString:other.toHttp]
+    && [self.method isEqualToString:other.method]
+    && [self.location isEqualToString:other.location]
+    && (self.optionalBody == other.optionalBody || [self.optionalBody isEqualToString:[other optionalBody]])
+    && [self.headers isEqualToDictionary:other.headers];
 }
 
 -(NSString*) description {
@@ -156,8 +156,9 @@
             self.method,
             self.location,
             self.optionalBody == nil ? @""
-                : [self.optionalBody length] == 0 ? @" [empty body]"
-                : @" [...body...]"];
+                                     : self.optionalBody.length == 0 ? @" [empty body]"
+                                     : @" [...body...]"];
 }
+
 
 @end

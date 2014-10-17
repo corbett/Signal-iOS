@@ -1,9 +1,7 @@
 #import "IpEndPoint.h"
-#import "Util.h"
-#import "Constraints.h"
-#import "IpAddress.h"
-#import "FutureSource.h"
+
 #import "DnsManager.h"
+#import "Util.h"
 
 @implementation IpEndPoint
 
@@ -31,7 +29,7 @@
 
 +(IpEndPoint*) ipEndPointFromSockaddrData:(NSData*)sockaddrData {
     require(sockaddrData != nil);
-    require([sockaddrData length] >= sizeof(struct sockaddr));
+    require(sockaddrData.length >= sizeof(struct sockaddr));
     
     struct sockaddr s;
     memcpy(&s, [sockaddrData bytes], sizeof(struct sockaddr));
@@ -44,7 +42,7 @@
 }
 +(IpEndPoint*) ipv4EndPointFromSockaddrData:(NSData*)sockaddrData {
     require(sockaddrData != nil);
-    require([sockaddrData length] >= sizeof(struct sockaddr_in));
+    require(sockaddrData.length >= sizeof(struct sockaddr_in));
     
     struct sockaddr_in s;
     memcpy(&s, [sockaddrData bytes], sizeof(struct sockaddr_in));
@@ -53,7 +51,7 @@
 }
 +(IpEndPoint*) ipv6EndPointFromSockaddrData:(NSData*)sockaddrData {
     require(sockaddrData != nil);
-    require([sockaddrData length] >= sizeof(struct sockaddr_in6));
+    require(sockaddrData.length >= sizeof(struct sockaddr_in6));
     
     struct sockaddr_in6 s;
     memcpy(&s, [sockaddrData bytes], sizeof(struct sockaddr_in6));
@@ -78,8 +76,8 @@
 -(void) handleStreamsOpened:(StreamPair *)streamPair {
     // no work needed
 }
--(Future*) asyncHandleStreamsConnected:(StreamPair *)streamPair {
-    return [Future finished:@YES];
+-(TOCFuture*) asyncHandleStreamsConnected:(StreamPair *)streamPair {
+    return [TOCFuture futureWithResult:@YES];
 }
 
 -(StreamPair*)createStreamPair {
@@ -90,8 +88,8 @@
                                  andOutput:(__bridge_transfer NSOutputStream*)writeStream];
 }
 
--(Future*) asyncResolveToSpecificEndPointsUnlessCancelled:(id<CancelToken>)unlessCancelledToken {
-    return [Future finished:@[self]];
+-(TOCFuture*) asyncResolveToSpecificEndPointsUnlessCancelled:(TOCCancelToken*)unlessCancelledToken {
+    return [TOCFuture futureWithResult:@[self]];
 }
 
 @end

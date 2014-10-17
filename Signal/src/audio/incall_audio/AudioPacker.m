@@ -21,12 +21,12 @@
 
 -(void)packFrame:(EncodedAudioFrame*)frame{
     require(frame != nil);
-    require(![frame isMissingAudioData]);
-    [framesToSend addObject:[frame tryGetAudioData]];
+    require(!frame.isMissingAudioData);
+    [framesToSend addObject:frame.tryGetAudioData];
 }
 
 -(EncodedAudioPacket*) tryGetFinishedAudioPacket{
-    if ([framesToSend count] < AUDIO_FRAMES_PER_PACKET) return nil;
+    if (framesToSend.count < AUDIO_FRAMES_PER_PACKET) return nil;
     
     uint16_t sequenceNumber = nextSequenceNumber++;
     NSData* payload = [framesToSend concatDatas];
@@ -55,9 +55,9 @@
     require(packet != nil);
     
     NSData* audioData = [packet audioData];
-    requireState([audioData length] % AUDIO_FRAMES_PER_PACKET == 0);
+    requireState(audioData.length % AUDIO_FRAMES_PER_PACKET == 0);
     
-    NSUInteger frameSize = [audioData length] / AUDIO_FRAMES_PER_PACKET;
+    NSUInteger frameSize = audioData.length / AUDIO_FRAMES_PER_PACKET;
     for (NSUInteger i = 0; i < AUDIO_FRAMES_PER_PACKET; i++) {
         NSData* frameData = [audioData subdataWithRange:NSMakeRange(frameSize*i, frameSize)];
         [audioFrameToReceiveQueue enqueue:[EncodedAudioFrame encodedAudioFrameWithData:frameData]];

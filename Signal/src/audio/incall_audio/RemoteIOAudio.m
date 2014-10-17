@@ -21,22 +21,22 @@
 
 static bool doesActiveInstanceExist;
 
-+(RemoteIOAudio*) remoteIOInterfaceStartedWithDelegate:(id<AudioCallbackHandler>)delegateIn untilCancelled:(id<CancelToken>)untilCancelledToken {
++(RemoteIOAudio*) remoteIOInterfaceStartedWithDelegate:(id<AudioCallbackHandler>)delegateIn untilCancelled:(TOCCancelToken*)untilCancelledToken {
     
     checkOperationDescribe(!doesActiveInstanceExist, @"Only one RemoteIOInterfance instance can exist at a time. Adding more will break previous instances.");
     doesActiveInstanceExist = true;
     
     RemoteIOAudio* newRemoteIoInterface = [RemoteIOAudio new];
-    newRemoteIoInterface->starveLogger = [[Environment logging] getOccurrenceLoggerForSender:newRemoteIoInterface withKey:@"starve"];
-    newRemoteIoInterface->conditionLogger = [[Environment logging] getConditionLoggerForSender:newRemoteIoInterface];
+    newRemoteIoInterface->starveLogger = [Environment.logging getOccurrenceLoggerForSender:newRemoteIoInterface withKey:@"starve"];
+    newRemoteIoInterface->conditionLogger = [Environment.logging getConditionLoggerForSender:newRemoteIoInterface];
     newRemoteIoInterface->recordingQueue = [CyclicalBuffer new];
     newRemoteIoInterface->playbackQueue =  [CyclicalBuffer new];
     newRemoteIoInterface->unusedBuffers = [NSMutableSet set];
     newRemoteIoInterface->state = NOT_STARTED;
-    newRemoteIoInterface->playbackBufferSizeLogger = [[Environment logging] getValueLoggerForValue:@"|playback queue|" from:newRemoteIoInterface];
-    newRemoteIoInterface->recordingQueueSizeLogger = [[Environment logging] getValueLoggerForValue:@"|recording queue|" from:newRemoteIoInterface];
+    newRemoteIoInterface->playbackBufferSizeLogger = [Environment.logging getValueLoggerForValue:@"|playback queue|" from:newRemoteIoInterface];
+    newRemoteIoInterface->recordingQueueSizeLogger = [Environment.logging getValueLoggerForValue:@"|recording queue|" from:newRemoteIoInterface];
     
-    while ([newRemoteIoInterface->unusedBuffers count] < INITIAL_NUMBER_OF_BUFFERS) {
+    while (newRemoteIoInterface->unusedBuffers.count < INITIAL_NUMBER_OF_BUFFERS) {
         [newRemoteIoInterface addUnusedBuffer];
     }
     [newRemoteIoInterface setupAudio];
@@ -47,7 +47,7 @@ static bool doesActiveInstanceExist;
 }
 
 -(void)setupAudio {
-    [[AppAudioManager sharedInstance] requestRecordingPrivlege];
+    [AppAudioManager.sharedInstance requestRecordingPrivlege];
     rioAudioUnit = [self makeAudioUnit];
     [self setAudioEnabled];
     [self setAudioStreamFormat];
@@ -162,7 +162,7 @@ static bool doesActiveInstanceExist;
     [unusedBuffers addObject:buffer];
 }
 
--(void) startWithDelegate:(id<AudioCallbackHandler>)delegateIn untilCancelled:(id<CancelToken>)untilCancelledToken {
+-(void) startWithDelegate:(id<AudioCallbackHandler>)delegateIn untilCancelled:(TOCCancelToken*)untilCancelledToken {
     require(delegateIn != nil);
     @synchronized(self){
         requireState(state == NOT_STARTED);
@@ -172,12 +172,12 @@ static bool doesActiveInstanceExist;
         state = STARTED;
     }
 
-    [untilCancelledToken whenCancelled:^{
+    [untilCancelledToken whenCancelledDo:^{
         @synchronized(self) {
             state = TERMINATED;
             doesActiveInstanceExist = false;
             [self checkDone:AudioOutputUnitStop(rioAudioUnit)];
-            [[AppAudioManager sharedInstance] releaseRecordingPrivlege];
+            [AppAudioManager.sharedInstance releaseRecordingPrivlege];
             [unusedBuffers removeAllObjects];
         }
     }];
@@ -236,7 +236,7 @@ static OSStatus recordingCallback(void *inRefCon,
 
 -(void)populatePlaybackQueueWithData:(NSData*)data {
     require(data != nil);
-    if ([data length] == 0) return;
+    if (data.length == 0) return;
     @synchronized(self){
         [playbackQueue enqueueData:data];
     }
@@ -255,10 +255,10 @@ static OSStatus playbackCallback(void *inRefCon,
         
         if (availableByteCount < requestedByteCount) {
             NSUInteger starveAmount = requestedByteCount - availableByteCount;
-            [instance->starveLogger markOccurrence:[NSNumber numberWithDouble:starveAmount]];
+            [instance->starveLogger markOccurrence:@(starveAmount)];
         } else {
             NSData* audioToCopyVolatile = [[instance playbackQueue] dequeuePotentialyVolatileDataWithLength:requestedByteCount];
-            memcpy(ioData->mBuffers[0].mData, [audioToCopyVolatile bytes], [audioToCopyVolatile length]);
+            memcpy(ioData->mBuffers[0].mData, [audioToCopyVolatile bytes], audioToCopyVolatile.length);
         }
     }
     
@@ -309,7 +309,7 @@ static OSStatus playbackCallback(void *inRefCon,
     } else if (resultCode == errSecParam){
         failure = @"oneOrMoreNonValidParameter";
     }else {
-        failure = [[NSNumber numberWithInt:resultCode] description];
+        failure = [@(resultCode) description];
     }
     [conditionLogger logError:[NSString stringWithFormat:@"StatusCheck failed: %@", failure]];
 }
@@ -327,7 +327,7 @@ static OSStatus playbackCallback(void *inRefCon,
 }
 
 -(BOOL) toggleMute {
-	BOOL shouldBeMuted = ![self isAudioMuted];
+	BOOL shouldBeMuted = !self.isAudioMuted;
 	UInt32 newValue =  shouldBeMuted ? FLAG_MUTED : FLAG_UNMUTED;
 	
 	[self checkDone:AudioUnitSetProperty(rioAudioUnit,

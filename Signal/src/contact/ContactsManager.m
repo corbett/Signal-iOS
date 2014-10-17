@@ -1,8 +1,6 @@
 #import "ContactsManager.h"
-#import "FutureSource.h"
-#import "FutureUtil.h"
 #import <AddressBook/AddressBook.h>
-#import "Constraints.h"
+#import <libPhoneNumber-iOS/NBPhoneNumber.h>
 #import "Environment.h"
 #import "NotificationManifest.h"
 #import "PhoneNumberDirectoryFilter.h"
@@ -35,7 +33,7 @@ typedef BOOL (^ContactSearchBlock)(id, NSUInteger, BOOL*);
         newUserNotificationsEnabled = [self knownUserStoreInitialized];
         _favouriteContactIds = [self loadFavouriteIds];
         _knownWhisperUserIds = [self loadKnownWhisperUsers];
-        life = [CancelTokenSource cancelTokenSource];
+        life = [TOCCancelTokenSource new];
         observableContactsController = [ObservableValueController observableValueControllerWithInitialValue:nil];
         observableWhisperUsersController = [ObservableValueController observableValueControllerWithInitialValue:nil];
         [self registerNotificationHandlers];
@@ -48,13 +46,13 @@ typedef BOOL (^ContactSearchBlock)(id, NSUInteger, BOOL*);
         @synchronized(self) {
             [self setupLatestContacts:latestContacts];
         }
-    } untilCancelled:[life getToken]];
+    } untilCancelled:life.token];
     
     [observableWhisperUsersController watchLatestValueOnArbitraryThread:^(NSArray *latestUsers) {
         @synchronized(self) {
             [self setupLatestWhisperUsers:latestUsers];
         }
-    } untilCancelled:[life getToken]];
+    } untilCancelled:life.token];
 }
 
 -(void)dealloc {
@@ -146,15 +144,15 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 
 #pragma mark - Address Book utils
 
-+(Future*) asyncGetAddressBook {
++(TOCFuture*) asyncGetAddressBook {
     CFErrorRef creationError = nil;
     ABAddressBookRef addressBookRef = ABAddressBookCreateWithOptions(NULL, &creationError);
     assert((addressBookRef == nil) == (creationError != nil));
     if (creationError != nil) {
-        return [Future failed:(__bridge_transfer id)creationError];
+        return [TOCFuture futureWithFailure:(__bridge_transfer id)creationError];
     }
 
-    FutureSource *futureAddressBookSource = [FutureSource new];
+    TOCFutureSource *futureAddressBookSource = [TOCFutureSource new];
 
     id addressBook = (__bridge_transfer id)addressBookRef;
     ABAddressBookRequestAccessWithCompletion(addressBookRef, ^(bool granted, CFErrorRef requestAccessError) {
@@ -167,7 +165,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
         }
     });
 
-    return futureAddressBookSource;
+    return futureAddressBookSource.future;
 }
 
 -(NSArray*) getContactsFromAddressBook:(ABAddressBookRef)addressBook {
@@ -180,6 +178,8 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
                       (void*)(unsigned long)ABPersonGetSortOrdering());
     
     NSArray *sortedPeople = (__bridge_transfer NSArray *)allPeopleMutable;
+
+    // This predicate returns all contacts from the addressbook having at least one phone number
     
     NSPredicate* predicate = [NSPredicate predicateWithBlock: ^BOOL(id record, NSDictionary *bindings) {
         ABMultiValueRef phoneNumbers = ABRecordCopyValue( (__bridge ABRecordRef)record, kABPersonPhoneProperty);
@@ -187,14 +187,14 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
         
         for (CFIndex i = 0; i < ABMultiValueGetCount(phoneNumbers); i++) {
             NSString* phoneNumber = (__bridge_transfer NSString*) ABMultiValueCopyValueAtIndex(phoneNumbers, i);
-            if ([phoneNumber length]>0) {
+            if (phoneNumber.length>0) {
                 result = YES;
                 break;
-                }
             }
+        }
         CFRelease(phoneNumbers);
         return result;
-        }];
+    }];
     CFRelease(allPeople);
     NSArray* filteredContacts = [sortedPeople filteredArrayUsingPredicate:predicate];
     
@@ -204,8 +204,8 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 -(NSArray*)latestContactsWithSearchString:(NSString *)searchString {
-    return [[latestContactsById allValues] filter:^int(Contact *contact) {
-        return [searchString length] == 0 || [ContactsManager name:[contact fullName] matchesQuery:searchString];
+    return [latestContactsById.allValues filter:^int(Contact *contact) {
+        return searchString.length == 0 || [ContactsManager name:contact.fullName matchesQuery:searchString];
     }];
 }
 
@@ -222,8 +222,8 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
         NSString *companyName = (__bridge_transfer NSString*)ABRecordCopyValue(record, kABPersonOrganizationProperty);
         if (companyName) {
             firstName = companyName;
-        } else if ([phoneNumbers count]) {
-            firstName =	[phoneNumbers firstObject];
+        } else if (phoneNumbers.count) {
+            firstName =	phoneNumbers.firstObject;
         }
     }
 
@@ -249,7 +249,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 -(Contact*)latestContactForPhoneNumber:(PhoneNumber *)phoneNumber {
-    NSArray *allContacts = [latestContactsById allValues];
+    NSArray *allContacts = latestContactsById.allValues;
 
     ContactSearchBlock searchBlock = ^BOOL(Contact *contact, NSUInteger idx, BOOL *stop) {
         for (PhoneNumber *number in contact.parsedPhoneNumbers) {
@@ -272,7 +272,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 - (BOOL)phoneNumber:(PhoneNumber *)phoneNumber1 matchesNumber:(PhoneNumber *)phoneNumber2 {
-    return [[phoneNumber1 toE164] isEqualToString:[phoneNumber2 toE164]];
+    return [phoneNumber1.toE164 isEqualToString:phoneNumber2.toE164];
 }
 
 - (NSArray *)phoneNumbersForRecord:(ABRecordRef)record {
@@ -285,8 +285,8 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
         
         NSMutableArray *numbers = [NSMutableArray array];
         
-        for (CFIndex i = 0; i < (NSInteger)[phoneNumbers count]; i++) {
-            NSString *phoneNumber = phoneNumbers[(NSUInteger)i];
+        for (NSUInteger i = 0; i < phoneNumbers.count; i++) {
+            NSString *phoneNumber = phoneNumbers[i];
             [numbers addObject:phoneNumber];
         }
         
@@ -320,7 +320,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
     require(contacts != nil);
 
     NSArray *matchingContacts = [contacts filter:^int(Contact *contact) {
-        return [optionalSearchString length] == 0 || [self name:[contact fullName] matchesQuery:optionalSearchString];
+        return optionalSearchString.length == 0 || [self name:contact.fullName matchesQuery:optionalSearchString];
     }];
 
     return [matchingContacts groupBy:^id(Contact *contact) {
@@ -328,18 +328,18 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
     
         BOOL firstNameOrdering = ABPersonGetSortOrdering() == kABPersonCompositeNameFormatFirstNameFirst?YES:NO;
         
-        if (firstNameOrdering && [contact firstName] != nil && [[contact firstName] length] > 0) {
-            nameToUse = [contact firstName];
-        } else if (!firstNameOrdering && [contact lastName] != nil && [[contact lastName] length] > 0){
-            nameToUse = [contact lastName];
-        } else if ([contact lastName] == nil) {
-            if ([[contact fullName] length] > 0) {
-                nameToUse = [contact fullName];
+        if (firstNameOrdering && contact.firstName != nil && contact.firstName.length > 0) {
+            nameToUse = contact.firstName;
+        } else if (!firstNameOrdering && contact.lastName != nil && contact.lastName.length > 0){
+            nameToUse = contact.lastName;
+        } else if (contact.lastName == nil) {
+            if (contact.fullName.length > 0) {
+                nameToUse = contact.fullName;
             } else {
                 return nameToUse;
             }
         } else {
-            nameToUse = [contact lastName];
+            nameToUse = contact.lastName;
         }
         
         return [[[nameToUse substringToIndex:1] uppercaseString] decomposedStringWithCompatibilityMapping];
@@ -348,29 +348,29 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 
 +(NSDictionary *)keyContactsById:(NSArray *)contacts {
     return [contacts keyedBy:^id(Contact* contact) {
-        return [NSNumber numberWithInt:(int)contact.recordID];
+        return @((int)contact.recordID);
     }];
 }
 
 -(Contact *)latestContactWithRecordId:(ABRecordID)recordId {
     @synchronized(self) {
-        return [latestContactsById objectForKey:[NSNumber numberWithInt:recordId]];
+        return latestContactsById[@(recordId)];
     }
 }
 
 -(NSArray*) recordsForContacts:(NSArray*) contacts{
     return [contacts map:^id(Contact *contact) {
-        return [NSNumber numberWithInt:[contact recordID]];
+        return @([contact recordID]);
     }];
 }
 
 +(BOOL)name:(NSString *)nameString matchesQuery:(NSString *)queryString {
-    NSCharacterSet *whitespaceSet = [NSCharacterSet whitespaceCharacterSet];
+    NSCharacterSet *whitespaceSet = NSCharacterSet.whitespaceCharacterSet;
     NSArray *queryStrings = [queryString componentsSeparatedByCharactersInSet:whitespaceSet];
     NSArray *nameStrings = [nameString componentsSeparatedByCharactersInSet:whitespaceSet];
 
     return [queryStrings all:^int(NSString* query) {
-        if ([query length] == 0) return YES;
+        if (query.length == 0) return YES;
         return [nameStrings any:^int(NSString* nameWord) {
             NSStringCompareOptions searchOpts = NSCaseInsensitiveSearch | NSAnchoredSearch;
             return [nameWord rangeOfString:query options:searchOpts].location != NSNotFound;
@@ -379,12 +379,10 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 +(BOOL)phoneNumber:(PhoneNumber *)phoneNumber matchesQuery:(NSString *)queryString {
-    NSString *phoneNumberString = [phoneNumber localizedDescriptionForUser];
-    NSString *searchString = [[phoneNumberString componentsSeparatedByCharactersInSet:
-                            [[NSCharacterSet decimalDigitCharacterSet] invertedSet]]
-                           componentsJoinedByString:@""];
+    NSString *phoneNumberString = phoneNumber.localizedDescriptionForUser;
+    NSString *searchString = phoneNumberString.digitsOnly;
 
-    if ([queryString length] == 0) return YES;
+    if (queryString.length == 0) return YES;
     NSStringCompareOptions searchOpts = NSCaseInsensitiveSearch | NSAnchoredSearch;
     return [searchString rangeOfString:queryString options:searchOpts].location != NSNotFound;
 }
@@ -404,14 +402,14 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 #pragma mark - Favourites
 
 -(NSMutableArray *)loadFavouriteIds {
-    NSArray *favourites = [[NSUserDefaults standardUserDefaults] objectForKey:FAVOURITES_DEFAULT_KEY];
-    return favourites == nil ? [NSMutableArray array] : [favourites mutableCopy];
+    NSArray *favourites = [NSUserDefaults.standardUserDefaults objectForKey:FAVOURITES_DEFAULT_KEY];
+    return favourites == nil ? [NSMutableArray array] : favourites.mutableCopy;
 }
 
 -(void)saveFavouriteIds {
-    [[NSUserDefaults standardUserDefaults] setObject:[_favouriteContactIds copy]
+    [NSUserDefaults.standardUserDefaults setObject:[_favouriteContactIds copy]
                                               forKey:FAVOURITES_DEFAULT_KEY];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [NSUserDefaults.standardUserDefaults synchronize];
     [observableFavouritesController updateValue:[self contactsForContactIds:_favouriteContactIds]];
 }
 
@@ -420,7 +418,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 
     contact.isFavourite = !contact.isFavourite;
     if (contact.isFavourite) {
-        [_favouriteContactIds addObject:[NSNumber numberWithInt:contact.recordID]];
+        [_favouriteContactIds addObject:@(contact.recordID)];
     } else {
         
         ContactSearchBlock removeBlock = ^BOOL(NSNumber *favouriteNumber, NSUInteger idx, BOOL *stop) {
@@ -438,31 +436,31 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 
 +(NSArray *)favouritesForAllContacts:(NSArray *)contacts {
     return [contacts filter:^int(Contact* contact) {
-        return [contact isFavourite];
+        return contact.isFavourite;
     }];
 }
 
 #pragma mark - Whisper User Management
 
 -(NSUInteger) checkForNewWhisperUsers {
-	NSArray *currentUsers = [self getWhisperUsersFromContactsArray:[latestContactsById allValues]];
-	NSArray *newUsers     = [self getNewItemsFrom:currentUsers comparedTo:[latestWhisperUsersById allValues]];
+	NSArray *currentUsers = [self getWhisperUsersFromContactsArray:latestContactsById.allValues];
+	NSArray *newUsers     = [self getNewItemsFrom:currentUsers comparedTo:latestWhisperUsersById.allValues];
     
-	if([newUsers count] > 0){
+	if(newUsers.count > 0){
 		[observableWhisperUsersController updateValue:currentUsers];
 	}
     
     NSArray *unacknowledgedUserIds = [self getUnacknowledgedUsersFrom:currentUsers];
-    if([unacknowledgedUserIds count] > 0){
+    if(unacknowledgedUserIds.count > 0){
         NSArray *unacknowledgedUsers = [self contactsForContactIds: unacknowledgedUserIds];
         if(!newUserNotificationsEnabled){
             [self addContactsToKnownWhisperUsers:unacknowledgedUsers];
         }else{
-            NSDictionary *payload = [NSDictionary dictionaryWithObject:unacknowledgedUsers forKey:NOTIFICATION_DATAKEY_NEW_USERS];
+            NSDictionary *payload = @{NOTIFICATION_DATAKEY_NEW_USERS: unacknowledgedUsers};
             [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFICATION_NEW_USERS_AVAILABLE object:self userInfo:payload];
         }
     }
-    return [newUsers count];
+    return newUsers.count;
 }
 
 -(NSArray*) getUnacknowledgedUsersFrom:(NSArray*) users {
@@ -471,7 +469,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 -(NSUInteger) getNumberOfUnacknowledgedCurrentUsers{
-    NSArray *currentUsers = [self getWhisperUsersFromContactsArray:[latestContactsById allValues]];
+    NSArray *currentUsers = [self getWhisperUsersFromContactsArray:latestContactsById.allValues];
     return [[self getUnacknowledgedUsersFrom:currentUsers] count];
 }
 
@@ -486,7 +484,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 	NSSet *oldSet = [NSSet setWithArray:oldArray];
 	
 	[newSet minusSet:oldSet];
-	return [newSet allObjects];
+	return newSet.allObjects;
 }
 
 - (BOOL)isContactRegisteredWithWhisper:(Contact*) contact {
@@ -499,7 +497,7 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
 }
 
 - (BOOL)isPhoneNumberRegisteredWithWhisper:(PhoneNumber *)phoneNumber {
-	PhoneNumberDirectoryFilter* directory = [[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter];
+	PhoneNumberDirectoryFilter* directory = Environment.getCurrent.phoneDirectoryManager.getCurrentFilter;
 	return phoneNumber != nil && [directory containsPhoneNumber:phoneNumber];
 }
 
@@ -507,32 +505,32 @@ void onAddressBookChanged(ABAddressBookRef notifyAddressBook, CFDictionaryRef in
     for( Contact *contact in contacts){
         [_knownWhisperUserIds addObject:@([contact recordID])];
     }
-    NSMutableSet *users = [NSMutableSet setWithArray:[latestWhisperUsersById allValues]];
+    NSMutableSet *users = [NSMutableSet setWithArray:latestWhisperUsersById.allValues];
     [users addObjectsFromArray:contacts];
     
-    [observableWhisperUsersController updateValue:[users allObjects]];
+    [observableWhisperUsersController updateValue:users.allObjects];
     [self saveKnownWhisperUsers];
 }
 
 -(BOOL) knownUserStoreInitialized{
-    NSUserDefaults *d = [[NSUserDefaults standardUserDefaults] objectForKey:KNOWN_USERS_DEFAULT_KEY];
+    NSUserDefaults *d = [NSUserDefaults.standardUserDefaults objectForKey:KNOWN_USERS_DEFAULT_KEY];
     return  (Nil != d);
 }
 
 -(NSMutableArray*) loadKnownWhisperUsers{
-    NSArray *knownUsers = [[NSUserDefaults standardUserDefaults] objectForKey:KNOWN_USERS_DEFAULT_KEY];
-    return knownUsers == nil ? [NSMutableArray array] : [knownUsers mutableCopy];
+    NSArray *knownUsers = [NSUserDefaults.standardUserDefaults objectForKey:KNOWN_USERS_DEFAULT_KEY];
+    return knownUsers == nil ? [NSMutableArray array] : knownUsers.mutableCopy;
 }
 
 -(void) saveKnownWhisperUsers{
     _knownWhisperUserIds = [NSMutableArray arrayWithArray:[latestWhisperUsersById allKeys]];
-    [[NSUserDefaults standardUserDefaults] setObject:[_knownWhisperUserIds copy] forKey:KNOWN_USERS_DEFAULT_KEY];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [NSUserDefaults.standardUserDefaults setObject:[_knownWhisperUserIds copy] forKey:KNOWN_USERS_DEFAULT_KEY];
+    [NSUserDefaults.standardUserDefaults synchronize];
 }
 
 -(void) clearKnownWhisUsers{
-    [[NSUserDefaults standardUserDefaults] setObject:[NSArray array] forKey:KNOWN_USERS_DEFAULT_KEY];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [NSUserDefaults.standardUserDefaults setObject:@[] forKey:KNOWN_USERS_DEFAULT_KEY];
+    [NSUserDefaults.standardUserDefaults synchronize];
 }
 
 @end

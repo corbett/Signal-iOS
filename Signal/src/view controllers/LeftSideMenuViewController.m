@@ -11,8 +11,8 @@
 #define NUMBER_OF_TABLE_VIEW_SECTIONS 2
 
 static NSString *SIDE_MENU_TABLE_CELL_IDENTIFIER = @"LeftSideMenuCell";
-static NSString *WHISPER_SYSTEMS_URL = @"http://whispersystems.org/";
-static NSString *WHISPER_SYSTEMS_BLOG_URL = @"http://whispersystems.org/blog";
+static NSString *WHISPER_SYSTEMS_URL = @"https://whispersystems.org/";
+static NSString *WHISPER_SYSTEMS_BLOG_URL = @"https://whispersystems.org/blog";
 static NSString *WHISPER_SYSTEMS_BUGREPORT_URL = @"http://support.whispersystems.org";
 
 @interface LeftSideMenuViewController () {
@@ -124,15 +124,15 @@ static NSString *WHISPER_SYSTEMS_BUGREPORT_URL = @"http://support.whispersystems
 }
 
 - (void)openAboutWhisperUrl {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:WHISPER_SYSTEMS_URL]];
+    [UIApplication.sharedApplication openURL:[NSURL URLWithString:WHISPER_SYSTEMS_URL]];
 }
 
 - (void)openBugReporterUrl {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:WHISPER_SYSTEMS_BUGREPORT_URL]];
+    [UIApplication.sharedApplication openURL:[NSURL URLWithString:WHISPER_SYSTEMS_BUGREPORT_URL]];
 }
 
 - (void)openBlogUrl {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:WHISPER_SYSTEMS_BLOG_URL]];
+    [UIApplication.sharedApplication openURL:[NSURL URLWithString:WHISPER_SYSTEMS_BLOG_URL]];
 }
 
 #pragma mark - UITableViewDelegate
@@ -159,9 +159,9 @@ static NSString *WHISPER_SYSTEMS_BUGREPORT_URL = @"http://support.whispersystems
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == FIRST_SECTION_INDEX) {
-        return (NSInteger)[_firstSectionOptions count];
+        return (NSInteger)_firstSectionOptions.count;
     } else {
-        return (NSInteger)[_secondSectionOptions count];
+        return (NSInteger)_secondSectionOptions.count;
     }
 }
 
@@ -186,7 +186,7 @@ static NSString *WHISPER_SYSTEMS_BUGREPORT_URL = @"http://support.whispersystems
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
-    if ([self isLeftSideViewOpenCompletely]) {
+    if (self.isLeftSideViewOpenCompletely) {
         NSString *menuOption;
         if (indexPath.section == FIRST_SECTION_INDEX) {
             menuOption = _firstSectionOptions[(NSUInteger)indexPath.row];

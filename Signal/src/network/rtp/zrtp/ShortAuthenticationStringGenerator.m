@@ -79,13 +79,13 @@ const char* PGP_LIST_ODD[] = {
 
 +(NSString*) generateFromData:(NSData*)sasBytes {
     require(sasBytes != nil);
-    require([sasBytes length] >= MIN_SAS_BYTES);
+    require(sasBytes.length >= MIN_SAS_BYTES);
     uint8_t wordIndexOne = [sasBytes uint8At:0];
     uint8_t wordIndexTwo = [sasBytes uint8At:1];
     
     return [NSString stringWithFormat:@"%@ %@",
-            [NSString stringWithUTF8String:PGP_LIST_EVEN[wordIndexOne]],
-            [NSString stringWithUTF8String:PGP_LIST_ODD[wordIndexTwo]]];
+            @(PGP_LIST_EVEN[wordIndexOne]),
+            @(PGP_LIST_ODD[wordIndexTwo])];
 }
 @end
 

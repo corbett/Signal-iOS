@@ -44,7 +44,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     if (_phoneNumber) {
-        _currentNumberMutable = [[_phoneNumber toE164] mutableCopy];
+        _currentNumberMutable = _phoneNumber.toE164.mutableCopy;
         [self updateNumberLabel];
     }
 }
@@ -95,7 +95,7 @@
 }
 
 - (void)removeLastDigit {
-    NSUInteger n = [_currentNumberMutable length];
+    NSUInteger n = _currentNumberMutable.length;
     if (n > 0) {
         [_currentNumberMutable deleteCharactersInRange:NSMakeRange(n - 1, 1)];
     }
@@ -111,30 +111,30 @@
 }
 
 - (void)callButtonTapped {
-    PhoneNumber *phoneNumber = [self phoneNumberForCurrentInput];
+    PhoneNumber *phoneNumber = self.phoneNumberForCurrentInput;
 
-    BOOL shouldTryCall = [[[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter] containsPhoneNumber:phoneNumber] || [[Environment getCurrent].recentCallManager isPhoneNumberPresentInRecentCalls:phoneNumber];
+    BOOL shouldTryCall = [Environment.getCurrent.phoneDirectoryManager.getCurrentFilter containsPhoneNumber:phoneNumber] || [Environment.getCurrent.recentCallManager isPhoneNumberPresentInRecentCalls:phoneNumber];
     
     if( shouldTryCall){
         [self initiateCallToPhoneNumber:phoneNumber];
-    }else if([phoneNumber isValid]){
+    }else if(phoneNumber.isValid){
         [self promptToInvitePhoneNumber:phoneNumber];
     }
 }
 
 -(void) initiateCallToPhoneNumber:(PhoneNumber*) phoneNumber {
     if (_contact) {
-        [[Environment phoneManager] initiateOutgoingCallToContact:_contact
+        [Environment.phoneManager initiateOutgoingCallToContact:_contact
                                                    atRemoteNumber:phoneNumber];
     } else {
-        [[Environment phoneManager] initiateOutgoingCallToRemoteNumber:phoneNumber];
+        [Environment.phoneManager initiateOutgoingCallToRemoteNumber:phoneNumber];
     }
 }
 
 - (PhoneNumber *)phoneNumberForCurrentInput {
     NSString *numberText = [_currentNumberMutable copy];
     
-    if ([numberText length]> 0 && [[numberText substringToIndex:1] isEqualToString:COUNTRY_CODE_PREFIX]) {
+    if (numberText.length> 0 && [[numberText substringToIndex:1] isEqualToString:COUNTRY_CODE_PREFIX]) {
         return [PhoneNumber tryParsePhoneNumberFromE164:numberText];
     } else {
         return [PhoneNumber tryParsePhoneNumberFromUserSpecifiedText:numberText];
@@ -150,7 +150,7 @@
 
 - (void)tryUpdateContactForNumber:(PhoneNumber *)number {
     if (number) {
-        _contact = [[[Environment getCurrent] contactsManager] latestContactForPhoneNumber:number];
+        _contact = [Environment.getCurrent.contactsManager latestContactForPhoneNumber:number];
     } else {
         _contact = nil;
     }
@@ -168,7 +168,7 @@
             [self removeContactImage];
         }
         
-        [_addContactButton setTitle:[_contact fullName] forState:UIControlStateNormal];
+        [_addContactButton setTitle:_contact.fullName forState:UIControlStateNormal];
         
     } else {
         [_addContactButton setTitle:@"" forState:UIControlStateNormal];

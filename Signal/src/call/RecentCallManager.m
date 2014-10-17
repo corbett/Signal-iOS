@@ -33,8 +33,8 @@ typedef BOOL (^SearchTermConditionalBlock)(RecentCall*, NSUInteger, BOOL*);
     return observableRecentsController;
 }
 
--(void) watchForContactUpdatesFrom:(ContactsManager*) contactManager untillCancelled:(id<CancelToken>) cancelToken{
-    [[contactManager getObservableWhisperUsers] watchLatestValue:^(NSArray* latestUsers) {
+-(void) watchForContactUpdatesFrom:(ContactsManager*) contactManager untillCancelled:(TOCCancelToken*) cancelToken{
+    [contactManager.getObservableWhisperUsers watchLatestValue:^(NSArray* latestUsers) {
         for (RecentCall* recentCall in _allRecents) {
             if (![contactManager latestContactWithRecordId:recentCall.contactRecordID]) {
                 Contact* contact = [contactManager latestContactForPhoneNumber:recentCall.phoneNumber];
@@ -43,26 +43,26 @@ typedef BOOL (^SearchTermConditionalBlock)(RecentCall*, NSUInteger, BOOL*);
                 }
             }
         }
-    } onThread:[NSThread mainThread] untilCancelled:cancelToken];
+    } onThread:NSThread.mainThread untilCancelled:cancelToken];
 }
 
 -(void) watchForCallsThrough:(PhoneManager*)phoneManager
-              untilCancelled:(id<CancelToken>)untilCancelledToken {
+              untilCancelled:(TOCCancelToken*)untilCancelledToken {
     require(phoneManager != nil);
 
-    [[phoneManager currentCallObservable] watchLatestValue:^(CallState* latestCall) {
-        if (latestCall != nil && [[Environment preferences] getHistoryLogEnabled]) {
+    [phoneManager.currentCallObservable watchLatestValue:^(CallState* latestCall) {
+        if (latestCall != nil && Environment.preferences.getHistoryLogEnabled) {
             [self addCall:latestCall];
         }
-    } onThread:[NSThread mainThread] untilCancelled:untilCancelledToken];
+    } onThread:NSThread.mainThread untilCancelled:untilCancelledToken];
 }
 
 -(void) addCall:(CallState*)call {
     require(call != nil);
     
-    [call.futureCallLocallyAcceptedOrRejected finallyDo:^(Future* interactionCompletion) {
+    [call.futureCallLocallyAcceptedOrRejected finallyDo:^(TOCFuture* interactionCompletion) {
         bool isOutgoingCall = call.initiatedLocally;
-        bool isMissedCall = [interactionCompletion hasFailed];
+        bool isMissedCall = interactionCompletion.hasFailed;
         Contact* contact = [self tryGetContactForCall:call];
         
         RPRecentCallType callType = isOutgoingCall ? RPRecentCallTypeOutgoing
@@ -81,7 +81,7 @@ typedef BOOL (^SearchTermConditionalBlock)(RecentCall*, NSUInteger, BOOL*);
 }
 
 -(Contact*) tryGetContactForNumber:(PhoneNumber*)number {
-    return [[[Environment getCurrent] contactsManager] latestContactForPhoneNumber:number];
+    return [Environment.getCurrent.contactsManager latestContactForPhoneNumber:number];
 }
 
 - (void)addMissedCallDueToBusy:(ResponderSessionDescriptor*)incomingCallDescriptor {
@@ -95,51 +95,51 @@ typedef BOOL (^SearchTermConditionalBlock)(RecentCall*, NSUInteger, BOOL*);
 
 -(void) updateRecentCall:(RecentCall*) recentCall withContactId:(ABRecordID) contactId {
     [recentCall updateRecentCallWithContactId:contactId];
-    [observableRecentsController updateValue:[_allRecents copy]];
+    [observableRecentsController updateValue:_allRecents.copy];
     [self saveContactsToDefaults];
 }
 
 - (void)addRecentCall:(RecentCall *)recentCall {
     [_allRecents insertObject:recentCall atIndex:0];
-    [[Environment preferences] setFreshInstallTutorialsEnabled:NO];
-    [observableRecentsController updateValue:[_allRecents copy]];
+    [Environment.preferences setFreshInstallTutorialsEnabled:NO];
+    [observableRecentsController updateValue:_allRecents.copy];
     [self saveContactsToDefaults];
 }
 
 - (void)removeRecentCall:(RecentCall *)recentCall {
     [_allRecents removeObject:recentCall];
-    [observableRecentsController updateValue:[_allRecents copy]];
+    [observableRecentsController updateValue:_allRecents.copy];
     [self saveContactsToDefaults];
 }
 
 - (void)archiveRecentCall:(RecentCall *)recentCall {
     NSUInteger indexOfRecent = [_allRecents indexOfObject:recentCall];
     recentCall.isArchived = YES;
-    [_allRecents replaceObjectAtIndex:indexOfRecent withObject:recentCall];
+    _allRecents[indexOfRecent] = recentCall;
     [self saveContactsToDefaults];
-    [observableRecentsController updateValue:[_allRecents copy]];
+    [observableRecentsController updateValue:_allRecents.copy];
 }
 
 - (void)clearRecentCalls {
     [_allRecents removeAllObjects];
-    [observableRecentsController updateValue:[_allRecents copy]];
+    [observableRecentsController updateValue:_allRecents.copy];
     [self saveContactsToDefaults];
 }
 
 - (void)saveContactsToDefaults {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSData *saveData = [NSKeyedArchiver archivedDataWithRootObject:[_allRecents copy]];
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    NSData *saveData = [NSKeyedArchiver archivedDataWithRootObject:_allRecents.copy];
 
     [defaults setObject:saveData forKey:RECENT_CALLS_DEFAULT_KEY];
     [defaults synchronize];
 }
 
 - (NSMutableArray *)loadContactsFromDefaults {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     NSData *encodedData = [defaults objectForKey:RECENT_CALLS_DEFAULT_KEY];
     id data = [NSKeyedUnarchiver unarchiveObjectWithData:encodedData];
 
-    if(![data isKindOfClass:[NSArray class]]) {
+    if(![data isKindOfClass:NSArray.class]) {
         return [NSMutableArray array];
     } else {
         return [NSMutableArray arrayWithArray:data];
@@ -147,7 +147,7 @@ typedef BOOL (^SearchTermConditionalBlock)(RecentCall*, NSUInteger, BOOL*);
 }
 
 - (NSArray *)recentsForSearchString:(NSString *)optionalSearchString andExcludeArchived:(BOOL)excludeArchived {
-    ContactsManager *contactsManager = [[Environment getCurrent] contactsManager];
+    ContactsManager *contactsManager = Environment.getCurrent.contactsManager;
     SearchTermConditionalBlock searchBlock = ^BOOL(RecentCall *obj, NSUInteger idx, BOOL *stop) {
         BOOL nameMatchesSearch = YES;
         BOOL numberMatchesSearch = YES;

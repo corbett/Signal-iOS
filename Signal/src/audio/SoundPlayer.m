@@ -23,11 +23,11 @@ NSMutableDictionary* currentActiveAudioPlayers;
         [sound setCompeletionBlock:^(SoundInstance* soundInst)  {
             [self removeSoundFromManifest:soundInst];
         }];
-        [currentActiveAudioPlayers setValue:sound forKey:[sound getId]];
+        [currentActiveAudioPlayers setValue:sound forKey:sound.getId];
     }
 }
 -(void) removeSoundFromManifest:(SoundInstance*) sound {
-    [self removeSoundFromMainifestById:[sound getId]];
+    [self removeSoundFromMainifestById:sound.getId];
 }
 
 -(void) removeSoundFromMainifestById:(NSString*) soundId {
@@ -44,23 +44,23 @@ NSMutableDictionary* currentActiveAudioPlayers;
 }
 
 -(void) stopSound:(SoundInstance*) sound {
-    SoundInstance* playingSoundInstance = [currentActiveAudioPlayers objectForKey:[sound getId] ];
+    SoundInstance* playingSoundInstance = currentActiveAudioPlayers[sound.getId];
     [self removeSoundFromManifest:sound];
     [playingSoundInstance stop];
 }
 
 -(void) stopAllAudio{
-    for( SoundInstance* sound in [currentActiveAudioPlayers allValues]){
+    for( SoundInstance* sound in currentActiveAudioPlayers.allValues){
         [self stopSound:sound];
     }
 }
 
 -(BOOL) isSoundPlaying:(SoundInstance*) sound {
-    return nil != [currentActiveAudioPlayers objectForKey:[sound getId]];
+    return nil != currentActiveAudioPlayers[sound.getId];
 }
 
 -(void) awake {
-    for( SoundInstance* sound in [currentActiveAudioPlayers allValues]){
+    for( SoundInstance* sound in currentActiveAudioPlayers.allValues){
         [sound play];
     }
 }

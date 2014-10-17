@@ -18,11 +18,11 @@
 -(NSNumber*) tryGetSessionId {
     if (![self.location hasPrefix:@"/session/"]) return nil;
     
-    NSString* sessionIdText = [self.location substringFromIndex:[@"/session/" length]];
-    sessionIdText = [sessionIdText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSString* sessionIdText = [self.location substringFromIndex:@"/session/".length];
+    sessionIdText = [sessionIdText stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
     NSNumber* sessionIdNumber = [sessionIdText tryParseAsDecimalNumber];
 
-    if ([sessionIdNumber hasLongLongValue]) return sessionIdNumber;
+    if (sessionIdNumber.hasLongLongValue) return sessionIdNumber;
     
     return nil;
 }
@@ -32,15 +32,15 @@
 }
 
 -(bool) isRingingForSession:(int64_t)targetSessionId {
-    return [self.method isEqualToString:@"RING"] && [[NSNumber numberWithLongLong:targetSessionId] isEqualToNumber:[self tryGetSessionId]];
+    return [self.method isEqualToString:@"RING"] && [@(targetSessionId) isEqualToNumber:self.tryGetSessionId];
 }
 
 -(bool) isHangupForSession:(int64_t)targetSessionId {
-    return [self.method isEqualToString:@"DELETE"] && [[NSNumber numberWithLongLong:targetSessionId] isEqualToNumber:[self tryGetSessionId]];
+    return [self.method isEqualToString:@"DELETE"] && [@(targetSessionId) isEqualToNumber:self.tryGetSessionId];
 }
 
 -(bool) isBusyForSession:(int64_t)targetSessionId {
-    return [self.method isEqualToString:@"BUSY"] && [[NSNumber numberWithLongLong:targetSessionId] isEqualToNumber:[self tryGetSessionId]];
+    return [self.method isEqualToString:@"BUSY"] && [@(targetSessionId) isEqualToNumber:self.tryGetSessionId];
 }
 
 +(HttpRequest*) httpRequestToOpenPortWithSessionId:(int64_t)sessionId {
@@ -58,7 +58,7 @@
 +(HttpRequest*) httpRequestToInitiateToRemoteNumber:(PhoneNumber*)remoteNumber {
     require(remoteNumber != nil);
     
-    NSString* formattedRemoteNumber = [remoteNumber toE164];
+    NSString* formattedRemoteNumber = remoteNumber.toE164;
     NSString* interopVersionInsert = CLAIMED_INTEROP_VERSION_IN_INITIATE_SIGNAL == 0
                                    ? @""
                                    : [NSString stringWithFormat:@"/%d", CLAIMED_INTEROP_VERSION_IN_INITIATE_SIGNAL];
@@ -80,15 +80,15 @@
 +(HttpRequest*) httpRequestToVerifyAccessToPhoneNumberWithChallenge:(NSString*)challenge {
     require(challenge != nil);
     
-    PhoneNumber* localPhoneNumber = [SGNKeychainUtil localNumber];
-    NSString* query = [NSString stringWithFormat:@"/users/verification/%@", [localPhoneNumber toE164]];
+    PhoneNumber* localPhoneNumber = SGNKeychainUtil.localNumber;
+    NSString* query = [NSString stringWithFormat:@"/users/verification/%@", localPhoneNumber.toE164];
     [SGNKeychainUtil generateSignaling];
     
-    NSData* signalingCipherKey = [SGNKeychainUtil signalingCipherKey];
-    NSData* signalingMacKey = [SGNKeychainUtil signalingMacKey];
-    NSData* signalingExtraKeyData = [SGNKeychainUtil signalingCipherKey];
-    NSString* encodedSignalingKey = [[@[signalingCipherKey, signalingMacKey, signalingExtraKeyData] concatDatas] encodedAsBase64];
-    NSString* body = [@{@"key" : encodedSignalingKey, @"challenge" : challenge} encodedAsJson];
+    NSData* signalingCipherKey = SGNKeychainUtil.signalingCipherKey;
+    NSData* signalingMacKey = SGNKeychainUtil.signalingMacKey;
+    NSData* signalingExtraKeyData = SGNKeychainUtil.signalingCipherKey;
+    NSString* encodedSignalingKey = @[signalingCipherKey, signalingMacKey, signalingExtraKeyData].concatDatas.encodedAsBase64;
+    NSString* body = @{@"key" : encodedSignalingKey, @"challenge" : challenge}.encodedAsJson;
     
     return [HttpRequest httpRequestWithBasicAuthenticationAndMethod:@"PUT"
                                                         andLocation:query
@@ -97,7 +97,7 @@
 +(HttpRequest*) httpRequestToRegisterForApnSignalingWithDeviceToken:(NSData*)deviceToken {
     require(deviceToken != nil);
     
-    NSString* query = [NSString stringWithFormat:@"/apn/%@", [deviceToken encodedAsHexString]];
+    NSString* query = [NSString stringWithFormat:@"/apn/%@", deviceToken.encodedAsHexString];
     
     return [HttpRequest httpRequestWithBasicAuthenticationAndMethod:@"PUT"
                                                         andLocation:query];

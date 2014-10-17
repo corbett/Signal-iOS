@@ -42,10 +42,10 @@
     bool hasDH3k = false;
     
     for (id<KeyAgreementProtocol> e in keyAgreementProtocols) {
-        if ([[e getId] isEqualToData:COMMIT_DEFAULT_AGREE_SPEC_ID]) {
+        if ([e.getId isEqualToData:COMMIT_DEFAULT_AGREE_SPEC_ID]) {
             hasDH3k = true;
         } else {
-            [agreeSpecIds addObject:[e getId]];
+            [agreeSpecIds addObject:e.getId];
         }
     }
     
@@ -60,18 +60,18 @@
     require(zid != nil);
     require(keyAgreementProtocols != nil);
     
-    return [HelloPacket helloPacketWithVersion:[Environment getCurrent].zrtpVersionId
-                                   andClientId:[Environment getCurrent].zrtpClientId
+    return [HelloPacket helloPacketWithVersion:Environment.getCurrent.zrtpVersionId
+                                   andClientId:Environment.getCurrent.zrtpClientId
                                 andHashChainH3:[hashChain h3]
                                         andZid:zid
                                   andFlags0SMP:0
                             andFlagsUnusedLow4:0
                            andFlagsUnusedHigh4:0
-                                andHashSpecIds:[NSArray array]
-                              andCipherSpecIds:[NSArray array]
-                                andAuthSpecIds:[NSArray array]
+                                andHashSpecIds:@[]
+                              andCipherSpecIds:@[]
+                                andAuthSpecIds:@[]
                                andAgreeSpecIds:[self getAgreeIdsFromKeyAgreementProtocols:keyAgreementProtocols]
-                                 andSasSpecIds:[NSArray array]
+                                 andSasSpecIds:@[]
                       authenticatedWithHmacKey:[hashChain h2]];
 }
 
@@ -101,14 +101,14 @@
     require((flagsUnusedLow4 & ~FLAGS_UNUSED_LOW_MASK) == 0);
     require((flagsUnusedHigh4 & ~FLAGS_UNUSED_HIGH_MASK) == 0);
     
-    require([versionId length] == VERSION_ID_LENGTH);
-    require([clientId length] == CLIENT_ID_LENGTH);
-    require([hashChainH3 length] == HASH_CHAIN_ITEM_LENGTH);
-    require([hashIds count] <= MAX_SPEC_IDS);
-    require([cipherIds count] <= MAX_SPEC_IDS);
-    require([authIds count] <= MAX_SPEC_IDS);
-    require([agreeIds count] <= MAX_SPEC_IDS);
-    require([sasIds count] <= MAX_SPEC_IDS);
+    require(versionId.length == VERSION_ID_LENGTH);
+    require(clientId.length == CLIENT_ID_LENGTH);
+    require(hashChainH3.length == HASH_CHAIN_ITEM_LENGTH);
+    require(hashIds.count <= MAX_SPEC_IDS);
+    require(cipherIds.count <= MAX_SPEC_IDS);
+    require(authIds.count <= MAX_SPEC_IDS);
+    require(agreeIds.count <= MAX_SPEC_IDS);
+    require(sasIds.count <= MAX_SPEC_IDS);
     
     HelloPacket* p = [HelloPacket new];
     p->flagsUnusedLow4 = flagsUnusedLow4;
@@ -136,16 +136,16 @@
                                        andHighUInt4:flags0SMP]];
     
     [flags setUint8At:UNUSED_HIGH_AND_0SMP_FLAG_INDEX
-                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)[hashIds count]
+                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)hashIds.count
                                        andHighUInt4:flagsUnusedLow4]];
     
     [flags setUint8At:AUTH_ID_AND_CIPHER_ID_FLAG_INDEX
-                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)[authIds count]
-                                       andHighUInt4:(uint8_t)[cipherIds count]]];
+                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)authIds.count
+                                       andHighUInt4:(uint8_t)cipherIds.count]];
     
     [flags setUint8At:SAS_ID_AND_AGREE_ID_FLAG_INDEX
-                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)[sasIds count]
-                                       andHighUInt4:(uint8_t)[agreeIds count]]];
+                   to:[NumberUtil uint8FromLowUInt4:(uint8_t)sasIds.count
+                                       andHighUInt4:(uint8_t)agreeIds.count]];
     
     return flags;
 }
@@ -155,7 +155,7 @@
             versionId,
             clientId,
             hashChainH3,
-            [zid getData],
+            zid.getData,
             [self generateFlags],
             [[@[hashIds, cipherIds, authIds, agreeIds, sasIds] concatArrays] concatDatas]
             
@@ -179,7 +179,7 @@
     return [Zid zidWithData:[payload subdataWithRange:NSMakeRange(ZID_OFFSET, ZID_LENGTH)]];
 }
 +(NSArray*) getSpecIdsFromPayload:(NSData*)payload counts:(NSArray*)counts {
-    checkOperation([payload length] >= SPEC_IDS_OFFSET + SPEC_ID_LENGTH*[counts sumNSUInteger]);
+    checkOperation(payload.length >= SPEC_IDS_OFFSET + SPEC_ID_LENGTH*[counts sumNSUInteger]);
     
     NSMutableArray* result = [NSMutableArray array];
     NSUInteger offset = SPEC_IDS_OFFSET;
@@ -205,25 +205,25 @@
     uint8_t authIdsCount = [flags lowUint4AtByteOffset:AUTH_ID_AND_CIPHER_ID_FLAG_INDEX];
     uint8_t agreeIdsCount = [flags highUint4AtByteOffset:SAS_ID_AND_AGREE_ID_FLAG_INDEX];
     uint8_t sasIdsCount = [flags lowUint4AtByteOffset:SAS_ID_AND_AGREE_ID_FLAG_INDEX];
-    NSArray* counts = @[[NSNumber numberWithUnsignedInteger:hashIdsCount],
-                        [NSNumber numberWithUnsignedInteger:cipherIdsCount],
-                        [NSNumber numberWithUnsignedInteger:authIdsCount],
-                        [NSNumber numberWithUnsignedInteger:agreeIdsCount],
-                        [NSNumber numberWithUnsignedInteger:sasIdsCount]];
+    NSArray* counts = @[@(hashIdsCount),
+                        @(cipherIdsCount),
+                        @(authIdsCount),
+                        @(agreeIdsCount),
+                        @(sasIdsCount)];
     
     NSArray* specIds = [HelloPacket getSpecIdsFromPayload:payload counts:counts];
-    hashIds = [specIds objectAtIndex:HASH_IDS_INDEX];
-    cipherIds = [specIds objectAtIndex:CIPHER_IDS_INDEX];
-    authIds = [specIds objectAtIndex:AUTH_IDS_INDEX];
-    agreeIds = [specIds objectAtIndex:AGREE_IDS_INDEX];
-    sasIds = [specIds objectAtIndex:SAS_IDS_INDEX];
+    hashIds = specIds[HASH_IDS_INDEX];
+    cipherIds = specIds[CIPHER_IDS_INDEX];
+    authIds = specIds[AUTH_IDS_INDEX];
+    agreeIds = specIds[AGREE_IDS_INDEX];
+    sasIds = specIds[SAS_IDS_INDEX];
 }
 +(HelloPacket*) helloPacketParsedFromHandshakePacket:(HandshakePacket*)handshakePacket {
     require(handshakePacket != nil);
     checkOperationDescribe([[handshakePacket typeId] isEqualToData:HANDSHAKE_TYPE_HELLO], @"Not a hello packet");
     
     NSData* payload = [handshakePacket payload];
-    checkOperation([payload length] >= SPEC_IDS_OFFSET);
+    checkOperation(payload.length >= SPEC_IDS_OFFSET);
     
     HelloPacket* p = [HelloPacket new];
     
@@ -242,7 +242,7 @@
     return embedding;
 }
 -(NSArray*) agreeIdsIncludingImplied {
-    NSMutableArray* a = [agreeIds mutableCopy];
+    NSMutableArray* a = agreeIds.mutableCopy;
     [a addObject:COMMIT_DEFAULT_AGREE_SPEC_ID];
     return a;
 }

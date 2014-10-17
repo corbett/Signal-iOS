@@ -1,9 +1,12 @@
 #import "PhoneNumberDirectoryFilterManager.h"
+
 #import "Environment.h"
+#import "NotificationManifest.h"
 #import "PreferencesUtil.h"
+#import "RPServerRequestsManager.h"
+#import "SignalUtil.h"
 #import "ThreadManager.h"
 #import "Util.h"
-#import "NotificationManifest.h"
 
 #define MINUTE (60.0)
 #define HOUR (MINUTE*60.0)
@@ -12,21 +15,21 @@
 #define DIRECTORY_UPDATE_RETRY_PERIOD (1.0*HOUR)
 
 @implementation PhoneNumberDirectoryFilterManager {
-@private CancelTokenSource* currentUpdateLifetime;
+@private TOCCancelTokenSource* currentUpdateLifetime;
 }
 
 -(id) init {
-	if (self = [super init]) {
-		phoneNumberDirectoryFilter = [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterDefault];
-	}
-	return self;
+    if (self = [super init]) {
+        phoneNumberDirectoryFilter = PhoneNumberDirectoryFilter.phoneNumberDirectoryFilterDefault;
+    }
+    return self;
 }
--(void) startUntilCancelled:(id<CancelToken>)cancelToken {
+-(void) startUntilCancelled:(TOCCancelToken*)cancelToken {
     lifetimeToken = cancelToken;
     
-    phoneNumberDirectoryFilter = [[Environment preferences] tryGetSavedPhoneNumberDirectory];
+    phoneNumberDirectoryFilter = [Environment.preferences tryGetSavedPhoneNumberDirectory];
     if (phoneNumberDirectoryFilter == nil) {
-        phoneNumberDirectoryFilter = [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterDefault];
+        phoneNumberDirectoryFilter = PhoneNumberDirectoryFilter.phoneNumberDirectoryFilterDefault;
     }
     
     [self scheduleUpdate];
@@ -45,67 +48,42 @@
 }
 -(void) scheduleUpdateAt:(NSDate*)date {
     void(^doUpdate)(void) = ^{
-        [self update];
+        if (Environment.isRegistered) {
+            [self update];
+        }
     };
     
     [currentUpdateLifetime cancel];
-    currentUpdateLifetime = [CancelTokenSource cancelTokenSource];
-    [lifetimeToken whenCancelled:^{ [currentUpdateLifetime cancel]; }];
+    currentUpdateLifetime = [TOCCancelTokenSource new];
+    [lifetimeToken whenCancelledDo:^{ [currentUpdateLifetime cancel]; }];
     [TimeUtil scheduleRun:doUpdate
                        at:date
                 onRunLoop:[ThreadManager normalLatencyThreadRunLoop]
-          unlessCancelled:currentUpdateLifetime.getToken];
-}
-
--(Future*) asyncQueryCurrentDirectory {
-    CancellableOperationStarter startAwaitDirectoryOperation = ^(id<CancelToken> untilCancelledToken) {
-		HttpRequest* directoryRequest = [HttpRequest httpRequestForPhoneNumberDirectoryFilter];
-
-        Future* futureDirectoryResponse = [HttpManager asyncOkResponseFromMasterServer:directoryRequest
-                                                                       unlessCancelled:untilCancelledToken
-                                                                       andErrorHandler:[Environment errorNoter]];
-        
-        return [futureDirectoryResponse then:^(HttpResponse* response) {
-			return [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterFromHttpResponse:response];
-		}];
-    };
-    
-    return [AsyncUtil raceCancellableOperation:startAwaitDirectoryOperation
-                                againstTimeout:DIRECTORY_UPDATE_TIMEOUT_PERIOD
-                                untilCancelled:lifetimeToken];
-}
-
--(PhoneNumberDirectoryFilter*) sameDirectoryWithRetryTimeout {
-    BloomFilter* filter = [phoneNumberDirectoryFilter bloomFilter];
-    NSDate* retryDate = [NSDate dateWithTimeInterval:DIRECTORY_UPDATE_RETRY_PERIOD
-                                           sinceDate:[NSDate date]];
-    return [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterWithBloomFilter:filter
-                                                               andExpirationDate:retryDate];
-}
--(void) signalDirectoryQueryFailed:(id)failure {
-    NSString* desc = [NSString stringWithFormat:@"Failed to retrieve directory. Retrying in %f hours.",
-                      DIRECTORY_UPDATE_RETRY_PERIOD/HOUR];
-    [Environment errorNoter](desc, failure, false);
-}
--(Future*) asyncQueryCurrentDirectoryWithDefaultOnFail {
-    Future* futureDirectory = [self asyncQueryCurrentDirectory];
-    
-    return [futureDirectory catch:^PhoneNumberDirectoryFilter*(id error) {
-        [self signalDirectoryQueryFailed:error];
-        return [self sameDirectoryWithRetryTimeout];
-    }];
+          unlessCancelled:currentUpdateLifetime.token];
 }
 
 -(void) update {
-    Future* eventualDirectory = [self asyncQueryCurrentDirectoryWithDefaultOnFail];
-    
-    [eventualDirectory thenDo:^(PhoneNumberDirectoryFilter* directory) {
+    [[RPServerRequestsManager sharedInstance] performRequest:[RPAPICall fetchBloomFilter] success:^(NSURLSessionDataTask *task, NSData *responseObject) {
+        PhoneNumberDirectoryFilter *directory = [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterFromURLResponse:(NSHTTPURLResponse*)task.response body:responseObject];
+        
         @synchronized(self) {
             phoneNumberDirectoryFilter = directory;
         }
-        [[Environment preferences] setSavedPhoneNumberDirectory:directory];
+        
+        [Environment.preferences setSavedPhoneNumberDirectory:directory];
         [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFICATION_DIRECTORY_WAS_UPDATED object:nil];
         [self scheduleUpdate];
+        
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSString* desc = [NSString stringWithFormat:@"Failed to retrieve directory. Retrying in %f hours.",
+                          DIRECTORY_UPDATE_RETRY_PERIOD/HOUR];
+        Environment.errorNoter(desc, error, false);
+        BloomFilter* filter = [phoneNumberDirectoryFilter bloomFilter];
+        NSDate* retryDate = [NSDate dateWithTimeInterval:DIRECTORY_UPDATE_RETRY_PERIOD
+                                               sinceDate:[NSDate date]];
+        [PhoneNumberDirectoryFilter phoneNumberDirectoryFilterWithBloomFilter:filter
+                                                                   andExpirationDate:retryDate];
+        [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFICATION_DIRECTORY_FAILED object:nil];
     }];
 }
 

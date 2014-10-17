@@ -18,7 +18,7 @@
     NSString* documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"/Documents/"];
     NSString *path = [NSString stringWithFormat:@"%@/%@.plist", documentsDirectory, @"RedPhone-Data"];
     
-    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+    if ([NSFileManager.defaultManager fileExistsAtPath:path]) {
         NSData *plistData = [NSData dataWithContentsOfFile:path];
         
         NSError *error;
@@ -26,16 +26,16 @@
         NSDictionary *dict = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:&format error:&error];
         
         NSArray *entries = [dict allKeys];
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
         
-        for (NSUInteger i = 0; i < [entries count]; i++) {
-            NSString *key = [entries objectAtIndex:i];
-            [defaults setObject:[dict objectForKey:key] forKey:key];
+        for (NSUInteger i = 0; i < entries.count; i++) {
+            NSString *key = entries[i];
+            [defaults setObject:dict[key] forKey:key];
         }
         
         [defaults synchronize];
         
-        [[NSFileManager defaultManager]removeItemAtPath:path error:&error];
+        [NSFileManager.defaultManager removeItemAtPath:path error:&error];
         
         if (error) {
             DDLogError(@"Error while migrating data: %@", error.description);
@@ -43,9 +43,13 @@
         
         // Some users push IDs were not correctly registered, by precaution, we are going to re-register all of them
         
-        [[PushManager sharedManager] askForPushRegistration];
+        [PushManager.sharedManager registrationWithSuccess:^{
+            
+        } failure:^{
+            DDLogError(@"Error re-registering on migration from 1.0.2");
+        }];
         
-        [[NSFileManager defaultManager] removeItemAtPath:path error:&error];
+        [NSFileManager.defaultManager removeItemAtPath:path error:&error];
         
         if (error) {
             DDLogError(@"Error upgrading from 1.0.2 : %@", error.description);

@@ -30,9 +30,9 @@
 }
 
 -(uint32_t) hash:(NSData*)value index:(NSUInteger)index {
-    NSData* key = [[[NSNumber numberWithUnsignedInteger:index] stringValue] encodedAsAscii];
+    NSData* key = [[@(index) stringValue] encodedAsAscii];
     NSData* hash = [value hmacWithSha1WithKey:key];
-    return [hash bigEndianUInt32At:0] % ([data length] * 8);
+    return [hash bigEndianUInt32At:0] % (data.length * 8);
 }
 
 -(bool) isBitSetAt:(uint32_t)bitIndex {
@@ -43,7 +43,7 @@
 
 -(bool) contains:(NSString*)entity {
     require(entity != nil);
-    NSData* value = [entity encodedAsUtf8];
+    NSData* value = entity.encodedAsUtf8;
     for (NSUInteger i = 0; i < hashCount; i++) {
         uint32_t bitIndex = [self hash:value index:i];
         if (![self isBitSetAt:bitIndex]) {

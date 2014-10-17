@@ -29,9 +29,9 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
 	
     if (_contact) {
         self.navigationController.navigationBar.barTintColor = [UIUtil darkBackgroundColor];
-        self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+        self.navigationController.navigationBar.tintColor = UIColor.whiteColor;
         self.navigationController.navigationBar.translucent = NO;
-        _contactNameLabel.text = [_contact fullName];
+        _contactNameLabel.text = _contact.fullName;
         if (_contact.image) {
             _contactImageView.image = _contact.image;
         }
@@ -53,7 +53,7 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    NSInteger secureNumberCount = (NSInteger)[_contact.userTextPhoneNumbers count] + (NSInteger)[_contact.emails count];
+    NSInteger secureNumberCount = (NSInteger)_contact.userTextPhoneNumbers.count + (NSInteger)_contact.emails.count;
     return _contact.notes != nil ? secureNumberCount + 1 : secureNumberCount;
 }
 
@@ -65,15 +65,15 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
                                                  reuseIdentifier:DETAIL_TABLE_CELL_IDENTIFIER];
     }
         
-    if ((NSUInteger)indexPath.row < [_contact.userTextPhoneNumbers count]) {
+    if ((NSUInteger)indexPath.row < _contact.userTextPhoneNumbers.count) {
         
         PhoneNumber *phoneNumber = [PhoneNumber tryParsePhoneNumberFromUserSpecifiedText:_contact.userTextPhoneNumbers[(NSUInteger)indexPath.row]];
-        BOOL isSecure = [[[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter] containsPhoneNumber:phoneNumber];
+        BOOL isSecure = [Environment.getCurrent.phoneDirectoryManager.getCurrentFilter containsPhoneNumber:phoneNumber];
         [cell configureWithPhoneNumber:phoneNumber isSecure:isSecure];
         
-    } else if ((NSUInteger)indexPath.row < [_contact.userTextPhoneNumbers count] + [_contact.emails count]) {
+    } else if ((NSUInteger)indexPath.row < _contact.userTextPhoneNumbers.count + _contact.emails.count) {
         
-        NSUInteger emailIndex = (NSUInteger)indexPath.row - [_contact.userTextPhoneNumbers count];
+        NSUInteger emailIndex = (NSUInteger)indexPath.row - _contact.userTextPhoneNumbers.count;
         [cell configureWithEmailString:_contact.emails[emailIndex]];
         
     } else {
@@ -99,8 +99,8 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
             [self openPhoneAppWithPhoneNumber:number];
         }
         
-    } else if ((NSUInteger)indexPath.row < [_contact.userTextPhoneNumbers count] + [_contact.emails count]) {
-        NSUInteger emailIndex = (NSUInteger)indexPath.row - [_contact.userTextPhoneNumbers count];
+    } else if ((NSUInteger)indexPath.row < _contact.userTextPhoneNumbers.count + _contact.emails.count) {
+        NSUInteger emailIndex = (NSUInteger)indexPath.row - _contact.userTextPhoneNumbers.count;
         [self openEmailAppWithEmail:_contact.emails[emailIndex]];
     }
 }
@@ -118,7 +118,7 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
 }
 
 - (void)favouriteButtonTapped {
-    [[[Environment getCurrent] contactsManager] toggleFavourite:_contact];
+    [Environment.getCurrent.contactsManager toggleFavourite:_contact];
     [self configureFavouritesButton];
 }
 
@@ -136,27 +136,27 @@ static NSString *const FAVOURITE_FALSE_ICON_NAME = @"favourite_false_icon";
                                                                                   style:UIBarButtonItemStylePlain
                                                                                  target:self
                                                                                  action:@selector(favouriteButtonTapped)];
-        self.navigationItem.rightBarButtonItem.tintColor = [UIColor whiteColor];
+        self.navigationItem.rightBarButtonItem.tintColor = UIColor.whiteColor;
     }
 }
 
 - (void)openPhoneAppWithPhoneNumber:(PhoneNumber *)phoneNumber {
     if (phoneNumber) {
-        [[UIApplication sharedApplication] openURL:[phoneNumber toUrl]];
+        [UIApplication.sharedApplication openURL:phoneNumber.toSystemDialerURL];
     }
 }
 
 - (void)openEmailAppWithEmail:(NSString *)email {
     NSString *mailURL = [NSString stringWithFormat:@"%@%@",MAIL_URL_PREFIX, email];
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:mailURL]];
+    [UIApplication.sharedApplication openURL:[NSURL URLWithString:mailURL]];
 }
 
 - (void)startSecureCallWithNumber:(PhoneNumber *)number {
-    [[Environment phoneManager] initiateOutgoingCallToContact:_contact atRemoteNumber:number];
+    [Environment.phoneManager initiateOutgoingCallToContact:_contact atRemoteNumber:number];
 }
 
 - (BOOL)phoneNumberIsSecure:(PhoneNumber *)phoneNumber {
-    PhoneNumberDirectoryFilter* directory = [[[Environment getCurrent] phoneDirectoryManager] getCurrentFilter];
+    PhoneNumberDirectoryFilter* directory = Environment.getCurrent.phoneDirectoryManager.getCurrentFilter;
     return phoneNumber != nil && [directory containsPhoneNumber:phoneNumber];
 }
 

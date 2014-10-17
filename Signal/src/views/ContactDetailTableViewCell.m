@@ -9,12 +9,12 @@
 @implementation ContactDetailTableViewCell
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
-    self = [[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:self options:nil][0];
+    self = [NSBundle.mainBundle loadNibNamed:NSStringFromClass(self.class) owner:self options:nil][0];
     return self;
 }
 
 - (NSString *)reuseIdentifier {
-    return NSStringFromClass([self class]);
+    return NSStringFromClass(self.class);
 }
 
 - (void)configureWithPhoneNumber:(PhoneNumber *)phoneNumber isSecure:(BOOL)isSecure {
@@ -23,7 +23,7 @@
                                          INFO_DISPLAY_LABEL_DEFAULT_WIDTH,
                                          CGRectGetHeight(_infoDisplayLabel.frame));
 
-    _infoDisplayLabel.text = [phoneNumber localizedDescriptionForUser];
+    _infoDisplayLabel.text = phoneNumber.localizedDescriptionForUser;
         
     if (isSecure) {
         _infoTypeLabel.text = CONTACT_DETAIL_COMM_TYPE_SECURE;

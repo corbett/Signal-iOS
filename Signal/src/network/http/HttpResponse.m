@@ -41,7 +41,7 @@
     require(data != nil);
     NSUInteger responseSize;
     HttpRequestOrResponse* http = [HttpRequestOrResponse tryExtractFromPartialData:data usedLengthOut:&responseSize];
-    checkOperation([http isResponse] && responseSize == [data length]);
+    checkOperation(http.isResponse && responseSize == data.length);
     return [http response];
 }
 +(HttpResponse*) httpResponse200Ok {
@@ -62,7 +62,7 @@
 +(HttpResponse*) httpResponse200OkWithOptionalBody:(NSString*)optionalBody {
     return [HttpResponse httpResponseFromStatusCode:200
                                       andStatusText:@"OK"
-                                         andHeaders:[NSDictionary dictionary]
+                                         andHeaders:@{}
                                 andOptionalBodyText:optionalBody];
 }
 -(bool) isOkResponse {
@@ -81,7 +81,7 @@
 }
 
 -(bool) hasEmptyBody {
-    return [optionalBodyData length] == 0 && [optionalBodyText length] == 0;
+    return optionalBodyData.length == 0 && optionalBodyText.length == 0;
 }
 -(NSString*) getOptionalBodyText {
     if (optionalBodyText != nil) return optionalBodyText;
@@ -90,7 +90,7 @@
 }
 -(NSData*) getOptionalBodyData {
     if (optionalBodyData != nil) return optionalBodyData;
-    if (optionalBodyText != nil) return [optionalBodyText encodedAsUtf8];
+    if (optionalBodyText != nil) return optionalBodyText.encodedAsUtf8;
     return nil;
 }
 
@@ -98,15 +98,15 @@
     NSMutableArray* r = [NSMutableArray array];
     
     [r addObject:@"HTTP/1.0 "];
-    [r addObject:[[NSNumber numberWithUnsignedInteger:statusCode] description]];
+    [r addObject:[@(statusCode) description]];
     [r addObject:@" "];
     [r addObject:statusText];
     [r addObject:@"\r\n"];
     
-    NSString* body = [self getOptionalBodyText];
+    NSString* body = self.getOptionalBodyText;
     if (body != nil) {
         [r addObject:@"Content-Length: "];
-        [r addObject:[[NSNumber numberWithUnsignedInteger:[body length]] stringValue]];
+        [r addObject:[@(body.length) stringValue]];
         [r addObject:@"\r\n"];
         [r addObject:body];
     } else {
@@ -116,15 +116,15 @@
     return [r componentsJoinedByString:@""];
 }
 -(NSData*) serialize {
-    return [[self toHttp] encodedAsUtf8];
+    return self.toHttp.encodedAsUtf8;
 }
 
 -(NSString*) description {
     return [NSString stringWithFormat:@"%lu %@%@",
             (unsigned long)statusCode,
             statusText,
-            ![self hasBody] ? @""
-              : [self hasEmptyBody] ? @" [empty body]"
+            !self.hasBody ? @""
+              : self.hasEmptyBody ? @" [empty body]"
               : @" [...body...]"];
 }
 -(bool) hasBody {

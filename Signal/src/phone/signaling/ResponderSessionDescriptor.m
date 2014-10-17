@@ -50,11 +50,11 @@
 +(ResponderSessionDescriptor*)responderSessionDescriptorFromEncryptedRemoteNotification:(NSDictionary*)remoteNotif {
     require(remoteNotif != nil);
     
-    NSString* message = [remoteNotif objectForKey:MessagePropertyKey];
+    NSString* message = remoteNotif[MessagePropertyKey];
     checkOperation(message != nil);
     NSData* authenticatedPayload = [message decodedAsBase64Data];
 
-    checkOperation([authenticatedPayload length] > 0);
+    checkOperation(authenticatedPayload.length > 0);
     uint8_t includedRemoteNotificationFormatVersion = [authenticatedPayload uint8At:0];
     checkOperation(includedRemoteNotificationFormatVersion == EXPECTED_REMOTE_NOTIF_FORMAT_VERSION);
     
@@ -86,10 +86,10 @@
 }
 +(NSData*) verifyAndRemoveMacFromRemoteNotifcationData:(NSData*)data {
     require(data != nil);
-    checkOperation([data length] >= HMAC_TRUNCATED_SIZE);
+    checkOperation(data.length >= HMAC_TRUNCATED_SIZE);
     NSData* includedMac     = [data takeLast:HMAC_TRUNCATED_SIZE];
     NSData* payload         = [data skipLast:HMAC_TRUNCATED_SIZE];
-    NSData* signalingMacKey = [SGNKeychainUtil signalingMacKey];
+    NSData* signalingMacKey = SGNKeychainUtil.signalingMacKey;
     require(signalingMacKey != nil);
     NSData* computedMac     = [[payload hmacWithSha1WithKey:signalingMacKey] takeLast:HMAC_TRUNCATED_SIZE];
     checkOperation([includedMac isEqualToData_TimingSafe:computedMac]);
@@ -97,8 +97,9 @@
 }
 +(NSData*) decryptRemoteNotificationData:(NSData*)data {
     require(data != nil);
-    checkOperation([data length] >= VERSION_SIZE + IV_SIZE);
-    NSData* cipherKey = [SGNKeychainUtil signalingCipherKey];
+    checkOperation(data.length >= VERSION_SIZE + IV_SIZE);
+    NSData* cipherKey = SGNKeychainUtil.signalingCipherKey;
+    require(cipherKey != nil);
     NSData* iv = [data subdataWithRange:NSMakeRange(VERSION_SIZE, IV_SIZE)];
     NSData* cipherText = [data skip:VERSION_SIZE+IV_SIZE];
     return [cipherText decryptWithAesInCipherBlockChainingModeWithPkcs7PaddingWithKey:cipherKey andIv:iv];

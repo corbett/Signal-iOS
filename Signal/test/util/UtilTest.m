@@ -26,7 +26,7 @@
     test([[(@[]) toUint8Data] length] == 0);
 
     NSData* d = [@[@0, @1] toUint8Data];
-    test([d length] == 2);
+    test(d.length == 2);
     test(((uint8_t*)[d bytes])[0] == 0);
     test(((uint8_t*)[d bytes])[1] == 1);
 }
@@ -243,29 +243,29 @@
     test([d isEqualToData:[(@[@1, @2, @1, @1, @2, @3]) toUint8Data]]);
 }
 -(void) testStringEncodedAsUtf8 {
-    test([[@"ab" encodedAsUtf8] isEqualToData:[(@[@97, @98]) toUint8Data]]);
+    test([@"ab".encodedAsUtf8 isEqualToData:[(@[@97, @98]) toUint8Data]]);
 }
 -(void) testStringEncodedAsAscii {
-    test([[@"ab" encodedAsAscii] isEqualToData:[(@[@97, @98]) toUint8Data]]);
-    testThrows([@"√" encodedAsAscii]);
+    test([@"ab".encodedAsAscii isEqualToData:[(@[@97, @98]) toUint8Data]]);
+    testThrows(@"√".encodedAsAscii);
 }
 -(void) testBase64EncodeKnown {
-    test([[[@"" encodedAsUtf8] encodedAsBase64] isEqualToString:@""]);
-    test([[[@"f" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zg=="]);
-    test([[[@"fo" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zm8="]);
-    test([[[@"foo" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zm9v"]);
-    test([[[@"foob" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zm9vYg=="]);
-    test([[[@"fooba" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zm9vYmE="]);
-    test([[[@"foobar" encodedAsUtf8] encodedAsBase64] isEqualToString:@"Zm9vYmFy"]);
+    test([@"".encodedAsUtf8.encodedAsBase64 isEqualToString:@""]);
+    test([@"f".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zg=="]);
+    test([@"fo".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zm8="]);
+    test([@"foo".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zm9v"]);
+    test([@"foob".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zm9vYg=="]);
+    test([@"fooba".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zm9vYmE="]);
+    test([@"foobar".encodedAsUtf8.encodedAsBase64 isEqualToString:@"Zm9vYmFy"]);
 }
 -(void) testBase64DecodeKnown {
-    test([[@"" encodedAsUtf8] isEqualToData:[@"" decodedAsBase64Data]]);
-    test([[@"f" encodedAsUtf8] isEqualToData:[@"Zg==" decodedAsBase64Data]]);
-    test([[@"fo" encodedAsUtf8] isEqualToData:[@"Zm8=" decodedAsBase64Data]]);
-    test([[@"foo" encodedAsUtf8] isEqualToData:[@"Zm9v" decodedAsBase64Data]]);
-    test([[@"foob" encodedAsUtf8] isEqualToData:[@"Zm9vYg==" decodedAsBase64Data]]);
-    test([[@"fooba" encodedAsUtf8] isEqualToData:[@"Zm9vYmE=" decodedAsBase64Data]]);
-    test([[@"foobar" encodedAsUtf8] isEqualToData:[@"Zm9vYmFy" decodedAsBase64Data]]);
+    test([@"".encodedAsUtf8 isEqualToData:[@"" decodedAsBase64Data]]);
+    test([@"f".encodedAsUtf8 isEqualToData:[@"Zg==" decodedAsBase64Data]]);
+    test([@"fo".encodedAsUtf8 isEqualToData:[@"Zm8=" decodedAsBase64Data]]);
+    test([@"foo".encodedAsUtf8 isEqualToData:[@"Zm9v" decodedAsBase64Data]]);
+    test([@"foob".encodedAsUtf8 isEqualToData:[@"Zm9vYg==" decodedAsBase64Data]]);
+    test([@"fooba".encodedAsUtf8 isEqualToData:[@"Zm9vYmE=" decodedAsBase64Data]]);
+    test([@"foobar".encodedAsUtf8 isEqualToData:[@"Zm9vYmFy" decodedAsBase64Data]]);
 }
 -(void) testBase64Perturbed {
     for (NSUInteger i = 0; i < 100; i++) {
@@ -273,7 +273,7 @@
         uint8_t data[n];
         arc4random_buf(data, sizeof(data));
         NSData* d = [NSData dataWithBytes:data length:sizeof(data)];
-        NSString* b = [d encodedAsBase64];
+        NSString* b = d.encodedAsBase64;
         NSData* d2 = [b decodedAsBase64Data];
         if (![d isEqualToData:d2]) {
             XCTFail(@"%@",[d description]);
@@ -281,8 +281,8 @@
     }
 }
 -(void) testToRegex {
-    testThrows([@"(" toRegularExpression]);
-    NSRegularExpression* r = [@"a+b" toRegularExpression];
+    testThrows(@"(".toRegularExpression);
+    NSRegularExpression* r = @"a+b".toRegularExpression;
     test([r numberOfMatchesInString:@"a" options:NSMatchingAnchored range:NSMakeRange(0, 1)] == 0);
     test([r numberOfMatchesInString:@"b" options:NSMatchingAnchored range:NSMakeRange(0, 1)] == 0);
     test([r numberOfMatchesInString:@"ba" options:NSMatchingAnchored range:NSMakeRange(0, 1)] == 0);
@@ -293,8 +293,8 @@
 }
 -(void) testWithMatchesAgainstReplacedBy {
     test([[@"(555)-555-5555" withMatchesAgainst:[@"[^0-9+]" toRegularExpression] replacedBy:@""] isEqualToString:@"5555555555"]);
-    test([[@"aaaaaa" withMatchesAgainst:[@"a" toRegularExpression] replacedBy:@""] isEqualToString:@""]);
-    test([[@"aabaabaa" withMatchesAgainst:[@"b" toRegularExpression] replacedBy:@"wonder"] isEqualToString:@"aawonderaawonderaa"]);
+    test([[@"aaaaaa" withMatchesAgainst:@"a".toRegularExpression replacedBy:@""] isEqualToString:@""]);
+    test([[@"aabaabaa" withMatchesAgainst:@"b".toRegularExpression replacedBy:@"wonder"] isEqualToString:@"aawonderaawonderaa"]);
 }
 -(void) testContainsAnyMatches {
     NSRegularExpression* r = [@"^\\+[0-9]{10,}" toRegularExpression];
@@ -317,12 +317,12 @@
     testThrows([@"test" withPrefixRemovedElseNull:nil]);
 }
 -(void) testToJson {
-    test([[@{} encodedAsJson] isEqualToString:@"{}"]);
+    test([@{}.encodedAsJson isEqualToString:@"{}"]);
     test([[@{@"a":@"b"} encodedAsJson] isEqualToString:@"{\"a\":\"b\"}"]);
     test([[@{@"c":@5} encodedAsJson] isEqualToString:@"{\"c\":5}"]);
     test([[(@{@"a":@5,@"b":@YES}) encodedAsJson] isEqualToString:@"{\"a\":5,\"b\":true}"]);
     
-    testThrows([@{@"ev": [@"a+b" toRegularExpression]} encodedAsJson]);
+    testThrows([@{@"ev": @"a+b".toRegularExpression} encodedAsJson]);
 }
 -(void) testFromJson {
     test([[@"{}" decodedAsJsonIntoDictionary] isEqualToDictionary:@{}]);
@@ -336,8 +336,8 @@
 }
 -(void) testRepresentedAsHexString {
     test([[[NSData data] encodedAsHexString] isEqualToString:@""]);
-    test([[increasingData(17) encodedAsHexString] isEqualToString:@"000102030405060708090a0b0c0d0e0f10"]);
-    test([[increasingDataFrom(256-16,16) encodedAsHexString] isEqualToString:@"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"]);
+    test([increasingData(17).encodedAsHexString isEqualToString:@"000102030405060708090a0b0c0d0e0f10"]);
+    test([increasingDataFrom(256-16,16).encodedAsHexString isEqualToString:@"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"]);
 }
 -(void) testDecodedAsHexData {
     test([[@"" decodedAsHexString] isEqualToData:[NSData data]]);
@@ -350,49 +350,95 @@
     testThrows([@"0" decodedAsHexString]);
 }
 -(void) testHasUnsignedIntegerValue {
-    test([@0 hasUnsignedIntegerValue]);
-    test([@1 hasUnsignedIntegerValue]);
-    test([@0xFFFFFFFF hasUnsignedIntegerValue]);
-    test(![@0x100000000 hasUnsignedIntegerValue]);
-    test([[NSNumber numberWithDouble:pow(2, 31)] hasUnsignedIntegerValue]);
-    test(![[NSNumber numberWithDouble:pow(2, 32)] hasUnsignedIntegerValue]);
-    test(![@-1 hasUnsignedIntegerValue]);
-    test(![@0.5 hasUnsignedIntegerValue]);
+    test((@0).hasUnsignedIntegerValue);
+    test((@1).hasUnsignedIntegerValue);
+    test((@0xFFFFFFFF).hasUnsignedIntegerValue);
+    test(@(pow(2, 31)).hasUnsignedIntegerValue);
+    test(!(@-1).hasUnsignedIntegerValue);
+    test(!(@0.5).hasUnsignedIntegerValue);
 }
 -(void) testHasUnsignedLongLongValue {
-    test([@0 hasUnsignedLongLongValue]);
-    test([@1 hasUnsignedLongLongValue]);
-    test([@0xFFFFFFFFFFFFFFFF hasUnsignedLongLongValue]);
-    test([[NSNumber numberWithDouble:pow(2, 63)] hasUnsignedLongLongValue]);
-    test(![[NSNumber numberWithDouble:pow(2, 64)] hasUnsignedLongLongValue]);
-    test(![@-1 hasUnsignedLongLongValue]);
-    test(![@0.5 hasUnsignedLongLongValue]);
+    test((@0).hasUnsignedLongLongValue);
+    test((@1).hasUnsignedLongLongValue);
+    test((@0xFFFFFFFFFFFFFFFF).hasUnsignedLongLongValue);
+    test(@(pow(2, 63)).hasUnsignedLongLongValue);
+    test(!@(pow(2, 64)).hasUnsignedLongLongValue);
+    test(!(@-1).hasUnsignedLongLongValue);
+    test(!(@0.5).hasUnsignedLongLongValue);
 }
 -(void) testHasLongLongValue {
-    test([@0 hasLongLongValue]);
-    test([@1 hasLongLongValue]);
-    test([@-11 hasLongLongValue]);
-    test([@LONG_LONG_MAX hasLongLongValue]);
-    test([@LONG_LONG_MIN hasLongLongValue]);
-    test(![@ULONG_LONG_MAX hasLongLongValue]);
-    test([[NSNumber numberWithDouble:pow(2, 62)] hasLongLongValue]);
-    test(![[NSNumber numberWithDouble:pow(2, 63)] hasLongLongValue]);
-    test(![[NSNumber numberWithDouble:-pow(2, 64)] hasLongLongValue]);
-    test(![@0.5 hasLongLongValue]);
+    test((@0).hasLongLongValue);
+    test((@1).hasLongLongValue);
+    test((@-11).hasLongLongValue);
+    test(@LONG_LONG_MAX.hasLongLongValue);
+    test(@LONG_LONG_MIN.hasLongLongValue);
+    test(!@ULONG_LONG_MAX.hasLongLongValue);
+    test(@(pow(2, 62)).hasLongLongValue);
+    test(!@(pow(2, 63)).hasLongLongValue);
+    test(!@(-pow(2, 64)).hasLongLongValue);
+    test(!(@0.5).hasLongLongValue);
 }
--(void) tryParseAsUnsignedInteger {
+-(void) testTryParseAsUnsignedInteger {
     test([@"" tryParseAsUnsignedInteger] == nil);
     test([@"88ffhih" tryParseAsUnsignedInteger] == nil);
     test([@"0xA" tryParseAsUnsignedInteger] == nil);
     test([@"A" tryParseAsUnsignedInteger] == nil);
-    test([@"4294967297" tryParseAsUnsignedInteger] == nil);
-    test([@"123456789123456789123456789123456789" tryParseAsUnsignedInteger] == nil);
     test([@"-1" tryParseAsUnsignedInteger] == nil);
     test([@"-" tryParseAsUnsignedInteger] == nil);
 
     test([[@"0" tryParseAsUnsignedInteger] isEqual:@0]);
+    test([[@"00" tryParseAsUnsignedInteger] isEqual:@0]);
     test([[@"1" tryParseAsUnsignedInteger] isEqual:@1]);
+    test([[@"01" tryParseAsUnsignedInteger] isEqual:@1]);
     test([[@"25" tryParseAsUnsignedInteger] isEqual:@25]);
-    test([[@"4294967296" tryParseAsUnsignedInteger] isEqual:@4294967296]);
+    test([[(@NSUIntegerMax).description tryParseAsUnsignedInteger] isEqual:@NSUIntegerMax]);
+    if (NSUIntegerMax == 4294967295UL) {
+        test([@"4294967296" tryParseAsUnsignedInteger] == nil);
+    }
+    if (NSUIntegerMax == 18446744073709551615ULL) {
+        test([@"18446744073709551616" tryParseAsUnsignedInteger] == nil);
+    }
+
+    NSString* max = (@NSUIntegerMax).description;
+    NSString* farTooLarge = [max stringByAppendingString:max];
+    test([farTooLarge tryParseAsUnsignedInteger] == nil);
 }
+-(void) testRemoveAllCharactersIn {
+    testThrows([@"" removeAllCharactersIn:nil]);
+
+    test([[@"" removeAllCharactersIn:NSCharacterSet.letterCharacterSet] isEqual:@""]);
+    test([[@"1" removeAllCharactersIn:NSCharacterSet.letterCharacterSet] isEqual:@"1"]);
+    test([[@"a" removeAllCharactersIn:NSCharacterSet.letterCharacterSet] isEqual:@""]);
+    test([[@"A" removeAllCharactersIn:NSCharacterSet.letterCharacterSet] isEqual:@""]);
+    test([[@"abc123%^&" removeAllCharactersIn:NSCharacterSet.letterCharacterSet] isEqual:@"123%^&"]);
+
+    test([[@"" removeAllCharactersIn:NSCharacterSet.decimalDigitCharacterSet] isEqual:@""]);
+    test([[@"1" removeAllCharactersIn:NSCharacterSet.decimalDigitCharacterSet] isEqual:@""]);
+    test([[@"a" removeAllCharactersIn:NSCharacterSet.decimalDigitCharacterSet] isEqual:@"a"]);
+    test([[@"A" removeAllCharactersIn:NSCharacterSet.decimalDigitCharacterSet] isEqual:@"A"]);
+    test([[@"abc123%^&" removeAllCharactersIn:NSCharacterSet.decimalDigitCharacterSet] isEqual:@"abc%^&"]);
+}
+-(void) testDigitsOnly {
+    test([@"".digitsOnly isEqual:@""]);
+    test([@"1".digitsOnly isEqual:@"1"]);
+    test([@"a".digitsOnly isEqual:@""]);
+    test([@"(555) 235-7111".digitsOnly isEqual:@"5552357111"]);
+}
+-(void) testWithCharactersInRangeReplacedBy {
+    testThrows([@"" withCharactersInRange:NSMakeRange(0, 0) replacedBy:nil]);
+    testThrows([@"" withCharactersInRange:NSMakeRange(0, 1) replacedBy:@""]);
+    testThrows([@"" withCharactersInRange:NSMakeRange(1, 0) replacedBy:@""]);
+    testThrows([@"" withCharactersInRange:NSMakeRange(1, 1) replacedBy:@""]);
+    testThrows([@"abc" withCharactersInRange:NSMakeRange(4, 0) replacedBy:@""]);
+    testThrows([@"abc" withCharactersInRange:NSMakeRange(3, 1) replacedBy:@""]);
+    testThrows([@"abc" withCharactersInRange:NSMakeRange(4, NSUIntegerMax) replacedBy:@""]);
+    
+    test([[@"" withCharactersInRange:NSMakeRange(0, 0) replacedBy:@""] isEqual:@""]);
+    test([[@"" withCharactersInRange:NSMakeRange(0, 0) replacedBy:@"abc"] isEqual:@"abc"]);
+    test([[@"abc" withCharactersInRange:NSMakeRange(0, 0) replacedBy:@"123"] isEqual:@"123abc"]);
+    test([[@"abc" withCharactersInRange:NSMakeRange(3, 0) replacedBy:@"123"] isEqual:@"abc123"]);
+    test([[@"abc" withCharactersInRange:NSMakeRange(2, 0) replacedBy:@"123"] isEqual:@"ab123c"]);
+    test([[@"abcdef" withCharactersInRange:NSMakeRange(1, 2) replacedBy:@"1234"] isEqual:@"a1234def"]);
+}
+
 @end

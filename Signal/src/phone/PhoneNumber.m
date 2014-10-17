@@ -15,7 +15,7 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
     require(text != nil);
     require(regionCode != nil);
     
-    NBPhoneNumberUtil *phoneUtil = [NBPhoneNumberUtil sharedInstance];
+    NBPhoneNumberUtil *phoneUtil = NBPhoneNumberUtil.sharedInstance;
     
     NSError* parseError = nil;
     NBPhoneNumber *number = [phoneUtil parse:text
@@ -38,7 +38,7 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
     require(text != nil);
     
     return [PhoneNumber phoneNumberFromText:text
-                                  andRegion:[Environment currentRegionCodeForPhoneNumbers]];
+                                  andRegion:Environment.currentRegionCodeForPhoneNumbers];
 }
 
 +(PhoneNumber*) phoneNumberFromE164:(NSString*)text {
@@ -53,7 +53,7 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
 
 +(NSString*) bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:(NSString*)input {
     return [PhoneNumber bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:input
-                                                               withSpecifiedRegionCode:[Environment currentRegionCodeForPhoneNumbers]];
+                                                               withSpecifiedRegionCode:Environment.currentRegionCodeForPhoneNumbers];
 }
 
 +(NSString*) bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:(NSString*)input withSpecifiedCountryCodeString:(NSString *)countryCodeString{
@@ -65,7 +65,7 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
     NBAsYouTypeFormatter* formatter = [[NBAsYouTypeFormatter alloc] initWithRegionCode:regionCode];
     
     NSString* result = input;
-    for (NSUInteger i = 0; i < [input length]; i++) {
+    for (NSUInteger i = 0; i < input.length; i++) {
         result = [formatter inputDigit:[input substringWithRange:NSMakeRange(i, 1)]];
     }
     return result;
@@ -73,8 +73,8 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
 
 
 +(NSString*) regionCodeFromCountryCodeString:(NSString*) countryCodeString {
-    NBPhoneNumberUtil* phoneUtil = [NBPhoneNumberUtil sharedInstance];
-    NSString* regionCode = [phoneUtil getRegionCodeForCountryCode:[NSNumber numberWithInteger:[[countryCodeString substringFromIndex:1] integerValue]]];
+    NBPhoneNumberUtil* phoneUtil = NBPhoneNumberUtil.sharedInstance;
+    NSString* regionCode = [phoneUtil getRegionCodeForCountryCode:@([[countryCodeString substringFromIndex:1] integerValue])];
     return regionCode;
 }
 
@@ -94,10 +94,9 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
 +(PhoneNumber*) tryParsePhoneNumberFromUserSpecifiedText:(NSString*)text {
     require(text != nil);
 
-    char s[[text length]+1];
+    char s[text.length+1];
     int xx = 0;
-    for (NSUInteger i = 0; i < [text length]; i++) {
-        // @todo: Don't be terrible
+    for (NSUInteger i = 0; i < text.length; i++) {
         unichar x = [text characterAtIndex:i];
         if (x == '+' || (x >= '0' && x <= '9')) {
             s[xx++] = (char)x;
@@ -123,7 +122,7 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
     }
 }
 
--(NSURL*) toUrl {
+-(NSURL*) toSystemDialerURL {
     NSString* link = [NSString stringWithFormat:@"telprompt://%@", e164];
     return [NSURL URLWithString:link];
 }
@@ -137,11 +136,11 @@ static NSString *const RPDefaultsKeyPhoneNumberCanonical = @"RPDefaultsKeyPhoneN
 }
 
 -(BOOL)isValid {
-    return [[NBPhoneNumberUtil sharedInstance] isValidNumber:phoneNumber];
+    return [NBPhoneNumberUtil.sharedInstance isValidNumber:phoneNumber];
 }
 
 -(NSString *)localizedDescriptionForUser {
-    NBPhoneNumberUtil *phoneUtil = [NBPhoneNumberUtil sharedInstance];
+    NBPhoneNumberUtil *phoneUtil = NBPhoneNumberUtil.sharedInstance;
 
     NSError* formatError = nil;
     NSString* pretty = [phoneUtil format:phoneNumber

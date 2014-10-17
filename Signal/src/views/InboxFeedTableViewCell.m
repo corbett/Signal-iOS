@@ -13,9 +13,9 @@
 @implementation InboxFeedTableViewCell
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
-    self = [[[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class])
+    self = [NSBundle.mainBundle loadNibNamed:NSStringFromClass(self.class)
                                           owner:self
-                                        options:nil] objectAtIndex:0];
+                                        options:nil][0];
 
 
     if (self) {
@@ -33,14 +33,14 @@
 }
 
 - (NSString *)reuseIdentifier {
-    return NSStringFromClass([self class]);
+    return NSStringFromClass(self.class);
 }
 
 - (void)configureWithRecentCall:(RecentCall *)recentCall {
-    Contact *contact = [[[Environment getCurrent] contactsManager] latestContactWithRecordId:recentCall.contactRecordID];
+    Contact *contact = [Environment.getCurrent.contactsManager latestContactWithRecordId:recentCall.contactRecordID];
 
     if (contact) {
-        _nameLabel.text = [contact fullName];
+        _nameLabel.text = contact.fullName;
         if (contact.image) {
             _contactPictureView.image = contact.image;
         } else {
@@ -58,7 +58,7 @@
     }
 
     _missedCallView.hidden = recentCall.userNotified;
-    _numberLabel.text = [recentCall.phoneNumber localizedDescriptionForUser];
+    _numberLabel.text = recentCall.phoneNumber.localizedDescriptionForUser;
     _timeLabel.attributedText = [self dateArrributedString:[recentCall date]];
 }
 
@@ -80,19 +80,19 @@
 
     [attributedString addAttribute:NSForegroundColorAttributeName
                              value:[UIColor darkGrayColor]
-                             range:NSMakeRange(0, [timeString length])];
+                             range:NSMakeRange(0, timeString.length)];
 
     [attributedString addAttribute:NSForegroundColorAttributeName
                              value:[UIUtil darkBackgroundColor]
-                             range:NSMakeRange([timeString length],[dateString length])];
+                             range:NSMakeRange(timeString.length,dateString.length)];
 
     [attributedString addAttribute:NSFontAttributeName
                              value:[UIUtil helveticaLightWithSize:TIME_LABEL_SIZE]
-                             range:NSMakeRange(0, [timeString length])];
+                             range:NSMakeRange(0, timeString.length)];
 
     [attributedString addAttribute:NSFontAttributeName
                              value:[UIUtil helveticaRegularWithSize:DATE_LABEL_SIZE]
-                             range:NSMakeRange([timeString length],[dateString length])];
+                             range:NSMakeRange(timeString.length,dateString.length)];
 
     return attributedString;
 }
@@ -115,7 +115,7 @@
                                               _archiveImageView.bounds.origin.y,
                                               (CGFloat)newWidth,
                                               _archiveImageView.bounds.size.height);
-        _archiveImageView.tintColor = [UIColor whiteColor];
+        _archiveImageView.tintColor = UIColor.whiteColor;
 
     }
 
@@ -134,7 +134,7 @@
                                              _deleteImageView.bounds.origin.y,
                                              (CGFloat)newWidth,
                                              _deleteImageView.bounds.size.height);
-        _deleteImageView.tintColor = [UIColor whiteColor];
+        _deleteImageView.tintColor = UIColor.whiteColor;
     }
 }
 

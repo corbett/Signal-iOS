@@ -1,3 +1,4 @@
+#import "RPServerRequestsManager.h"
 #import "Environment.h"
 #import "HttpManager.h"
 #import "LocalizableText.h"
@@ -8,12 +9,13 @@
 #import "PreferencesUtil.h"
 #import "PushManager.h"
 #import "RegisterViewController.h"
+#import "RPServerRequestsManager.h"
 #import "SignalUtil.h"
 #import "SGNKeychainUtil.h"
 #import "ThreadManager.h"
 #import "Util.h"
 
-
+#import <Pastelog.h>
 
 #define REGISTER_VIEW_NUMBER 0
 #define CHALLENGE_VIEW_NUMBER 1
@@ -27,7 +29,6 @@
 #define IPHONE_BLUE [UIColor colorWithRed:22 green:173 blue:214 alpha:1]
 
 @interface RegisterViewController () {
-    NSMutableString *_enteredPhoneNumber;
     NSTimer* countdownTimer;
     NSDate *timeoutDate;
 }
@@ -38,6 +39,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self localizeButtonText];
     
     DDLogInfo(@"Opened Registration View");
 
@@ -45,19 +47,17 @@
     
     _scrollView.contentSize = _containerView.bounds.size;
 
-    BOOL isRegisteredAlready = [Environment isRegistered];
+    BOOL isRegisteredAlready = Environment.isRegistered;
     _registerCancelButton.hidden = !isRegisteredAlready;
 
     [self initializeKeyboardHandlers];
     [self setPlaceholderTextColor:[UIColor lightGrayColor]];
-    _enteredPhoneNumber = [NSMutableString string];
 }
 
 + (RegisterViewController*)registerViewController {
     RegisterViewController *viewController = [RegisterViewController new];
-    viewController->registered = [FutureSource new];
-    viewController->life = [CancelTokenSource cancelTokenSource];
-    [[viewController->life getToken] whenCancelledTryCancel:viewController->registered];
+    viewController->life = [TOCCancelTokenSource new];
+    viewController->registered = [TOCFutureSource futureSourceUntil:viewController->life.token];
 
     return viewController;
 }
@@ -68,12 +68,12 @@
 
 - (void)setPlaceholderTextColor:(UIColor *)color {
     NSAttributedString *placeholder = _phoneNumberTextField.attributedPlaceholder;
-    if ([placeholder length]) {
+    if (placeholder.length) {
         NSDictionary * attributes = [placeholder attributesAtIndex:0
                                                     effectiveRange:NULL];
         
         NSMutableDictionary *newAttributes = [[NSMutableDictionary alloc] initWithDictionary:attributes];
-        [newAttributes setObject:color forKey:NSForegroundColorAttributeName];
+        newAttributes[NSForegroundColorAttributeName] = color;
         
         NSString *placeholderString = [placeholder string];
         _phoneNumberTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholderString
@@ -98,9 +98,9 @@
 }
 
 - (void)populateDefaultCountryNameAndCode {
-    NSLocale *locale = [NSLocale currentLocale];
+    NSLocale *locale = NSLocale.currentLocale;
     NSString *countryCode = [locale objectForKey:NSLocaleCountryCode];
-    NSNumber *cc = [[NBPhoneNumberUtil sharedInstance] getCountryCodeForRegion:countryCode];
+    NSNumber *cc = [NBPhoneNumberUtil.sharedInstance getCountryCodeForRegion:countryCode];
     
     _countryCodeLabel.text = [NSString stringWithFormat:@"%@%@",COUNTRY_CODE_PREFIX, cc];
     _countryNameLabel.text = [PhoneNumberUtil countryNameFromCountryCode:countryCode];
@@ -116,33 +116,6 @@
     [self presentViewController:countryCodeController animated:YES completion:nil];
 }
 
--(Future*) asyncRegister:(PhoneNumber*)phoneNumber untilCancelled:(id<CancelToken>)cancelToken {
-    [SGNKeychainUtil generateServerAuthPassword];
-    [SGNKeychainUtil setLocalNumberTo:phoneNumber];
-    
-    CancellableOperationStarter regStarter = ^Future *(id<CancelToken> internalUntilCancelledToken) {
-        HttpRequest *registerRequest = [HttpRequest httpRequestToStartRegistrationOfPhoneNumber];
-       
-        return [HttpManager asyncOkResponseFromMasterServer:registerRequest
-                                            unlessCancelled:internalUntilCancelledToken
-                                            andErrorHandler:[Environment errorNoter]];
-    };
-    Future *futurePhoneRegistrationStarted = [AsyncUtil raceCancellableOperation:regStarter
-                                                                  againstTimeout:20.0
-                                                                  untilCancelled:cancelToken];
-
-    return [futurePhoneRegistrationStarted then:^(id _) {
-        [self showViewNumber:CHALLENGE_VIEW_NUMBER];
-        [Environment setRegistered:YES];
-        [self.challengeNumberLabel setText:[phoneNumber description]];
-        [_registerCancelButton removeFromSuperview];
-        [self startVoiceVerificationCountdownTimer];
-        self->futureChallengeAcceptedSource = [FutureSource new];
-        return futureChallengeAcceptedSource;
-    }];
-
-}
-
 - (void)registerPhoneNumberTapped {
     NSString *phoneNumber = [NSString stringWithFormat:@"%@%@", _countryCodeLabel.text, _phoneNumberTextField.text];
     PhoneNumber* localNumber = [PhoneNumber tryParsePhoneNumberFromUserSpecifiedText:phoneNumber];
@@ -150,16 +123,21 @@
     
     [_phoneNumberTextField resignFirstResponder];
 
-    Future* futureFinished = [self asyncRegister:localNumber untilCancelled:[life getToken]];
     [_registerActivityIndicator startAnimating];
     _registerButton.enabled = NO;
     
-    [futureFinished catchDo:^(id error) {
-        NSError *err = ((NSError*)error);
+    [SGNKeychainUtil setLocalNumberTo:localNumber];
+    
+    [[RPServerRequestsManager sharedInstance]performRequest:[RPAPICall requestVerificationCode] success:^(NSURLSessionDataTask *task, id responseObject) {
+        [self showViewNumber:CHALLENGE_VIEW_NUMBER];
+        [self.challengeNumberLabel setText:[phoneNumber description]];
+        [_registerCancelButton removeFromSuperview];
+        [self startVoiceVerificationCountdownTimer];
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
         [_registerActivityIndicator stopAnimating];
         _registerButton.enabled = YES;
         
-        DDLogError(@"Registration failed with information %@", err.description);
+        DDLogError(@"Registration failed with information %@", error.description);
         
         UIAlertView *registrationErrorAV = [[UIAlertView alloc]initWithTitle:REGISTER_ERROR_ALERT_VIEW_TITLE message:REGISTER_ERROR_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_ERROR_ALERT_VIEW_DISMISS otherButtonTitles:nil, nil];
         
@@ -176,37 +154,37 @@
     _challengeButton.enabled = NO;
     [_challengeActivityIndicator startAnimating];
     
-    HttpRequest *verifyRequest = [HttpRequest httpRequestToVerifyAccessToPhoneNumberWithChallenge:_challengeTextField.text];
-    Future *futureDone = [HttpManager asyncOkResponseFromMasterServer:verifyRequest
-                                                      unlessCancelled:nil
-                                                      andErrorHandler:[Environment errorNoter]];
-    
-    [futureDone catchDo:^(id error) {
-        if ([error isKindOfClass:[HttpResponse class]]) {
-            HttpResponse* badResponse = error;
-            if ([badResponse getStatusCode] == 401) {
-                UIAlertView *incorrectChallengeCodeAV = [[UIAlertView alloc]initWithTitle:REGISTER_CHALLENGE_ALERT_VIEW_TITLE message:REGISTER_CHALLENGE_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_CHALLENGE_ALERT_DISMISS otherButtonTitles:nil, nil];
-                [incorrectChallengeCodeAV show];
-                return;
-            }
-        }
-        [Environment errorNoter](error, @"While Verifying Challenge.", NO);
-    }];
-
-    [futureDone thenDo:^(id result) {
-        [[PushManager sharedManager] askForPushRegistrationWithSuccess:^{
+    [[RPServerRequestsManager sharedInstance] performRequest:[RPAPICall verifyVerificationCode:_challengeTextField.text] success:^(NSURLSessionDataTask *task, id responseObject) {
+        
+        [PushManager.sharedManager registrationWithSuccess:^{
+            [futureChallengeAcceptedSource trySetResult:@YES];
             [Environment setRegistered:YES];
-            [[[Environment getCurrent] phoneDirectoryManager] forceUpdate];
             [registered trySetResult:@YES];
+            [Environment.getCurrent.phoneDirectoryManager forceUpdate];
             [self dismissView];
-            [futureChallengeAcceptedSource trySetResult:result];
         } failure:^{
-            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:REGISTER_ERROR_ALERT_VIEW_TITLE message:REGISTER_ERROR_ALERT_VIEW_BODY delegate:nil cancelButtonTitle:REGISTER_ERROR_ALERT_VIEW_DISMISS otherButtonTitles:nil, nil];
-            [alertView show];
+            _challengeButton.enabled = YES;
+            [_challengeActivityIndicator stopAnimating];
         }];
-    }];
-
-    [futureDone finallyDo:^(Future *completed) {
+        
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        NSString *alertTitle = NSLocalizedString(@"REGISTRATION_ERROR", @"");
+        
+        if ([error isKindOfClass:HttpResponse.class]) {
+            NSHTTPURLResponse* badResponse = (NSHTTPURLResponse*)task.response;
+            if (badResponse.statusCode == 401) {
+                SignalAlertView(alertTitle, REGISTER_CHALLENGE_ALERT_VIEW_BODY);
+            } else if (badResponse.statusCode == 401){
+                SignalAlertView(alertTitle, NSLocalizedString(@"REGISTER_RATE_LIMITING_BODY", @""));
+            } else {
+                NSString *alertBodyString =  [NSString stringWithFormat:@"%@ %lu", NSLocalizedString(@"SERVER_CODE", @""),(unsigned long)badResponse.statusCode];
+                SignalAlertView (alertTitle, alertBodyString);
+            }
+        } else{
+            Environment.errorNoter(error, @"While Verifying Challenge.", NO);
+            SignalReportError
+        }
+        
         _challengeButton.enabled = YES;
         [_challengeActivityIndicator stopAnimating];
     }];
@@ -239,7 +217,7 @@
     
     NSTimeInterval smsTimeoutTimeInterval = SMS_VERIFICATION_TIMEOUT_SECONDS;
     
-    NSDate *now = [[NSDate alloc] init];
+    NSDate *now = [NSDate new];
     timeoutDate = [[NSDate alloc] initWithTimeInterval:smsTimeoutTimeInterval sinceDate:now];
 
     countdownTimer = [NSTimer scheduledTimerWithTimeInterval:1
@@ -253,9 +231,9 @@
 }
 
 - (void) countdowntimerFired {
-    NSDate *now = [[NSDate alloc] init];
+    NSDate *now = [NSDate new];
     
-    NSCalendar *sysCalendar = [NSCalendar currentCalendar];
+    NSCalendar *sysCalendar = NSCalendar.currentCalendar;
     unsigned int unitFlags = NSHourCalendarUnit | NSMinuteCalendarUnit | NSSecondCalendarUnit;
     NSDateComponents *conversionInfo = [sysCalendar components:unitFlags fromDate:now  toDate:timeoutDate  options:0];
     NSString* timeLeft = [NSString stringWithFormat:@"%ld:%02ld",(long)[conversionInfo minute],(long)[conversionInfo second]];
@@ -270,32 +248,18 @@
 
 - (void) initiateVoiceVerification{
     [self stopVoiceVerificationCountdownTimer];
-    CancellableOperationStarter callStarter = ^Future *(id<CancelToken> internalUntilCancelledToken) {
-        HttpRequest* voiceVerifyReq = [HttpRequest httpRequestToStartRegistrationOfPhoneNumberWithVoice];
-        
-        [self.voiceChallengeTextLabel setText:@"Calling" ];
-        return [HttpManager asyncOkResponseFromMasterServer:voiceVerifyReq
-                                            unlessCancelled:internalUntilCancelledToken
-                                            andErrorHandler:[Environment errorNoter]];
-    };
-    Future *futureVoiceVerificationStarted = [AsyncUtil raceCancellableOperation:callStarter
-                                                                  againstTimeout:SERVER_TIMEOUT_SECONDS
-                                                                  untilCancelled:[life getToken]];
-    [futureVoiceVerificationStarted catchDo:^(id errorId) {
-        HttpResponse* error = (HttpResponse*)errorId;
-       [self.voiceChallengeTextLabel setText:[error getStatusText]];
-    }];
+    [self.voiceChallengeTextLabel setText:NSLocalizedString(@"REGISTER_CALL_CALLING", @"")];
     
-    [futureVoiceVerificationStarted finally:^id(id _id) {
+    [[RPServerRequestsManager sharedInstance] performRequest:[RPAPICall requestVerificationCodeWithVoice] success:^(NSURLSessionDataTask *task, id responseObject) {
+        
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, VOICE_VERIFICATION_COOLDOWN_SECONDS * NSEC_PER_SEC);
         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-            [self.voiceChallengeTextLabel setText:@"Re-Call"];
+            [self.voiceChallengeTextLabel setText:NSLocalizedString(@"REGISTER_CALL_RECALL", @"")];
         });
         
-        return _id;
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        [self.voiceChallengeTextLabel setText:error.description];
     }];
-    
-    
 }
 
 - (IBAction)initiateVoiceVerificationButtonHandler {
@@ -329,9 +293,9 @@
 }
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;;
         _scrollView.frame = CGRectMake(CGRectGetMinX(_scrollView.frame),
                                        CGRectGetMinY(_scrollView.frame)-keyboardSize.height,
                                        CGRectGetWidth(_scrollView.frame),
@@ -340,7 +304,7 @@
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
         _scrollView.frame = CGRectMake(CGRectGetMinX(_scrollView.frame),
                                        CGRectGetMinY(self.view.frame),
@@ -356,7 +320,16 @@
                        forCountry:(NSString *)country {
     _countryCodeLabel.text = code;
     _countryNameLabel.text = country;
-    [self updatePhoneNumberFieldWithString:code cursorposition:_enteredPhoneNumber.length];
+    
+    // Reformat phone number
+    NSString* digits = _phoneNumberTextField.text.digitsOnly;
+    NSString* reformattedNumber = [PhoneNumber bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:digits
+                                                                               withSpecifiedCountryCodeString:_countryCodeLabel.text];
+    _phoneNumberTextField.text = reformattedNumber;
+    UITextPosition *pos = _phoneNumberTextField.endOfDocument;
+    [_phoneNumberTextField setSelectedTextRange:[_phoneNumberTextField textRangeFromPosition:pos toPosition:pos]];
+    
+    // Done choosing country
     [vc dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -366,61 +339,44 @@
 
 #pragma mark - UITextFieldDelegate
 
-- (NSUInteger) calculateLocationOffset:(NSUInteger)location {
-    NSUInteger offset = 0, phonenumberposition = 0;
-    for (NSUInteger i = 0; i < location; i++) {
-        if ([_phoneNumberTextField.text characterAtIndex:i] != [_enteredPhoneNumber characterAtIndex:phonenumberposition]) {
-            offset++;
-        } else {
-            phonenumberposition++;
+-(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    NSString* textBeforeChange = textField.text;
+
+    // backspacing should skip over formatting characters
+    UITextPosition *posIfBackspace = [textField positionFromPosition:textField.beginningOfDocument
+                                                              offset:(NSInteger)(range.location + range.length)];
+    UITextRange *rangeIfBackspace = [textField textRangeFromPosition:posIfBackspace toPosition:posIfBackspace];
+    bool isBackspace = string.length == 0 && range.length == 1 && [rangeIfBackspace isEqual:textField.selectedTextRange];
+    if (isBackspace) {
+        NSString* digits = textBeforeChange.digitsOnly;
+        NSUInteger correspondingDeletePosition = [PhoneNumberUtil translateCursorPosition:range.location + range.length
+                                                                                     from:textBeforeChange
+                                                                                       to:digits
+                                                                        stickingRightward:true];
+        if (correspondingDeletePosition > 0) {
+            textBeforeChange = digits;
+            range = NSMakeRange(correspondingDeletePosition - 1, 1);
         }
     }
-    return offset;
-}
+    
+    // make the proposed change
+    NSString* textAfterChange = [textBeforeChange withCharactersInRange:range replacedBy:string];
+    NSUInteger cursorPositionAfterChange = range.location + string.length;
 
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range
-                                                       replacementString:(NSString *)string {
-    NSUInteger offset = [self calculateLocationOffset:range.location];
-    unichar currentPoschar = 0;
-    range.location -= offset;
-    BOOL handleBackspace = range.length == 1;
-    if (handleBackspace) {
-        if ((range.location + offset) <  _phoneNumberTextField.text.length) {
-            currentPoschar = [_phoneNumberTextField.text characterAtIndex:(range.location + offset)];
-        }
-        if ((currentPoschar < '0' || currentPoschar > '9') && currentPoschar != 0) {
-            range.location--;
-        }
-        NSRange backspaceRange = NSMakeRange(range.location, 1);
-        [_enteredPhoneNumber replaceCharactersInRange:backspaceRange withString:string];
-        range.location++;
-    } else {
-        NSString* sanitizedString = [[string componentsSeparatedByCharactersInSet:[[NSCharacterSet decimalDigitCharacterSet ] invertedSet]] componentsJoinedByString:@""];
-        NSMutableString* mutablePhoneNumber = [NSMutableString stringWithString:_enteredPhoneNumber];
-        [mutablePhoneNumber insertString:sanitizedString atIndex:range.location];
-        _enteredPhoneNumber = mutablePhoneNumber;
-        if ((range.location + offset + 1) <  _phoneNumberTextField.text.length) {
-            currentPoschar = [_phoneNumberTextField.text characterAtIndex:(range.location + offset + 1)];
-        }
-        if ((currentPoschar < '0' || currentPoschar > '9') && currentPoschar != 0) {
-            range.location++;
-        }
-    }
+    // reformat the phone number, trying to keep the cursor beside the inserted or deleted digit
+    bool isJustDeletion = string.length == 0;
+    NSString* textAfterReformat = [PhoneNumber bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:textAfterChange.digitsOnly
+                                                                               withSpecifiedCountryCodeString:_countryCodeLabel.text];
+    NSUInteger cursorPositionAfterReformat = [PhoneNumberUtil translateCursorPosition:cursorPositionAfterChange
+                                                                                 from:textAfterChange
+                                                                                   to:textAfterReformat
+                                                                    stickingRightward:isJustDeletion];
+    textField.text = textAfterReformat;
+    UITextPosition *pos = [textField positionFromPosition:textField.beginningOfDocument
+                                                   offset:(NSInteger)cursorPositionAfterReformat];
+    [textField setSelectedTextRange:[textField textRangeFromPosition:pos toPosition:pos]];
 
-    [self updatePhoneNumberFieldWithString:_enteredPhoneNumber cursorposition:range.location+offset];
-    return NO;
-}
-
--(void) updatePhoneNumberFieldWithString:(NSString*)input
-                          cursorposition:(NSUInteger)cursorpos {
-    NSString* result = [PhoneNumber bestEffortFormatPartialUserSpecifiedTextToLookLikeAPhoneNumber:_enteredPhoneNumber
-                                                                    withSpecifiedCountryCodeString:_countryCodeLabel.text];
-    cursorpos += result.length - _phoneNumberTextField.text.length;
-    _phoneNumberTextField.text = result;
-    UITextPosition *position = [_phoneNumberTextField positionFromPosition:[_phoneNumberTextField beginningOfDocument]
-                                                                    offset:(NSInteger)cursorpos];
-    [_phoneNumberTextField setSelectedTextRange:[_phoneNumberTextField textRangeFromPosition:position
-                                                                                  toPosition:position]];
+    return NO; // inform our caller that we took care of performing the change
 }
 
 @end

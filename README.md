@@ -1,4 +1,4 @@
-# Signal for iOS
+# Signal for iOS [![Build Status](https://travis-ci.org/WhisperSystems/Signal-iOS.svg?branch=master)](https://travis-ci.org/WhisperSystems/Signal-iOS)
 
 Signal allows you to make private phone calls and we are working on bringing secure messaging to it soon.
 

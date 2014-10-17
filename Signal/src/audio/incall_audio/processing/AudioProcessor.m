@@ -54,10 +54,10 @@
 }
 -(NSData*) tryDecodeOrInferFrame {
     EncodedAudioFrame* frame = [self pullFrame];
-    haveReceivedDataYet |= ![frame isMissingAudioData];
+    haveReceivedDataYet |= !frame.isMissingAudioData;
     if (!haveReceivedDataYet) return nil;
     
-    NSData* raw = [codec decode:[frame tryGetAudioData]];
+    NSData* raw = [codec decode:frame.tryGetAudioData];
     double stretch = [stretchFactorController getAndUpdateDesiredStretchFactor];
     return [audioStretcher stretchAudioData:raw stretchFactor:stretch];
 }

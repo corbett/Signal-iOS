@@ -15,20 +15,20 @@
     CallController* instance = [CallController new];
     CallProgress* initialProgress = [CallProgress callProgressWithType:CallProgressType_Connecting];
     instance->progress = [ObservableValueController observableValueControllerWithInitialValue:initialProgress];
-    instance->termination = [FutureSource new];
-    instance->shortAuthenticationString = [FutureSource new];
-    instance->canceller = [CancelTokenSource cancelTokenSource];
-    instance->interactiveCallAcceptedOrDenied = [FutureSource new];
+    instance->termination = [TOCFutureSource new];
+    instance->shortAuthenticationString = [TOCFutureSource new];
+    instance->canceller = [TOCCancelTokenSource new];
+    instance->interactiveCallAcceptedOrDenied = [TOCFutureSource new];
     instance->initiatedLocally = initiatedLocally;
     instance->remoteNumber = remoteNumber;
     instance->potentiallySpecifiedContact = contact;
     instance->exposedCallState = [CallState callStateWithObservableProgress:instance->progress
-                                                       andFutureTermination:instance->termination
-                                                               andFutureSas:instance->shortAuthenticationString
+                                                       andFutureTermination:instance->termination.future
+                                                               andFutureSas:instance->shortAuthenticationString.future
                                                             andRemoteNumber:instance->remoteNumber
                                                         andInitiatedLocally:instance->initiatedLocally
                                              andPotentiallySpecifiedContact:instance->potentiallySpecifiedContact
-                                                          andFutureAccepted:instance->interactiveCallAcceptedOrDenied];
+                                                          andFutureAccepted:instance->interactiveCallAcceptedOrDenied.future];
     
     return instance;
 }
@@ -44,7 +44,7 @@
 -(ErrorHandlerBlock) errorHandler {
     return ^(id error, id relatedInfo, bool causedTermination) {
         if (causedTermination) {
-            if ([error isKindOfClass:[CallTermination class]]) {
+            if ([error isKindOfClass:CallTermination.class]) {
                 CallTermination* t = error;
                 [self terminateWithReason:t.type
                           withFailureInfo:t.failure
@@ -56,23 +56,23 @@
             }
         }
         
-        [Environment errorNoter](error, relatedInfo, causedTermination);
+        Environment.errorNoter(error, relatedInfo, causedTermination);
     };
 }
--(id<CancelToken>) untilCancelledToken {
-    return [canceller getToken];
+-(TOCCancelToken*) untilCancelledToken {
+    return canceller.token;
 }
--(Future *)interactiveCallAccepted {
-    return [interactiveCallAcceptedOrDenied then:^id(NSNumber* accepted) {
+-(TOCFuture*)interactiveCallAccepted {
+    return [interactiveCallAcceptedOrDenied.future thenTry:^id(NSNumber* accepted) {
         if ([accepted boolValue]) return accepted;
         
-        return [Future failed:[CallTermination callTerminationOfType:CallTerminationType_RejectedLocal
-                                                         withFailure:accepted
-                                                      andMessageInfo:nil]];
+        return [TOCFuture futureWithFailure:[CallTermination callTerminationOfType:CallTerminationType_RejectedLocal
+                                                                       withFailure:accepted
+                                                                    andMessageInfo:nil]];
     }];
 }
--(Future *)interactiveCallAcceptedOrDenied {
-    return interactiveCallAcceptedOrDenied;
+-(TOCFuture*)interactiveCallAcceptedOrDenied {
+    return interactiveCallAcceptedOrDenied.future;
 }
 -(CallState*) callState {
     return exposedCallState;
@@ -111,7 +111,7 @@
 }
 
 -(void)terminateWithRejectionOrRemoteHangupAndFailureInfo:(id)failureInfo andRelatedInfo:(id)relatedInfo {
-    enum CallProgressType progressType = ((CallProgress*)[progress currentValue]).type;
+    enum CallProgressType progressType = ((CallProgress*)progress.currentValue).type;
     bool hasAcceptedAlready = progressType > CallProgressType_Ringing;
     enum CallTerminationType terminationType = hasAcceptedAlready
                                              ? CallTerminationType_HangupRemote
@@ -144,12 +144,12 @@
 -(void) enableBackground {
     [progress watchLatestValueOnArbitraryThread:^(CallProgress* latestProgress) {
         if( CallProgressType_Connecting == latestProgress.type) {
-            backgroundtask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+            backgroundtask = [UIApplication.sharedApplication beginBackgroundTaskWithExpirationHandler:^{
                 //todo: handle premature expiration
             }];
         }else if(CallProgressType_Terminated == latestProgress.type){
-            [[UIApplication sharedApplication] endBackgroundTask:backgroundtask];
+            [UIApplication.sharedApplication endBackgroundTask:backgroundtask];
         }
-    } untilCancelled:canceller.getToken];
+    } untilCancelled:canceller.token];
 }
 @end

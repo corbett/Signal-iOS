@@ -1,3 +1,4 @@
+#import "DebugLogger.h"
 #import "Environment.h"
 #import "Constraints.h"
 #import "FunctionalUtil.h"
@@ -6,6 +7,7 @@
 #import "HostNameEndPoint.h"
 #import "RecentCallManager.h"
 #import "ContactsManager.h"
+#import "PreferencesUtil.h"
 #import "PhoneNumberDirectoryFilterManager.h"
 #import "SGNKeychainUtil.h"
 
@@ -33,7 +35,7 @@ contactsManager,
 phoneDirectoryManager;
 
 +(NSString*) currentRegionCodeForPhoneNumbers {
-    return [[self getCurrent] currentRegionCodeForPhoneNumbers];
+    return self.getCurrent.currentRegionCodeForPhoneNumbers;
 }
 
 +(Environment*) getCurrent {
@@ -44,26 +46,26 @@ phoneDirectoryManager;
     environment = curEnvironment;
 }
 +(ErrorHandlerBlock) errorNoter {
-    return [[self getCurrent] errorNoter];
+    return self.getCurrent.errorNoter;
 }
 +(bool) hasEnabledTestingOrLegacyOption:(NSString*)flag {
-    return [[self getCurrent].testingAndLegacyOptions containsObject:flag];
+    return [self.getCurrent.testingAndLegacyOptions containsObject:flag];
 }
 
 +(NSString*) relayServerNameToHostName:(NSString*)name {
     return [NSString stringWithFormat:@"%@.%@",
             name,
-            [[Environment getCurrent] relayServerHostNameSuffix]];
+            Environment.getCurrent.relayServerHostNameSuffix];
 }
 +(SecureEndPoint*) getMasterServerSecureEndPoint {
-    return [[Environment getCurrent] masterServerSecureEndPoint];
+    return Environment.getCurrent.masterServerSecureEndPoint;
 }
 +(SecureEndPoint*) getSecureEndPointToDefaultRelayServer {
-    return [Environment getSecureEndPointToSignalingServerNamed:[Environment getCurrent].defaultRelayName];
+    return [Environment getSecureEndPointToSignalingServerNamed:Environment.getCurrent.defaultRelayName];
 }
 +(SecureEndPoint*) getSecureEndPointToSignalingServerNamed:(NSString*)name {
     require(name != nil);
-    Environment* env = [Environment getCurrent];
+    Environment* env = Environment.getCurrent;
     
     NSString* hostName = [self relayServerNameToHostName:name];
     HostNameEndPoint* location = [HostNameEndPoint hostNameEndPointWithHostName:hostName andPort:env.serverPort];
@@ -99,7 +101,7 @@ phoneDirectoryManager;
     
     // must support DH3k
     require([keyAgreementProtocolsInDescendingPriority any:^int(id p) {
-        return [p isKindOfClass:[DH3KKeyAgreementProtocol class]];
+        return [p isKindOfClass:DH3KKeyAgreementProtocol.class];
     }]);
     
     Environment* e = [Environment new];
@@ -122,8 +124,9 @@ phoneDirectoryManager;
     e->zrtpVersionId = zrtpVersionId;
     e->contactsManager = contactsManager;
     
-    // @todo: better place for this?
     if (recentCallManager != nil) {
+        // recentCallManagers are nil in unit tests because they would require unnecessary allocations. Detailed explanation: https://github.com/WhisperSystems/Signal-iOS/issues/62#issuecomment-51482195
+        
         [recentCallManager watchForCallsThrough:phoneManager
                                  untilCancelled:nil];
         [recentCallManager watchForContactUpdatesFrom:contactsManager
@@ -134,38 +137,42 @@ phoneDirectoryManager;
 }
 
 +(PhoneManager*) phoneManager {
-    return [[Environment getCurrent] phoneManager];
+    return Environment.getCurrent.phoneManager;
 }
 +(id<Logging>) logging {
-    return [[Environment getCurrent] logging];
+    // Many tests create objects that rely on Environment only for logging.
+    // So we bypass the nil check in getCurrent and silently don't log during unit testing, instead of failing hard.
+    if (environment == nil) return nil;
+    
+    return Environment.getCurrent.logging;
 }
 
 +(BOOL)isRegistered{
     // Attributes that need to be set
-    NSData *signalingKey = [SGNKeychainUtil signalingCipherKey];
-    NSData *macKey       = [SGNKeychainUtil signalingMacKey];
-    NSData *extra        = [SGNKeychainUtil signalingExtraKey];
-    NSString *serverAuth = [SGNKeychainUtil serverAuthPassword];
-    BOOL registered = [[[NSUserDefaults standardUserDefaults] objectForKey:isRegisteredUserDefaultString] boolValue];
+    NSData *signalingKey = SGNKeychainUtil.signalingCipherKey;
+    NSData *macKey       = SGNKeychainUtil.signalingMacKey;
+    NSData *extra        = SGNKeychainUtil.signalingExtraKey;
+    NSString *serverAuth = SGNKeychainUtil.serverAuthPassword;
+    BOOL registered = [[NSUserDefaults.standardUserDefaults objectForKey:isRegisteredUserDefaultString] boolValue];
     
-    if (signalingKey && macKey && extra && serverAuth && registered) {
-        return YES;
-    } else{
-        return NO;
-    }
+    return signalingKey && macKey && extra && serverAuth && registered;
 }
 
 +(void)setRegistered:(BOOL)status{
-    [[NSUserDefaults standardUserDefaults] setObject:status?@YES:@NO forKey:isRegisteredUserDefaultString];
+    [NSUserDefaults.standardUserDefaults setObject:status?@YES:@NO forKey:isRegisteredUserDefaultString];
 }
 
 +(PropertyListPreferences*)preferences{
-    return [[PropertyListPreferences alloc]init];
+    return [PropertyListPreferences new];
 }
 
 +(void)resetAppData{
     [SGNKeychainUtil wipeKeychain];
-    [[Environment preferences] clear];
+    [Environment.preferences clear];
+    if (self.preferences.loggingIsEnabled) {
+        [DebugLogger.sharedInstance wipeLogs];
+    }
+    [self.preferences setAndGetCurrentVersion];
 }
 
 @end

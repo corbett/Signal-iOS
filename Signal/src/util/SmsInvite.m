@@ -11,13 +11,13 @@
 }
 
 - (void)sendSMSInviteToNumber:(PhoneNumber *)number{
-    if ([MFMessageComposeViewController canSendText] && [[UIDevice currentDevice].model isEqualToString:@"iPhone"]){
+    if (MFMessageComposeViewController.canSendText && [UIDevice.currentDevice.model isEqualToString:@"iPhone"]){
         MFMessageComposeViewController *messageController = [MFMessageComposeViewController new];
         
         NSString *inviteMessage = INVITE_USERS_MESSAGE;
         
-        messageController.body = [inviteMessage stringByAppendingString:@" http://appstore.com/signalprivatemessenger"];
-        messageController.recipients = @[[number toE164]];
+        messageController.body = [inviteMessage stringByAppendingString:@" https://itunes.apple.com/app/id874139669"];
+        messageController.recipients = @[number.toE164];
         messageController.messageComposeDelegate = self;
         
         [parent presentViewController:messageController

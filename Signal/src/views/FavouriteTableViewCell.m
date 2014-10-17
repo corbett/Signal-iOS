@@ -5,14 +5,14 @@
 @implementation FavouriteTableViewCell
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
-    self = [[[NSBundle mainBundle] loadNibNamed:NSStringFromClass([self class]) owner:self options:nil] objectAtIndex:0];
+    self = [NSBundle.mainBundle loadNibNamed:NSStringFromClass(self.class) owner:self options:nil][0];
     _contactPictureView.layer.borderColor = [[UIColor lightGrayColor] CGColor];
     _contactPictureView.layer.masksToBounds = YES;
     return self;
 }
 
 - (NSString *)reuseIdentifier {
-    return NSStringFromClass([self class]);
+    return NSStringFromClass(self.class);
 }
 
 - (void)configureWithContact:(Contact *)contact {
@@ -40,11 +40,11 @@
 }
 
 - (NSAttributedString *)attributedStringForContact:(Contact *)contact {
-    NSMutableAttributedString *fullNameAttributedString = [[NSMutableAttributedString alloc] initWithString:[contact fullName]];
+    NSMutableAttributedString *fullNameAttributedString = [[NSMutableAttributedString alloc] initWithString:contact.fullName];
 
-    [fullNameAttributedString addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:_nameLabel.font.pointSize] range:NSMakeRange(0, [[contact firstName] length])];
-    [fullNameAttributedString addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:_nameLabel.font.pointSize] range:NSMakeRange([[contact firstName] length] + 1, [[contact lastName] length])];
-    [fullNameAttributedString addAttribute:NSForegroundColorAttributeName value:[UIColor blackColor] range:NSMakeRange(0, [[contact fullName] length])];
+    [fullNameAttributedString addAttribute:NSFontAttributeName value:[UIFont systemFontOfSize:_nameLabel.font.pointSize] range:NSMakeRange(0, contact.firstName.length)];
+    [fullNameAttributedString addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:_nameLabel.font.pointSize] range:NSMakeRange(contact.firstName.length + 1, contact.lastName.length)];
+    [fullNameAttributedString addAttribute:NSForegroundColorAttributeName value:[UIColor blackColor] range:NSMakeRange(0, contact.fullName.length)];
     return fullNameAttributedString;
 }
 

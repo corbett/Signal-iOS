@@ -34,6 +34,7 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 - (void)viewDidLoad {
     [super viewDidLoad];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactsDidRefresh) name:NOTIFICATION_DIRECTORY_WAS_UPDATED object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(contactRefreshFailed) name:NOTIFICATION_DIRECTORY_FAILED object:nil];
     UIRefreshControl *refreshControl = [[UIRefreshControl alloc]
                                         init];
     [refreshControl addTarget:self action:@selector(refreshContacts) forControlEvents:UIControlEventValueChanged];
@@ -50,7 +51,7 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     [_contactTableView reloadData];
     [_searchBarTitleView updateAutoCorrectionType];
-    [[Environment getCurrent].contactsManager enableNewUserNotifications];
+    [Environment.getCurrent.contactsManager enableNewUserNotifications];
     
     BOOL showNotificationView = _newWhisperUsers != nil;
     if (showNotificationView) {
@@ -104,7 +105,7 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
     
     _newWhisperUsers = users;
 
-    BOOL isViewVisible = [self isViewLoaded] && self.view.window;
+    BOOL isViewVisible = self.isViewLoaded && self.view.window;
     
     if (isViewVisible) {
         [self showNotificationViewAnimated:YES];
@@ -152,16 +153,16 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 #pragma mark - Contact functions
 
 - (void)setupContacts {
-    ObservableValue *observableContacts = [[[Environment getCurrent] contactsManager] getObservableWhisperUsers];
+    ObservableValue *observableContacts = Environment.getCurrent.contactsManager.getObservableWhisperUsers;
 
     [observableContacts watchLatestValue:^(NSArray *latestContacts) {
         _latestContacts = latestContacts;
         [self onSearchOrContactChange:nil];
-    } onThread:[NSThread mainThread] untilCancelled:nil];
+    } onThread:NSThread.mainThread untilCancelled:nil];
 }
 
 - (NSArray *)contactsForSectionIndex:(NSUInteger)index {
-    return [_latestAlphabeticalContacts valueForKey:[_latestSortedAlphabeticalContactKeys objectAtIndex:index]];
+    return [_latestAlphabeticalContacts valueForKey:_latestSortedAlphabeticalContactKeys[index]];
 }
 
 - (void)pushContactViewControllerForContactIndexPath:(NSIndexPath *)indexPath {
@@ -178,7 +179,7 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    return [_latestSortedAlphabeticalContactKeys objectAtIndex:(NSUInteger)section];
+    return _latestSortedAlphabeticalContactKeys[(NSUInteger)section];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -230,9 +231,9 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 #pragma mark - Keyboard
 
 - (void)keyboardWillShow:(NSNotification *)notification {
-    double duration = [[[notification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey] doubleValue];
+    double duration = [[notification userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     [UIView animateWithDuration:duration animations:^{
-        CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+        CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
         _contactTableView.frame = CGRectMake(CGRectGetMinX(_contactTableView.frame),
                                              CGRectGetMinY(_contactTableView.frame),
                                              CGRectGetWidth(_contactTableView.frame),
@@ -241,7 +242,7 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 }
 
 - (void)keyboardWillHide:(NSNotification *)notification {
-    CGSize keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGSize keyboardSize = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     _contactTableView.frame = CGRectMake(CGRectGetMinX(_contactTableView.frame),
                                          CGRectGetMinY(_contactTableView.frame),
                                          CGRectGetWidth(_contactTableView.frame),
@@ -251,18 +252,16 @@ static NSString *const CONTACT_BROWSE_TABLE_CELL_IDENTIFIER = @"ContactTableView
 #pragma mark - Refresh controls
 
 - (void)refreshContacts{
-    [[[Environment getCurrent] phoneDirectoryManager] forceUpdate];
-    self.refreshTimer = [NSTimer scheduledTimerWithTimeInterval:REFRESH_TIMEOUT target:self selector:@selector(contactRefreshDidTimeout) userInfo:nil repeats:NO];
+    [Environment.getCurrent.phoneDirectoryManager forceUpdate];
 }
 
-- (void)contactRefreshDidTimeout{
+- (void)contactRefreshFailed{
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:TIMEOUT message:TIMEOUT_CONTACTS_DETAIL delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"") otherButtonTitles:nil];
     [alert show];
     [self.refreshControl endRefreshing];
 }
 
 - (void)contactsDidRefresh{
-    [self.refreshTimer invalidate];
     [self.refreshControl endRefreshing];
 }
 

@@ -25,4 +25,13 @@
 -(BOOL) encounteredRevokedPushPermission;
 -(void) setRevokedPushPermission:(BOOL)revoked;
 
+-(BOOL)loggingIsEnabled;
+-(void)setLoggingEnabled:(BOOL)flag;
+
+-(BOOL)screenSecurityIsEnabled;
+-(void)setScreenSecurity:(BOOL)flag;
+
+-(NSString*)lastRanVersion;
+-(NSString*)setAndGetCurrentVersion;
+
 @end

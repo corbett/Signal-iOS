@@ -1,0 +1,3 @@
+[submodule "Pods"]
+	path = Pods
+	url = https://github.com/FredericJacobs/Precompiled-Signal-Dependencies.git

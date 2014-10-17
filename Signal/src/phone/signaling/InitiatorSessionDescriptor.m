@@ -25,12 +25,12 @@
     checkOperation(json != nil);
 
     NSDictionary* fields = [json decodedAsJsonIntoDictionary];
-    id jsonSessionId = [fields objectForKey:SessionIdKey];
-    id jsonRelayPort = [fields objectForKey:RelayPortKey];
-    id jsonRelayName = [fields objectForKey:RelayHostKey];
-    checkOperationDescribe([jsonSessionId isKindOfClass:[NSNumber class]], @"Unexpected json data");
-    checkOperationDescribe([jsonRelayPort isKindOfClass:[NSNumber class]], @"Unexpected json data");
-    checkOperationDescribe([jsonRelayName isKindOfClass:[NSString class]], @"Unexpected json data");
+    id jsonSessionId = fields[SessionIdKey];
+    id jsonRelayPort = fields[RelayPortKey];
+    id jsonRelayName = fields[RelayHostKey];
+    checkOperationDescribe([jsonSessionId isKindOfClass:NSNumber.class], @"Unexpected json data");
+    checkOperationDescribe([jsonRelayPort isKindOfClass:NSNumber.class], @"Unexpected json data");
+    checkOperationDescribe([jsonRelayName isKindOfClass:NSString.class], @"Unexpected json data");
     checkOperationDescribe([jsonRelayPort unsignedShortValue] > 0, @"Unexpected json data");
     
     int64_t sessionId = [[jsonSessionId description] longLongValue]; // workaround: asking for longLongValue directly causes rounding-through-double
@@ -41,8 +41,8 @@
 }
 
 -(NSString*) toJson {
-    return [@{SessionIdKey : [NSNumber numberWithLongLong:sessionId],
-            RelayPortKey : [NSNumber numberWithUnsignedShort:relayUdpPort],
+    return [@{SessionIdKey : @(sessionId),
+            RelayPortKey : @(relayUdpPort),
             RelayHostKey : relayServerName
             } encodedAsJson];
 }
