@@ -45,6 +45,12 @@ PODS:
     - UnionFind (~> 1.0)
   - UICKeyChainStore (1.0.7)
   - UnionFind (1.0.1)
+  - YapDatabase (2.5.3):
+    - YapDatabase/standard
+  - YapDatabase/common (2.5.3):
+    - CocoaLumberjack (~> 1)
+  - YapDatabase/standard (2.5.3):
+    - YapDatabase/common
 
 DEPENDENCIES:
   - AFNetworking (~> 2.4.1)
@@ -54,6 +60,7 @@ DEPENDENCIES:
   - PastelogKit (~> 1.2)
   - TwistedOakCollapsingFutures (~> 1.0)
   - UICKeyChainStore (from `Podspecs/UICKeyChainStore.podspec`)
+  - YapDatabase (~> 2.5.3)
 
 EXTERNAL SOURCES:
   UICKeyChainStore:
@@ -69,5 +76,6 @@ SPEC CHECKSUMS:
   TwistedOakCollapsingFutures: 07aab84fd3958dc94d55ef705b12857d9fbe61d1
   UICKeyChainStore: eef407137f0397e95a3df32cdf05f7e2ddd99647
   UnionFind: 45777a8b6878d3a602af3654cc3a09b87389d356
+  YapDatabase: 096e860167b04e629b88bea33dfb7a4153279bb0
 
-COCOAPODS: 0.34.1
+COCOAPODS: 0.34.2
