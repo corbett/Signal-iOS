@@ -579,10 +579,10 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
             </objects>
             <point key="canvasLocation" x="4645.5" y="-261"/>
         </scene>
-        <!--View Controller-->
+        <!--Present IdentityQR Code View Controller-->
         <scene sceneID="b0A-fL-uiD">
             <objects>
-                <viewController id="in8-UP-6ff" sceneMemberID="viewController">
+                <viewController id="in8-UP-6ff" customClass="PresentIdentityQRCodeViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="EEv-2N-b9z"/>
                         <viewControllerLayoutGuide type="bottom" id="PWz-Os-GfE"/>
@@ -590,28 +590,63 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
                     <view key="view" contentMode="scaleToFill" id="8fX-rK-XSk">
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Show code UI" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Psg-eI-6bn">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="I4l-hR-EdB">
+                                <rect key="frame" x="0.0" y="0.0" width="240" height="128"/>
+                                <variation key="heightClass=regular-widthClass=compact" ambiguous="YES" misplaced="YES">
+                                    <rect key="frame" x="75" y="275" width="250" height="250"/>
+                                </variation>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="your fingerprint" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Psg-eI-6bn">
                                 <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
-                                <variation key="heightClass=regular-widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="153" y="217" width="109" height="21"/>
+                                <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
+                                    <rect key="frame" x="137" y="246" width="126" height="21"/>
                                 </variation>
                             </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="centerY" secondItem="I4l-hR-EdB" secondAttribute="centerY" id="8cF-bh-cNO"/>
+                            <constraint firstItem="Psg-eI-6bn" firstAttribute="centerX" secondItem="I4l-hR-EdB" secondAttribute="centerX" id="Dih-Mx-6MX"/>
+                            <constraint firstAttribute="centerX" secondItem="I4l-hR-EdB" secondAttribute="centerX" id="s9z-2y-ePb"/>
+                            <constraint firstItem="PWz-Os-GfE" firstAttribute="top" secondItem="I4l-hR-EdB" secondAttribute="bottom" constant="275" id="tgT-gs-br0"/>
+                            <constraint firstAttribute="centerX" secondItem="Psg-eI-6bn" secondAttribute="centerX" id="x7Y-Q7-aYX"/>
+                            <constraint firstItem="Psg-eI-6bn" firstAttribute="top" secondItem="8fX-rK-XSk" secondAttribute="top" constant="246" id="z45-RM-R2B"/>
+                        </constraints>
                         <variation key="default">
                             <mask key="subviews">
+                                <exclude reference="I4l-hR-EdB"/>
                                 <exclude reference="Psg-eI-6bn"/>
+                            </mask>
+                            <mask key="constraints">
+                                <exclude reference="Dih-Mx-6MX"/>
+                                <exclude reference="x7Y-Q7-aYX"/>
+                                <exclude reference="z45-RM-R2B"/>
+                                <exclude reference="8cF-bh-cNO"/>
+                                <exclude reference="s9z-2y-ePb"/>
+                                <exclude reference="tgT-gs-br0"/>
                             </mask>
                         </variation>
                         <variation key="heightClass=regular-widthClass=compact">
                             <mask key="subviews">
+                                <include reference="I4l-hR-EdB"/>
                                 <include reference="Psg-eI-6bn"/>
+                            </mask>
+                            <mask key="constraints">
+                                <include reference="Dih-Mx-6MX"/>
+                                <include reference="x7Y-Q7-aYX"/>
+                                <include reference="z45-RM-R2B"/>
+                                <include reference="8cF-bh-cNO"/>
+                                <include reference="s9z-2y-ePb"/>
+                                <include reference="tgT-gs-br0"/>
                             </mask>
                         </variation>
                     </view>
+                    <connections>
+                        <outlet property="qrCodeView" destination="I4l-hR-EdB" id="Fzf-BD-z9y"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Zk1-cK-ftT" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

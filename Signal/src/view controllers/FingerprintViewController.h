@@ -26,4 +26,8 @@
 @property (nonatomic, strong) IBOutlet UIButton    * closeButton;
 @property (nonatomic, strong) IBOutlet UIButton    * shredMessagesAndContactButton;
 
+// returns my public identity key as NSData
+-(NSData*) getMyPublicIdentityKey;
+// returns recipient's public identity key as NSData
+-(NSData*) getTheirPublicIdentityKey;
 @end
