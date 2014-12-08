@@ -648,10 +648,10 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
             </objects>
             <point key="canvasLocation" x="5574" y="75"/>
         </scene>
-        <!--View Controller-->
+        <!--Scan Identity Barcode View Controller-->
         <scene sceneID="f84-pF-1is">
             <objects>
-                <viewController id="7qX-e8-QDY" sceneMemberID="viewController">
+                <viewController id="7qX-e8-QDY" customClass="ScanIdentityBarcodeViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="VoP-Af-AZ2"/>
                         <viewControllerLayoutGuide type="bottom" id="vey-9m-z4V"/>

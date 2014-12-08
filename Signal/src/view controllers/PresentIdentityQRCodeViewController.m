@@ -8,9 +8,7 @@
 
 #import "PresentIdentityQRCodeViewController.h"
 #import "NSData+Base64.h"
-@interface PresentIdentityQRCodeViewController ()
 
-@end
 
 @implementation PresentIdentityQRCodeViewController
 
