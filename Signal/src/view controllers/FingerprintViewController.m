@@ -138,7 +138,13 @@
 }
 
 
-- (IBAction)unwindToIdentityKeyWasVerified:(UIStoryboardSegue *)segue {
+- (IBAction)unwindToIdentityKeyWasVerified:(UIStoryboardSegue *)segue{
+    // Can later be used to mark identity key as verified if we want step above TOFU in UX
+}
+
+
+- (IBAction)unwindCancel:(UIStoryboardSegue *)segue{
+    NSLog(@"action cancelled");
     // Can later be used to mark identity key as verified if we want step above TOFU in UX
 }
 

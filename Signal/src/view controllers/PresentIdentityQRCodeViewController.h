@@ -11,4 +11,5 @@
 @interface PresentIdentityQRCodeViewController : UIViewController
 @property(nonatomic,strong) IBOutlet UIImageView* qrCodeView;
 @property(nonatomic,strong) NSData* identityKey;
+
 @end
