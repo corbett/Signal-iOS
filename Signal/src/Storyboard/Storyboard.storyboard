@@ -343,7 +343,7 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
                                                 <rect key="frame" x="274" y="236" width="75" height="30"/>
                                             </variation>
                                             <connections>
-                                                <segue destination="in8-UP-6ff" kind="presentation" id="Akq-Te-sbl"/>
+                                                <segue destination="in8-UP-6ff" kind="presentation" identifier="ScanIdentityBarcodeViewSegue" id="Akq-Te-sbl"/>
                                             </connections>
                                         </button>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4Nx-q7-dfY">
@@ -353,10 +353,10 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
                                                 <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                             </state>
                                             <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                                <rect key="frame" x="277" y="125" width="72" height="30"/>
+                                                <rect key="frame" x="277" y="126" width="72" height="30"/>
                                             </variation>
                                             <connections>
-                                                <segue destination="7qX-e8-QDY" kind="presentation" id="RV3-XQ-fDH"/>
+                                                <segue destination="7qX-e8-QDY" kind="presentation" identifier="PresentIdentityQRCodeViewSegue" id="RV3-XQ-fDH"/>
                                             </connections>
                                         </button>
                                     </subviews>
@@ -646,9 +646,11 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
                     </view>
                     <connections>
                         <outlet property="qrCodeView" destination="I4l-hR-EdB" id="Fzf-BD-z9y"/>
+                        <segue destination="DtB-oq-5vO" kind="unwind" identifier="UnwindToIdentityKeyWasVerifiedSegue" unwindAction="unwindToIdentityKeyWasVerified:" id="rwq-JG-XZu"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Zk1-cK-ftT" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="DtB-oq-5vO" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
             <point key="canvasLocation" x="5574" y="75"/>
         </scene>
@@ -662,28 +664,7 @@ Lorem ipsum : Quick explanation of Fingerprints</string>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Du7-nD-ScY">
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Scan code UI" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rwN-fe-Ieq">
-                                <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                                <nil key="highlightedColor"/>
-                                <variation key="heightClass=regular-widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="173" y="620" width="104" height="21"/>
-                                </variation>
-                            </label>
-                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                        <variation key="default">
-                            <mask key="subviews">
-                                <exclude reference="rwN-fe-Ieq"/>
-                            </mask>
-                        </variation>
-                        <variation key="heightClass=regular-widthClass=compact">
-                            <mask key="subviews">
-                                <include reference="rwN-fe-Ieq"/>
-                            </mask>
-                        </variation>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="VTv-Ry-X99" userLabel="First Responder" sceneMemberID="firstResponder"/>

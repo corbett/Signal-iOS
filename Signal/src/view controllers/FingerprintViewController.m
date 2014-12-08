@@ -15,6 +15,8 @@
 #import "DJWActionSheet.h"
 #import "TSStorageManager.h"
 #import "TSStorageManager+IdentityKeyStore.h"
+#import "PresentIdentityQRCodeViewController.h"
+#import "ScanIdentityBarcodeViewController.h"
 
 @interface FingerprintViewController ()
 @property TSContactThread *thread;
@@ -78,7 +80,7 @@
     return [[TSStorageManager sharedManager] identityKeyPair].publicKey;
 }
 
--(NSData*) getThierPublicIdentityKey {
+-(NSData*) getTheirPublicIdentityKey {
     return [[TSStorageManager sharedManager] identityKeyForRecipientId:self.thread.contactIdentifier];
     
 }
@@ -133,6 +135,11 @@
         [segue.destinationViewController setIdentityKey:[self getTheirPublicIdentityKey]];
     }
     
+}
+
+
+- (IBAction)unwindToIdentityKeyWasVerified:(UIStoryboardSegue *)segue {
+    // Can later be used to mark identity key as verified if we want step above TOFU in UX
 }
 
 #pragma mark - Shredding & Deleting

@@ -7,15 +7,13 @@
 //
 
 #import "ScanIdentityBarcodeViewController.h"
-#import "VerifyIdentityViewController.h"
 #import "NSData+Base64.h"
 
 
 
 @implementation ScanIdentityBarcodeViewController
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         // Custom initialization
@@ -23,8 +21,7 @@
     return self;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"Scan key";
     
@@ -71,12 +68,6 @@
     [self.view bringSubviewToFront:self.label];
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection {
     CGRect highlightViewRect = CGRectZero;
@@ -97,15 +88,11 @@
         if (detectionString != nil) {
             self.label.text = detectionString;
             NSData* detectionData = [NSData dataFromBase64String:detectionString];
-#warning do something with this fact; update the contact as verified
             if([detectionData isEqualToData:self.identityKey]) {
-
                 self.label.text = @"verified!";
-
             }
             else {
                 self.label.text = @"identity keys do not match";
-            
             }
             [self.session stopRunning];
             break;
@@ -115,24 +102,15 @@
         }
     }
     if([self.label.text isEqualToString:@"verified!"]) {
-        [self performSegueWithIdentifier:@"IdentityKeyWasVerified" sender:self];
+        [self performSegueWithIdentifier:@"UnwindToIdentityKeyWasVerifiedSegue" sender:self];
     }
 
     self.highlightView.frame = highlightViewRect;
 }
 
-/*
- #pragma mark - Navigation
 
- 
- 
- // In a storyboard-based application, you will often want to do a little preparation before navigation
- - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
- {
- // Get the new view controller using [segue destinationViewController].
- // Pass the selected object to the new view controller.
- }
- */
+
+
 @end
 
 

@@ -30,4 +30,7 @@
 -(NSData*) getMyPublicIdentityKey;
 // returns recipient's public identity key as NSData
 -(NSData*) getTheirPublicIdentityKey;
+
+// This is called when the recipient's public key is verified. Later can be used to mark as such if we want a step above TOFU in UX.
+- (IBAction)unwindToIdentityKeyWasVerified:(UIStoryboardSegue *)segue;
 @end
