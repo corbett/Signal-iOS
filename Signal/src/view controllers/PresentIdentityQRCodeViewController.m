@@ -25,6 +25,7 @@
     CIFilter *filter = [CIFilter filterWithName:@"CIQRCodeGenerator"];
     
     [filter setDefaults];
+
     [filter setValue:[[self.identityKey base64EncodedString] dataUsingEncoding:NSUTF8StringEncoding] forKey:@"inputMessage"];
     
     CIImage *outputImage = [filter outputImage];
