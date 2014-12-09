@@ -129,14 +129,6 @@
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-#if 1
-    // temporary debugging all of public keys
-    NSLog(@"their key base 64:\n%@\n\n",[[[self getTheirPublicIdentityKey] prependKeyType] base64EncodedString]);
-    NSLog(@"their key hex:\n%@\n\n",[self getFingerprintForDisplay:[self getTheirPublicIdentityKey]]);
-
-    NSLog(@"my key base 64:\n%@\n\n",[[[self getMyPublicIdentityKey] prependKeyType] base64EncodedString]);
-    NSLog(@"my key hex:\n%@\n\n",[self getFingerprintForDisplay:[self getMyPublicIdentityKey]]);
-#endif
     if([[segue identifier] isEqualToString:@"PresentIdentityQRCodeViewSegue"]){
         [segue.destinationViewController setIdentityKey:[[self getMyPublicIdentityKey] prependKeyType]];
     }

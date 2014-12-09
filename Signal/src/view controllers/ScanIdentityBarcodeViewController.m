@@ -8,6 +8,7 @@
 
 #import "ScanIdentityBarcodeViewController.h"
 #import "NSData+Base64.h"
+#import "NSData+hexString.h"
 
 
 
