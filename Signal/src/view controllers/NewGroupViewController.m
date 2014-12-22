@@ -77,6 +77,7 @@
 -(void)createGroup {
     //TODOGROUP
     GroupModel* model = [self makeGroup];
+    model.groupChange = TSGroupChangeUpdateNew;
     [Environment groupModel:model];
 }
 
@@ -92,6 +93,7 @@
     // Also add the originator
     [mut addObject:[SignalKeyingStorage.localNumber toE164]];
     NSData* groupId =  [SecurityUtils generateRandomBytes:16];
+    
     return [[GroupModel alloc] initWithTitle:title memberIds:mut image:img groupId:groupId];
 }
 

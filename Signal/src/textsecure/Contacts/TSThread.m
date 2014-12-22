@@ -119,7 +119,6 @@
             case TSOutgoingMessageStateSent:
                 return TSLastActionMessageSent;
                 break;
-            case TSOutgoingMessageStateMeta:
             case TSOutgoingMessageStateDelivered:
                 return TSLastActionMessageDelivered;
                 break;

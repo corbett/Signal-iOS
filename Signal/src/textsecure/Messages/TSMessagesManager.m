@@ -262,7 +262,8 @@
             TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction];
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
-                incomingMessage = [[TSIncomingMessage alloc] initWithTimestamp:timeStamp inThread:gThread authorId:message.source messageBody:@"UPDATE" attachments:attachments]; // TODOGROUPS GET RID OF THIS THIS WILL BE UI
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:thread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
+                return;
             }
             else {
                 incomingMessage = [[TSIncomingMessage alloc] initWithTimestamp:timeStamp inThread:gThread authorId:message.source messageBody:body attachments:attachments];

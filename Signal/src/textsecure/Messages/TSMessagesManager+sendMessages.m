@@ -246,27 +246,19 @@ dispatch_queue_t sendingQueue() {
     if([thread isKindOfClass:[TSGroupThread class]]) {
         TSGroupThread *gThread = (TSGroupThread*)thread;
         PushMessageContentGroupContextBuilder *groupBuilder = [PushMessageContentGroupContextBuilder new];
-        /*
-         @property (nonatomic, strong) NSMutableArray *groupMembers;
-         @property (nonatomic, strong) UIImage *groupImage;
-         @property (nonatomic, strong) NSString *groupName;
-         @property (nonatomic, strong) NSData* groupId;
-         */
         [groupBuilder setMembersArray:gThread.groupModel.groupMemberIds];
         [groupBuilder setName:gThread.groupModel.groupName];
         [groupBuilder setId:gThread.groupModel.groupId];
-        switch (message.messageState) {
-            case TSOutgoingMessageStateAttemptingOut:
-            case TSOutgoingMessageStateSent:
-            case TSOutgoingMessageStateUnsent:
-            case TSOutgoingMessageStateDelivered:
-                [groupBuilder setType:PushMessageContentGroupContextTypeDeliver]; //TODOGROUP other types
+        switch (gThread.groupModel.groupChange) { //TODOREFACTOR: I don't want to do this on the basis of the message state meta
+            case TSGroupChangeQuit:
+                [groupBuilder setType:PushMessageContentGroupContextTypeQuit];
                 break;
-            case TSOutgoingMessageStateMeta:
-                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate]; //TODOGROUP other types
+            case TSGroupChangeUpdate:
+            case TSGroupChangeUpdateNew:
+                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate];
                 break;
             default:
-                [groupBuilder setType:PushMessageContentGroupContextTypeDeliver]; //TODOGROUP other types
+                [groupBuilder setType:PushMessageContentGroupContextTypeDeliver];
                 break;
         }
         //[groupBuilder setAvatar:(PushMessageContentAttachmentPointer *)]; //TODOATTACHMENTS
