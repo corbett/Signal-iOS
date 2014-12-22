@@ -21,6 +21,7 @@
 #import "TSStorageManager+SignedPreKeyStore.h"
 
 #import "PreKeyBundle+jsonDict.h"
+#import "SignalKeyingStorage.h"
 
 #import "TSAttachmentStream.h"
 #import "TSNetworkManager.h"
@@ -64,10 +65,14 @@ dispatch_queue_t sendingQueue() {
             }];
             
             for(TSRecipient *rec in recipients){
-                [self sendMessage:message
-                      toRecipient:rec
-                         inThread:thread
-                      withAttemps:1];
+                // TODOGROUP
+                // hack so that I don't send to myself
+                if( ![[rec uniqueId] isEqualToString:[SignalKeyingStorage.localNumber toE164]]){
+                    [self sendMessage:message
+                          toRecipient:rec
+                             inThread:thread
+                          withAttemps:1];
+                }
             }
             
             
