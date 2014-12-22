@@ -13,7 +13,7 @@ typedef NS_ENUM(NSInteger, TSGroupChange) {
     TSGroupChangeNone,
     TSGroupChangeQuit,
     TSGroupChangeUpdate,
-    TSGroupChangeUpdateNew,
+    TSGroupChangeUpdateNew
 };
 
 @interface GroupModel : TSYapDatabaseObject

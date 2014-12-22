@@ -74,7 +74,7 @@ dispatch_queue_t sendingQueue() {
                           withAttemps:1];
                 }
             }
-            
+            groupThread.groupModel.groupChange = TSGroupChangeNone;            
             
         } else if([thread isKindOfClass:[TSContactThread class]]){
             [self saveMessage:message withState:TSOutgoingMessageStateDelivered];
@@ -255,7 +255,7 @@ dispatch_queue_t sendingQueue() {
                 break;
             case TSGroupChangeUpdate:
             case TSGroupChangeUpdateNew:
-                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate];
+                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate]; // TODO not calling when I create a new group
                 break;
             default:
                 [groupBuilder setType:PushMessageContentGroupContextTypeDeliver];

@@ -125,7 +125,6 @@ typedef enum : NSUInteger {
         if(gThread.groupModel.groupChange == TSGroupChangeUpdateNew ) {
             TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:nil];
             [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
-            gThread.groupModel.groupChange = TSGroupChangeNone;
             [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
                 [gThread saveWithTransaction:transaction];
             }];
