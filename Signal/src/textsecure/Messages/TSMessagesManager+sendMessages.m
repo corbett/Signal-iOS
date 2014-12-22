@@ -270,13 +270,13 @@ dispatch_queue_t sendingQueue() {
                 break;
             case TSGroupMessageUpdate:
             case TSGroupMessageNew:
-                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate]; // TODO not calling when I create a new group
+                [groupBuilder setType:PushMessageContentGroupContextTypeUpdate];
                 break;
             default:
                 [groupBuilder setType:PushMessageContentGroupContextTypeDeliver];
                 break;
         }
-        //[groupBuilder setAvatar:(PushMessageContentAttachmentPointer *)]; //TODOATTACHMENTS
+        //[groupBuilder setAvatar:(PushMessageContentAttachmentPointer *)]; //TODOATTACHMENTS for avatar
         [builder setGroup:groupBuilder.build];
     }
     

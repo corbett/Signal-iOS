@@ -156,10 +156,10 @@ typedef enum : NSUInteger {
     
     self.title = self.thread.name;
     
-    UIBarButtonItem * lockButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"lock"] style:UIBarButtonItemStylePlain target:self action:@selector(showFingerprint)];
+    
     
     if (!isGroupConversation && [self isRedPhoneReachable]) {
-        
+        UIBarButtonItem * lockButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"lock"] style:UIBarButtonItemStylePlain target:self action:@selector(showFingerprint)];
         UIBarButtonItem * callButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"call_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(callAction)];
         [callButton setImageInsets:UIEdgeInsetsMake(0, -10, 0, -50)];
         UIBarButtonItem *negativeSeparator = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
@@ -167,7 +167,8 @@ typedef enum : NSUInteger {
         
         self.navigationItem.rightBarButtonItems = @[negativeSeparator, lockButton, callButton];
     } else {
-        self.navigationItem.rightBarButtonItem = lockButton;
+        UIBarButtonItem *groupMenuButton =  [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"settings_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(didPressGroupMenuButton:)];
+        self.navigationItem.rightBarButtonItem = groupMenuButton;
     }
 }
 
@@ -748,6 +749,42 @@ typedef enum : NSUInteger {
     TSInteraction *interaction = [self interactionAtIndexPath:indexPath];
     return [TSMessageAdapter messageViewDataWithInteraction:interaction inThread:self.thread];
 }
+#pragma mark group action view
+-(void)didPressGroupMenuButton:(UIButton *)sender
+{
+    [self.inputToolbar.contentView.textView resignFirstResponder];
+    
+    UIView *presenter = self.parentViewController.view;
+    
+    [DJWActionSheet showInView:presenter
+                     withTitle:nil
+             cancelButtonTitle:@"Cancel"
+        destructiveButtonTitle:nil
+             otherButtonTitles:@[@"Update group", @"Leave group", @"Delete thread"]
+                      tapBlock:^(DJWActionSheet *actionSheet, NSInteger tappedButtonIndex) {
+                          if (tappedButtonIndex == actionSheet.cancelButtonIndex) {
+                              NSLog(@"User Cancelled");
+                          } else if (tappedButtonIndex == actionSheet.destructiveButtonIndex) {
+                              NSLog(@"Destructive button tapped");
+                          }else {
+                              switch (tappedButtonIndex) {
+                                  case 0:
+                                      DDLogDebug(@"update group picked");
+                                      break;
+                                  case 1:
+                                      DDLogDebug(@"leave group picket");
+                                      break;
+                                  case 2:
+                                      DDLogDebug(@"delete thread");
+                                      break;
+                                      
+                                  default:
+                                      break;
+                              }
+                          }
+                      }];
+}
+
 
 #pragma mark Accessory View
 
