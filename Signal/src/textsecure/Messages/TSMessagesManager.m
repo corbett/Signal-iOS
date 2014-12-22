@@ -264,7 +264,7 @@
             TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction]; // I think this is unneeded
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
-                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:thread messageType:TSInfoMessageTypeUnsupportedMessage] saveWithTransaction:transaction]; //TODO CHANGE TO TSInfoMessageTypeGroupUpdate when an adaptor available for this type
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:thread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
                 return;
             }
             else {

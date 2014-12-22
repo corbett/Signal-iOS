@@ -245,7 +245,7 @@ dispatch_queue_t sendingQueue() {
     else {
         [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
             
-            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeUnsupportedMessage] saveWithTransaction:transaction]; //TODO CHANGE TO TSInfoMessageTypeGroupUpdate when an adaptor available for this type
+            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction]; 
         }];
     }
 }
