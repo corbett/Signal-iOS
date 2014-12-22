@@ -261,10 +261,10 @@
         if (groupId) {
             //TODOGROUP
             GroupModel *model = [[GroupModel alloc] initWithTitle:content.group.name memberIds:[[NSMutableArray alloc ] initWithArray:content.group.members] image:nil groupId:content.group.id]; //TODOATTACHMENTS, group avatar will not be nil
-            TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
+            TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction]; // nil for a new group
             [gThread saveWithTransaction:transaction]; // I think this is unneeded
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
-                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:thread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
                 return;
             }
             else {
