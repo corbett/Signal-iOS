@@ -162,19 +162,20 @@ static NSString *const kSegueIndentifier  = @"showSegue";
         NSIndexPath *selectedIndexPath = [self.tableView indexPathForSelectedRow];
         TSThread *thread               = [self threadForIndexPath:selectedIndexPath];
         
-        if (self.groupFromCompose) {
-            //TODOGROUP
+        if (self.contactIdentifierFromCompose){
+            [vc setupWithTSIdentifier:self.contactIdentifierFromCompose];
+            self.contactIdentifierFromCompose = nil;
+        }
+        else if (self.groupFromCompose) {
+            //TODOGROUP this should only be set if we have created a new group from compose
             [vc setupWithTSGroup:self.groupFromCompose];
             self.groupFromCompose = nil;
         }
         else if (thread) {
             [vc setupWithThread:thread];
         }
-        else if (self.contactIdentifierFromCompose){
-            [vc setupWithTSIdentifier:self.contactIdentifierFromCompose];
-            self.contactIdentifierFromCompose = nil;
-        }
-
+        
+        
         
     }
 }

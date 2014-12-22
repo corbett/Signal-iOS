@@ -74,7 +74,6 @@ dispatch_queue_t sendingQueue() {
                           withAttemps:1];
                 }
             }
-            groupThread.groupModel.groupChange = TSGroupChangeNone;            
             
         } else if([thread isKindOfClass:[TSContactThread class]]){
             [self saveMessage:message withState:TSOutgoingMessageStateDelivered];
@@ -249,12 +248,12 @@ dispatch_queue_t sendingQueue() {
         [groupBuilder setMembersArray:gThread.groupModel.groupMemberIds];
         [groupBuilder setName:gThread.groupModel.groupName];
         [groupBuilder setId:gThread.groupModel.groupId];
-        switch (gThread.groupModel.groupChange) { //TODOREFACTOR: I don't want to do this on the basis of the message state meta
-            case TSGroupChangeQuit:
+        switch (message.groupMetaMessage) {
+            case TSGroupMetaMessageQuit:
                 [groupBuilder setType:PushMessageContentGroupContextTypeQuit];
                 break;
-            case TSGroupChangeUpdate:
-            case TSGroupChangeUpdateNew:
+            case TSGroupMetaMessageUpdate:
+            case TSGroupMetaMessageNew:
                 [groupBuilder setType:PushMessageContentGroupContextTypeUpdate]; // TODO not calling when I create a new group
                 break;
             default:

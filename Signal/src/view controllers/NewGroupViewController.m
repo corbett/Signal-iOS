@@ -77,7 +77,6 @@
 -(void)createGroup {
     //TODOGROUP
     GroupModel* model = [self makeGroup];
-    model.groupChange = TSGroupChangeUpdateNew;
     [Environment groupModel:model];
 }
 

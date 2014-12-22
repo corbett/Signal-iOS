@@ -86,6 +86,11 @@ typedef enum : NSUInteger {
     //TODOGROUP
     [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         self.thread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
+        
+        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:nil];
+        message.groupMetaMessage = TSGroupMetaMessageNew;
+        [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
+        
         isGroupConversation = YES;
     }];
 }
@@ -120,17 +125,6 @@ typedef enum : NSUInteger {
                                                  name:UIApplicationWillEnterForegroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cancelReadTimer)
                                                  name:UIApplicationDidEnterBackgroundNotification object:nil];
-    if( isGroupConversation ) {
-        TSGroupThread *gThread = (TSGroupThread*)self.thread;
-        if(gThread.groupModel.groupChange == TSGroupChangeUpdateNew ) {
-            TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:nil];
-            [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
-            [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-                [gThread saveWithTransaction:transaction];
-            }];
-
-        }
-    }
 }
 
 - (void)startReadTimer{
