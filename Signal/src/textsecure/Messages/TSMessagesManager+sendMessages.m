@@ -280,8 +280,6 @@ dispatch_queue_t sendingQueue() {
         [builder setGroup:groupBuilder.build];
     }
     
-    return [builder.build data];
-    
     NSMutableArray *attachmentsArray = [NSMutableArray array];
     
     for (NSString *attachmentId in message.attachments){
