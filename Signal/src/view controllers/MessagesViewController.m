@@ -88,7 +88,7 @@ typedef enum : NSUInteger {
         self.thread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
         
         TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:nil];
-        message.groupMetaMessage = TSGroupMetaMessageNew;
+        message.groupMetaMessage = TSGroupMessageNew;
         [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
         
         isGroupConversation = YES;

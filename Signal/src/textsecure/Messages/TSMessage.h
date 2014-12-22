@@ -14,10 +14,11 @@
  */
 
 typedef NS_ENUM(NSInteger, TSGroupMetaMessage){
-    TSGroupMetaMessageNone,
-    TSGroupMetaMessageNew,
-    TSGroupMetaMessageUpdate,
-    TSGroupMetaMessageQuit
+    TSGroupMessageNone,
+    TSGroupMessageNew,
+    TSGroupMessageUpdate,
+    TSGroupMessageDeliver,
+    TSGroupMessageQuit
 };
 @interface TSMessage : TSInteraction
 

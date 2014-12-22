@@ -98,8 +98,10 @@
 - (void)handleDeliveryReceipt:(IncomingPushMessageSignal*)signal{
     [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         TSOutgoingMessage *message = [TSOutgoingMessage fetchObjectWithUniqueID:[TSInteraction stringFromTimeStamp:signal.timestamp] transaction:transaction];
-        message.messageState = TSOutgoingMessageStateDelivered;
-        [message saveWithTransaction:transaction];
+        if(![message isKindOfClass:[TSInfoMessage class]]){
+            message.messageState = TSOutgoingMessageStateDelivered;
+            [message saveWithTransaction:transaction];
+        }
     }];
 }
 
@@ -312,10 +314,13 @@
 
 - (void)processException:(NSException*)exception outgoingMessage:(TSOutgoingMessage*)message{
     DDLogWarn(@"Got exception: %@", exception.description);
-    [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-        [message setMessageState:TSOutgoingMessageStateUnsent];
-        [message saveWithTransaction:transaction];
-    }];
+    // Only update this with exception if it is not a group message
+    if(message.groupMetaMessage==TSGroupMessageNone) {
+        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+            [message setMessageState:TSOutgoingMessageStateUnsent]; // This was the issue before TODOGROUP
+            [message saveWithTransaction:transaction];
+        }];
+    }
 }
 
 - (void)notifyUserForIncomingMessage:(TSIncomingMessage*)message from:(NSString*)name{

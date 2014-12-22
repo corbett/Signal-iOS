@@ -72,11 +72,12 @@ dispatch_queue_t sendingQueue() {
                     [self sendMessage:message
                           toRecipient:rec
                              inThread:thread
-                          withAttemps:1];
+                          withAttemps:3];
                 }
             }
             
-        } else if([thread isKindOfClass:[TSContactThread class]]){
+        }
+        else if([thread isKindOfClass:[TSContactThread class]]){
             [self saveMessage:message withState:TSOutgoingMessageStateDelivered];
 
             TSContactThread *contactThread = (TSContactThread*)thread;
@@ -229,22 +230,23 @@ dispatch_queue_t sendingQueue() {
 }
 
 - (void)saveMessage:(TSOutgoingMessage*)message withState:(TSOutgoingMessageState)state{
-    [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-        [message setMessageState:state];
-        [message saveWithTransaction:transaction];
-    }];
+    if(message.groupMetaMessage == TSGroupMessageDeliver || message.groupMetaMessage == TSGroupMessageNone) {
+        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+            [message setMessageState:state];
+            [message saveWithTransaction:transaction];
+        }];
+    }
 }
 
 - (void) saveGroupMessage:(TSOutgoingMessage*)message inThread:(TSThread*)thread{
-    if(message.groupMetaMessage!=TSGroupMetaMessageNone) {
-        
-        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-
-            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeUnsupportedMessage] saveWithTransaction:transaction]; //TODO CHANGE TO TSInfoMessageTypeGroupUpdate when an adaptor available for this type
-        }];
+    if(message.groupMetaMessage==TSGroupMessageDeliver) {
+        [self saveMessage:message withState:message.messageState];
     }
     else {
-        [self saveMessage:message withState:message.messageState];
+        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+            
+            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeUnsupportedMessage] saveWithTransaction:transaction]; //TODO CHANGE TO TSInfoMessageTypeGroupUpdate when an adaptor available for this type
+        }];
     }
 }
 
@@ -263,11 +265,11 @@ dispatch_queue_t sendingQueue() {
         [groupBuilder setName:gThread.groupModel.groupName];
         [groupBuilder setId:gThread.groupModel.groupId];
         switch (message.groupMetaMessage) {
-            case TSGroupMetaMessageQuit:
+            case TSGroupMessageQuit:
                 [groupBuilder setType:PushMessageContentGroupContextTypeQuit];
                 break;
-            case TSGroupMetaMessageUpdate:
-            case TSGroupMetaMessageNew:
+            case TSGroupMessageUpdate:
+            case TSGroupMessageNew:
                 [groupBuilder setType:PushMessageContentGroupContextTypeUpdate]; // TODO not calling when I create a new group
                 break;
             default:
