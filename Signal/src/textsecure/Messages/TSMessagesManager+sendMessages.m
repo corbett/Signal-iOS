@@ -58,7 +58,8 @@ dispatch_queue_t sendingQueue() {
         if ([thread isKindOfClass:[TSGroupThread class]]) {
             //TODOGROUP
             TSGroupThread* groupThread = (TSGroupThread*)thread;
-            [self saveMessage:message withState:message.messageState];
+            
+            [self saveGroupMessage:message inThread:thread];
             __block NSArray* recipients;
             [self.dbConnection readWithBlock:^(YapDatabaseReadTransaction *transaction) {
                 recipients = [groupThread recipientsWithTransaction:transaction];
@@ -232,6 +233,19 @@ dispatch_queue_t sendingQueue() {
         [message setMessageState:state];
         [message saveWithTransaction:transaction];
     }];
+}
+
+- (void) saveGroupMessage:(TSOutgoingMessage*)message inThread:(TSThread*)thread{
+    if(message.groupMetaMessage!=TSGroupMetaMessageNone) {
+        
+        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+
+            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeUnsupportedMessage] saveWithTransaction:transaction]; //TODO CHANGE TO TSInfoMessageTypeGroupUpdate when an adaptor available for this type
+        }];
+    }
+    else {
+        [self saveMessage:message withState:message.messageState];
+    }
 }
 
 - (NSData*)plainTextForMessage:(TSOutgoingMessage*)message inThread:(TSThread*)thread{
