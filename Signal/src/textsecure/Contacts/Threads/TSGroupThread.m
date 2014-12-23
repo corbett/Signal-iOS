@@ -32,7 +32,10 @@
         thread = [[TSGroupThread alloc] initWithGroupModel:groupModel];
         [thread saveWithTransaction:transaction];
     }
-    
+    else if(![thread.groupModel isEqual:groupModel]) {
+        thread.groupModel = groupModel;
+        [thread saveWithTransaction:transaction];
+    }
     return thread;
 }
 

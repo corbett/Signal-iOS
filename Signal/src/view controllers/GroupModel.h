@@ -20,4 +20,7 @@
 
 -(instancetype)initWithTitle:(NSString*)title memberIds:(NSMutableArray*)members image:(UIImage*)image groupId:(NSData*)groupId;
 
+- (BOOL)isEqual:(id)other;
+- (BOOL)isEqualToGroupModel:(GroupModel *)model;
+
 @end

@@ -684,7 +684,6 @@ typedef enum : NSUInteger {
     // Process the notification(s),
     // and get the change-set(s) as applies to my view and mappings configuration.
     NSArray *notifications = [self.uiDatabaseConnection beginLongLivedReadTransaction];
-    
     NSArray *messageRowChanges = nil;
     
     [[self.uiDatabaseConnection ext:TSMessageDatabaseViewExtensionName] getSectionChanges:nil
