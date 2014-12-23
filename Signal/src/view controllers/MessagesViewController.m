@@ -446,8 +446,9 @@ typedef enum : NSUInteger {
         if([self.thread isKindOfClass:[TSGroupThread class]]) {
             NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
             textAttachment.bounds = CGRectMake(0, 0, 11.0f, 10.0f);
-            
-            NSMutableAttributedString * attrStr = [[NSMutableAttributedString alloc]initWithString:msg.senderId];
+            NSString *name = [[Environment getCurrent].contactsManager nameStringForPhoneIdentifier:msg.senderId];
+            name = name ? name : msg.senderId;
+            NSMutableAttributedString * attrStr = [[NSMutableAttributedString alloc]initWithString:name];
             [attrStr appendAttributedString:[NSAttributedString attributedStringWithAttachment:textAttachment]];
         
             return (NSAttributedString*)attrStr;
