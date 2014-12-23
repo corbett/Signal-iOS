@@ -247,7 +247,7 @@
 }
 
 - (void)handleReceivedTextMessage:(IncomingPushMessageSignal*)message withContent:(PushMessageContent*)content{
-    [self handleReceivedMessage:message withContent:content attachments:nil];
+    [self handleReceivedMessage:message withContent:content attachments:content.attachments];
 }
 
 - (void)handleReceivedMessage:(IncomingPushMessageSignal*)message withContent:(PushMessageContent*)content attachments:(NSArray*)attachments {

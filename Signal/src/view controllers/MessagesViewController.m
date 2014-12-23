@@ -403,20 +403,22 @@ typedef enum : NSUInteger {
 -(BOOL)shouldShowMessageStatusAtIndexPath:(NSIndexPath*)indexPath
 {
     
-    TSMessageAdapter * currentMessage = [self messageAtIndexPath:indexPath];
-    
-    if (indexPath.item == [self.collectionView numberOfItemsInSection:indexPath.section]-1)
-    {
-        return [self isMessageOutgoingAndDelivered:currentMessage];
+    TSMessageAdapter *currentMessage = [self messageAtIndexPath:indexPath];
+    if([self.thread isKindOfClass:[TSGroupThread class]]) {
+        return currentMessage.messageType == TSIncomingMessageAdapter;
     }
-    
-    if (![self isMessageOutgoingAndDelivered:currentMessage])
-    {
-        return NO;
+    else {
+        if (indexPath.item == [self.collectionView numberOfItemsInSection:indexPath.section]-1) {
+            return [self isMessageOutgoingAndDelivered:currentMessage];
+        }
+        
+        if (![self isMessageOutgoingAndDelivered:currentMessage]) {
+            return NO;
+        }
+        
+        TSMessageAdapter *nextMessage = [self nextOutgoingMessage:indexPath];
+        return ![self isMessageOutgoingAndDelivered:nextMessage];
     }
-    
-    TSMessageAdapter * nextMessage = [self nextOutgoingMessage:indexPath];
-    return ![self isMessageOutgoingAndDelivered:nextMessage];
 }
 
 -(TSMessageAdapter*)nextOutgoingMessage:(NSIndexPath*)indexPath
@@ -438,19 +440,28 @@ typedef enum : NSUInteger {
 }
 
 
--(NSAttributedString*)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
-{
-    if ([self shouldShowMessageStatusAtIndexPath:indexPath])
-    {
-        _lastDeliveredMessageIndexPath = indexPath;
-        NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-        textAttachment.bounds = CGRectMake(0, 0, 11.0f, 10.0f);
-        NSMutableAttributedString * attrStr = [[NSMutableAttributedString alloc]initWithString:@"Delivered"];
-        [attrStr appendAttributedString:[NSAttributedString attributedStringWithAttachment:textAttachment]];
+-(NSAttributedString*)collectionView:(JSQMessagesCollectionView *)collectionView attributedTextForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath {
+    TSMessageAdapter *msg = [self messageAtIndexPath:indexPath];
+    if ([self shouldShowMessageStatusAtIndexPath:indexPath]) {
+        if([self.thread isKindOfClass:[TSGroupThread class]]) {
+            NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+            textAttachment.bounds = CGRectMake(0, 0, 11.0f, 10.0f);
+            
+            NSMutableAttributedString * attrStr = [[NSMutableAttributedString alloc]initWithString:msg.senderId];
+            [attrStr appendAttributedString:[NSAttributedString attributedStringWithAttachment:textAttachment]];
         
-        return (NSAttributedString*)attrStr;
+            return (NSAttributedString*)attrStr;
+        }
+        else {
+            _lastDeliveredMessageIndexPath = indexPath;
+            NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
+            textAttachment.bounds = CGRectMake(0, 0, 11.0f, 10.0f);
+            NSMutableAttributedString * attrStr = [[NSMutableAttributedString alloc]initWithString:@"Delivered"];
+            [attrStr appendAttributedString:[NSAttributedString attributedStringWithAttachment:textAttachment]];
+        
+            return (NSAttributedString*)attrStr;
+        }
     }
-    
     return nil;
 }
 
@@ -458,8 +469,12 @@ typedef enum : NSUInteger {
                    layout:(JSQMessagesCollectionViewFlowLayout *)collectionViewLayout heightForCellBottomLabelAtIndexPath:(NSIndexPath *)indexPath
 {
     TSMessageAdapter * msg = [self messageAtIndexPath:indexPath];
-    
-    if (msg.messageType == TSOutgoingMessageAdapter) {
+    if([self.thread isKindOfClass:[TSGroupThread class]]) {
+        if(msg.messageType == TSIncomingMessageAdapter) {
+            return 16.0f;
+        }
+    }
+    else if (msg.messageType == TSOutgoingMessageAdapter) {
         return 16.0f;
     }
     
