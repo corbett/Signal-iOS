@@ -220,6 +220,8 @@
             TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction]; 
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
+                gThread.groupModel = model;
+                [gThread saveWithTransaction:transaction];
                 [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
             }
             else {
