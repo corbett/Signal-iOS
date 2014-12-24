@@ -552,7 +552,7 @@ typedef enum : NSUInteger {
         NSArray  *actions           = @[@"Accept new identity key", @"Copy new identity key to pasteboard"];
 
         [self.inputToolbar.contentView resignFirstResponder];
-        
+
         [DJWActionSheet showInView:self.tabBarController.view withTitle:messageString cancelButtonTitle:@"Cancel" destructiveButtonTitle:@"Delete" otherButtonTitles:actions tapBlock:^(DJWActionSheet *actionSheet, NSInteger tappedButtonIndex) {
             if (tappedButtonIndex == actionSheet.cancelButtonIndex) {
                 NSLog(@"User Cancelled");
@@ -883,7 +883,7 @@ typedef enum : NSUInteger {
         [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
         self.thread = gThread;
     }];
-
+    [self.inputToolbar.contentView resignFirstResponder];
 }
 
 
