@@ -12,15 +12,6 @@
 #import "ContactsManager.h"
 #import "Environment.h"
 
-#import "TSStorageManager.h"
-#import "TSOutgoingMessage.h"
-#import "TSMessagesManager.h"
-#import "TSAttachmentAdapter.h"
-
-#import "TSMessagesManager+sendMessages.h"
-#import "TSMessagesManager+attachments.h"
-#import "NSDate+millisecondTimeStamp.h"
-
 
 #import "Contact.h"
 #import "GroupModel.h"
@@ -32,6 +23,8 @@
 #import <MobileCoreServices/UTCoreTypes.h>
 #import <AVFoundation/AVFoundation.h>
 #import <CoreMedia/CoreMedia.h>
+
+static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue";
 
 @interface NewGroupViewController () {
     NSArray* contacts;
@@ -47,6 +40,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    contacts = [Environment getCurrent].contactsManager.textSecureContacts;
+    [self initializeDelegates];
+    [self initializeTableView];
+    [self initializeKeyboardHandlers];
+
     if(_thread==nil) {
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:@"Create" style:UIBarButtonItemStylePlain target:self action:@selector(createGroup)];
         self.navigationItem.title = @"New Group";
@@ -56,12 +54,24 @@
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:@"Update" style:UIBarButtonItemStylePlain target:self action:@selector(updateGroup)];
         self.navigationItem.title = _thread.groupModel.groupName;
         self.nameGroupTextField.text = _thread.groupModel.groupName;
+        // Select the contacts already selected:
+        // TODOGROUP inefficient way of doing this, will not scale well
+        for (NSInteger r = 0; r < [_tableView numberOfRowsInSection:0]-1; r++) {
+            NSMutableSet *usersInGroup = [NSMutableSet setWithArray:_thread.groupModel.groupMemberIds];
+            NSMutableArray *contactPhoneNumbers = [[NSMutableArray alloc] init];
+            for(PhoneNumber* number in [[contacts objectAtIndex:(NSUInteger)r] parsedPhoneNumbers]) {
+                [contactPhoneNumbers addObject:[number toE164]];
+            }
+            [usersInGroup intersectSet:[NSSet setWithArray:contactPhoneNumbers]];
+            if([usersInGroup count]>0) {
+                [_tableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:(r+1) inSection:0]
+                                        animated:NO
+                                  scrollPosition:UITableViewScrollPositionNone];
+            }
+        }
+        
     }
-    contacts = [Environment getCurrent].contactsManager.textSecureContacts;
 
-    [self initializeDelegates];
-    [self initializeTableView];
-    [self initializeKeyboardHandlers];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -101,37 +111,15 @@
 
 
 -(void)updateGroup {
-    //TODOGROUP
-    // First updating the group
-    
-    DDLogDebug(@"Update gruop not implemented");
-    _thread.groupModel.groupName = _nameGroupTextField.text;
-    _thread.groupModel.groupImage = _groupImageButton.imageView.image;
     NSMutableArray* mut = [[NSMutableArray alloc]init];
-    
     for (NSIndexPath* idx in _tableView.indexPathsForSelectedRows) {
         [mut addObjectsFromArray:[[contacts objectAtIndex:(NSUInteger)idx.row-1] textSecureIdentifiers]];
     }
     [mut addObject:[SignalKeyingStorage.localNumber toE164]];   // Also add the originator
-    _thread.groupModel.groupMemberIds = mut;
+    _groupModel.groupMemberIds = [NSMutableArray arrayWithArray:[[NSSet setWithArray:mut] allObjects]];
+    _groupModel = [[GroupModel alloc] initWithTitle:_nameGroupTextField.text memberIds:mut image:_groupImageButton.imageView.image groupId:_thread.groupModel.groupId];
 
-    
-    [[TSStorageManager sharedManager].dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-        [_thread saveWithTransaction:transaction];
-        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:_thread messageBody:@"" attachments:nil];
-        message.groupMetaMessage = TSGroupMessageUpdate; //TODOGROUP make sure TSGroupMessageUpdate
-        [[TSMessagesManager sharedManager] sendMessage:message inThread:_thread];
-        
-    }];
-
-    // Then send message alerting of
-    
-    // finally pop to group
-    
-    
-//    if (vc.presentedViewController) {
-//        [vc.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-//    }
+    [self performSegueWithIdentifier:kUnwindToMessagesViewSegue sender:self];
 
 }
 
@@ -255,12 +243,6 @@
     if (indexPath.row > 0) {
         NSUInteger row = (NSUInteger)indexPath.row;
         Contact* contact = contacts[row-1];
-        if(_thread) {
-            //TODOGROUP inefficient way of doing this, will not scale well
-            NSMutableSet *usersInGroup = [NSMutableSet setWithArray:_thread.groupModel.groupMemberIds];
-            [usersInGroup intersectSet:[NSSet setWithArray:contact.userTextPhoneNumbers]];
-            cell.accessoryType = [usersInGroup count]>0 ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-        }
         
         cell.textLabel.attributedText = [self attributedStringForContact:contact inCell:cell];
     

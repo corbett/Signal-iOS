@@ -870,6 +870,23 @@ typedef enum : NSUInteger {
     }];
 }
 
+
+- (IBAction)unwindGroupUpdated:(UIStoryboardSegue *)segue{
+    NewGroupViewController *ngc = [segue sourceViewController];
+    GroupModel* newGroupModel = [ngc groupModel];
+    [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+        TSGroupThread* gThread = [TSGroupThread getOrCreateThreadWithGroupModel:newGroupModel transaction:transaction];
+        gThread.groupModel = newGroupModel;
+        [gThread saveWithTransaction:transaction];
+        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:gThread messageBody:@"" attachments:nil];
+        message.groupMetaMessage = TSGroupMessageUpdate;
+        [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
+        self.thread = gThread;
+    }];
+
+}
+
+
 - (void)dealloc{
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
