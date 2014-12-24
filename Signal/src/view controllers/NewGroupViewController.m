@@ -116,8 +116,7 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
         [mut addObjectsFromArray:[[contacts objectAtIndex:(NSUInteger)idx.row-1] textSecureIdentifiers]];
     }
     [mut addObject:[SignalKeyingStorage.localNumber toE164]];   // Also add the originator
-    _groupModel.groupMemberIds = [NSMutableArray arrayWithArray:[[NSSet setWithArray:mut] allObjects]];
-    _groupModel = [[GroupModel alloc] initWithTitle:_nameGroupTextField.text memberIds:mut image:_groupImageButton.imageView.image groupId:_thread.groupModel.groupId];
+    _groupModel = [[GroupModel alloc] initWithTitle:_nameGroupTextField.text memberIds:[NSMutableArray arrayWithArray:[[NSSet setWithArray:mut] allObjects]] image:_groupImageButton.imageView.image groupId:_thread.groupModel.groupId];
 
     [self performSegueWithIdentifier:kUnwindToMessagesViewSegue sender:self];
 
