@@ -220,9 +220,10 @@
             TSGroupThread *gThread = [TSGroupThread threadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction]; 
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
+                NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
                 gThread.groupModel = model;
                 [gThread saveWithTransaction:transaction];
-                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate] saveWithTransaction:transaction];
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction]; // TODO change this
             }
             else {
                 incomingMessage = [[TSIncomingMessage alloc] initWithTimestamp:timeStamp inThread:gThread authorId:message.source messageBody:body attachments:attachments];
