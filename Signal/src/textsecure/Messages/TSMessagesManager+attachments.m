@@ -40,20 +40,20 @@ dispatch_queue_t attachmentsQueue() {
 @implementation TSMessagesManager (attachments)
 
 - (void)handleReceivedMediaMessage:(IncomingPushMessageSignal*)message withContent:(PushMessageContent*)content {
-    NSMutableArray *attachments = [NSMutableArray array];
-    
+    NSArray *attachmentsToRetrieve = content.group ?  [NSArray arrayWithObject:content.group.avatar] : content.attachments;
+    NSMutableArray *retrievedAttachments = [NSMutableArray array];
     [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
-        for (PushMessageContentAttachmentPointer *pointer in content.attachments) {
+        for (PushMessageContentAttachmentPointer *pointer in attachmentsToRetrieve) {
             TSAttachmentPointer *attachmentPointer = [[TSAttachmentPointer alloc] initWithIdentifier:pointer.id key:pointer.key contentType:pointer.contentType relay:message.relay];
             [attachmentPointer saveWithTransaction:transaction];
             dispatch_async(attachmentsQueue(), ^{
                 [self retrieveAttachment:attachmentPointer];
             });
-            [attachments addObject:attachmentPointer.uniqueId];
+            [retrievedAttachments addObject:attachmentPointer.uniqueId];
         }
     }];
     
-    [self handleReceivedMessage:message withContent:content attachments:attachments];
+    [self handleReceivedMessage:message withContent:content attachments:retrievedAttachments];
 }
 
 
