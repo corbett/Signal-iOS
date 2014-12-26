@@ -883,7 +883,6 @@ typedef enum : NSUInteger {
         [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
         self.thread = gThread;
     }];
-    [self.inputToolbar.contentView resignFirstResponder];
 }
 
 
