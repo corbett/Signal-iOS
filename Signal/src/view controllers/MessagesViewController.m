@@ -90,10 +90,14 @@ typedef enum : NSUInteger {
     [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         self.thread = [TSGroupThread getOrCreateThreadWithGroupModel:model transaction:transaction];
         
-        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:nil];
+        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:self.thread messageBody:@"" attachments:[[NSMutableArray alloc] init]];
         message.groupMetaMessage = TSGroupMessageNew;
-        [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
-        
+        if(model.groupImage!=nil) {
+            [[TSMessagesManager sharedManager] sendAttachment:UIImagePNGRepresentation(model.groupImage) contentType:@"image/png" inMessage:message thread:self.thread];
+        }
+        else {
+            [[TSMessagesManager sharedManager] sendMessage:message inThread:self.thread];
+        }
         isGroupConversation = YES;
     }];
 }
@@ -878,9 +882,15 @@ typedef enum : NSUInteger {
         TSGroupThread* gThread = [TSGroupThread getOrCreateThreadWithGroupModel:newGroupModel transaction:transaction];
         gThread.groupModel = newGroupModel;
         [gThread saveWithTransaction:transaction];
-        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:gThread messageBody:@"" attachments:nil];
+        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:gThread messageBody:@"" attachments:[[NSMutableArray alloc] init]];
         message.groupMetaMessage = TSGroupMessageUpdate;
-        [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
+        if(newGroupModel.groupImage!=nil) {
+            [[TSMessagesManager sharedManager] sendAttachment:UIImagePNGRepresentation(newGroupModel.groupImage) contentType:@"image/png" inMessage:message thread:gThread];
+        }
+        else {
+            [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
+        }
+
         self.thread = gThread;
     }];
 }
