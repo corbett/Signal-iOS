@@ -56,7 +56,14 @@ dispatch_queue_t attachmentsQueue() {
     [self handleReceivedMessage:message withContent:content attachments:attachments];
 }
 
-- (void)sendAttachment:(NSData*)attachmentData contentType:(NSString*)contentType thread:(TSThread*)thread {
+
+
+
+
+
+
+
+- (void)sendAttachment:(NSData*)attachmentData contentType:(NSString*)contentType inMessage:(TSOutgoingMessage*)outgoingMessage thread:(TSThread*)thread {
     
     TSRequest *allocateAttachment = [[TSAllocAttachmentRequest alloc] init];
     [[TSNetworkManager sharedManager] queueAuthenticatedRequest:allocateAttachment success:^(NSURLSessionDataTask *task, id responseObject) {
@@ -75,8 +82,8 @@ dispatch_queue_t attachmentsQueue() {
                     [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
                         [result.pointer saveWithTransaction:transaction];
                     }];
-                    TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:thread messageBody:nil attachments:@[attachementId]];
-                    [self sendMessage:message inThread:thread];
+                    [outgoingMessage.attachments addObject:attachementId];
+                    [self sendMessage:outgoingMessage inThread:thread];
                 } else{
                     DDLogWarn(@"Failed to upload attachment");
                 }
@@ -87,8 +94,16 @@ dispatch_queue_t attachmentsQueue() {
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         DDLogError(@"Failed to get attachment allocated: %@", error);
     }];
+
+    
+    
 }
-        
+
+- (void)sendAttachment:(NSData*)attachmentData contentType:(NSString*)contentType thread:(TSThread*)thread {
+    TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:thread messageBody:nil attachments:[[NSMutableArray alloc] init]];
+    [self sendAttachment:attachmentData contentType:contentType inMessage:message thread:thread];
+}
+
 - (void)retrieveAttachment:(TSAttachmentPointer*)attachment {
     
     TSAttachmentRequest *attachmentRequest = [[TSAttachmentRequest alloc] initWithId:[attachment identifier]

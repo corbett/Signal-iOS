@@ -270,28 +270,37 @@ dispatch_queue_t sendingQueue() {
                 [groupBuilder setType:PushMessageContentGroupContextTypeDeliver];
                 break;
         }
-        //[groupBuilder setAvatar:(PushMessageContentAttachmentPointer *)]; //TODOATTACHMENTS for avatar
+        if(gThread.groupModel.groupImage!=nil && [message.attachments count] == 1) {
+            id dbObject = [TSAttachmentStream fetchObjectWithUniqueID:[message.attachments firstObject]];
+            if ([dbObject isKindOfClass:[TSAttachmentStream class]]) {
+                TSAttachmentStream *attachment = (TSAttachmentStream*)dbObject;
+                PushMessageContentAttachmentPointerBuilder *attachmentbuilder = [PushMessageContentAttachmentPointerBuilder new];
+                [attachmentbuilder setId:[attachment.identifier unsignedLongLongValue]];
+                [attachmentbuilder setContentType:attachment.contentType];
+                [attachmentbuilder setKey:attachment.encryptionKey];
+                [groupBuilder setAvatar:[attachmentbuilder build]];
+            }
+        }
         [builder setGroup:groupBuilder.build];
     }
-    
-    NSMutableArray *attachmentsArray = [NSMutableArray array];
-    
-    for (NSString *attachmentId in message.attachments){
-        id dbObject = [TSAttachmentStream fetchObjectWithUniqueID:attachmentId];
-        
-        if ([dbObject isKindOfClass:[TSAttachmentStream class]]) {
-            TSAttachmentStream *attachment = (TSAttachmentStream*)dbObject;
+    else {
+        NSMutableArray *attachmentsArray = [NSMutableArray array];
+        for (NSString *attachmentId in message.attachments){
+            id dbObject = [TSAttachmentStream fetchObjectWithUniqueID:attachmentId];
             
-            PushMessageContentAttachmentPointerBuilder *attachmentbuilder = [PushMessageContentAttachmentPointerBuilder new];
-            [attachmentbuilder setId:[attachment.identifier unsignedLongLongValue]];
-            [attachmentbuilder setContentType:attachment.contentType];
-            [attachmentbuilder setKey:attachment.encryptionKey];
-    
-            [attachmentsArray addObject:[attachmentbuilder build]];
+            if ([dbObject isKindOfClass:[TSAttachmentStream class]]) {
+                TSAttachmentStream *attachment = (TSAttachmentStream*)dbObject;
+                
+                PushMessageContentAttachmentPointerBuilder *attachmentbuilder = [PushMessageContentAttachmentPointerBuilder new];
+                [attachmentbuilder setId:[attachment.identifier unsignedLongLongValue]];
+                [attachmentbuilder setContentType:attachment.contentType];
+                [attachmentbuilder setKey:attachment.encryptionKey];
+        
+                [attachmentsArray addObject:[attachmentbuilder build]];
+            }
         }
+        [builder setAttachmentsArray:attachmentsArray];
     }
-    
-    [builder setAttachmentsArray:attachmentsArray];
     
     return [builder.build data];
 }
