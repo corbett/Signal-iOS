@@ -41,10 +41,11 @@ dispatch_queue_t attachmentsQueue() {
 
 - (void)handleReceivedMediaMessage:(IncomingPushMessageSignal*)message withContent:(PushMessageContent*)content {
     NSArray *attachmentsToRetrieve = content.group ?  [NSArray arrayWithObject:content.group.avatar] : content.attachments;
+
     NSMutableArray *retrievedAttachments = [NSMutableArray array];
     [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         for (PushMessageContentAttachmentPointer *pointer in attachmentsToRetrieve) {
-            TSAttachmentPointer *attachmentPointer = [[TSAttachmentPointer alloc] initWithIdentifier:pointer.id key:pointer.key contentType:pointer.contentType relay:message.relay];
+            TSAttachmentPointer *attachmentPointer = content.group ? [[TSAttachmentPointer alloc] initWithIdentifier:pointer.id key:pointer.key contentType:pointer.contentType relay:message.relay avatarOfGroupId:content.group.id] : [[TSAttachmentPointer alloc] initWithIdentifier:pointer.id key:pointer.key contentType:pointer.contentType relay:message.relay];
             [attachmentPointer saveWithTransaction:transaction];
             dispatch_async(attachmentsQueue(), ^{
                 [self retrieveAttachment:attachmentPointer];
@@ -136,6 +137,13 @@ dispatch_queue_t attachmentsQueue() {
                                                                           contentType:attachment.contentType];
         [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
             [stream saveWithTransaction:transaction];
+            if(attachment.avatarOfGroupId!=nil) {
+                GroupModel *emptyModelToFillOutId = [[GroupModel alloc] initWithTitle:nil memberIds:nil image:nil groupId:attachment.avatarOfGroupId]; // TODO refactor the TSGroupThread to just take in an ID (as it is all that it uses). Should not take in more than it uses
+                TSGroupThread* gThread = [TSGroupThread getOrCreateThreadWithGroupModel:emptyModelToFillOutId transaction:transaction];
+                gThread.groupModel.groupImage=[stream image];
+                [gThread saveWithTransaction:transaction];
+            
+            }
         }];
     }
 }

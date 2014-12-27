@@ -223,15 +223,14 @@
             if([attachments count]==1) {
                 NSString* avatarId  = [attachments firstObject];
                 TSAttachment *avatar = [TSAttachment fetchObjectWithUniqueID:avatarId];
-                if ([avatar isKindOfClass:[TSAttachmentStream class]]) {
+                if ([avatar isKindOfClass:[TSAttachmentStream class]]) { //TODOGROUP this may not be downloaded yet
                     TSAttachmentStream *stream = (TSAttachmentStream*)avatar;
                     if ([stream isImage]) {
                         groupAvatar = [stream image];
                     }
                 }
             }
-            GroupModel *model = [[GroupModel alloc] initWithTitle:content.group.name memberIds:[[NSMutableArray alloc ] initWithArray:content.group.members] image:groupAvatar groupId:content.group.id]; //TODOGROUP group avatar will not be nil generically
-            TSGroupThread *gThread = [TSGroupThread getOrCreateThreadWithGroupModel:model transaction:transaction];
+            GroupModel *model = [[GroupModel alloc] initWithTitle:content.group.name memberIds:[[NSMutableArray alloc ] initWithArray:content.group.members] image:groupAvatar groupId:content.group.id];             TSGroupThread *gThread = [TSGroupThread getOrCreateThreadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction]; 
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
                 NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
