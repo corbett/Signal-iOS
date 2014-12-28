@@ -230,7 +230,8 @@
                     }
                 }
             }
-            GroupModel *model = [[GroupModel alloc] initWithTitle:content.group.name memberIds:[[NSMutableArray alloc ] initWithArray:content.group.members] image:groupAvatar groupId:content.group.id];             TSGroupThread *gThread = [TSGroupThread getOrCreateThreadWithGroupModel:model transaction:transaction];
+            GroupModel *model = [[GroupModel alloc] initWithTitle:content.group.name memberIds:[[NSMutableArray alloc ] initWithArray:content.group.members] image:groupAvatar groupId:content.group.id];
+            TSGroupThread *gThread = [TSGroupThread getOrCreateThreadWithGroupModel:model transaction:transaction];
             [gThread saveWithTransaction:transaction]; 
             if(content.group.type==PushMessageContentGroupContextTypeUpdate) {
                 NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
@@ -240,10 +241,7 @@
             }
             else if(content.group.type==PushMessageContentGroupContextTypeQuit) {
                 NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
-                gThread.groupModel = model;
-                // remove the sender's id from the group model members
                 NSMutableArray *newGroupMembers = [NSMutableArray arrayWithArray:gThread.groupModel.groupMemberIds];
-                DDLogDebug(@"removing member: %@",message.source);
                 [newGroupMembers removeObject:message.source];
                 gThread.groupModel.groupMemberIds = newGroupMembers;
                 [gThread saveWithTransaction:transaction];
