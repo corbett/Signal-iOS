@@ -14,7 +14,6 @@
 
 - (void)configWithThread:(TSGroupThread*)thread;
 @property(nonatomic, strong) IBOutlet UITableView* tableView;
-
 @property(nonatomic, strong) IBOutlet UITextField* nameGroupTextField;
 @property(nonatomic, strong) IBOutlet UIButton* groupImageButton;
 @property(nonatomic, strong) IBOutlet UIView* tapToDismissView;

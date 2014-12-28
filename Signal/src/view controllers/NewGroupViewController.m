@@ -54,9 +54,10 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:@"Update" style:UIBarButtonItemStylePlain target:self action:@selector(updateGroup)];
         self.navigationItem.title = _thread.groupModel.groupName;
         self.nameGroupTextField.text = _thread.groupModel.groupName;
+        [self setupGroupImageButton:_thread.groupModel.groupImage];
         // Select the contacts already selected:
-        // TODOGROUP inefficient way of doing this, will not scale well
         for (NSInteger r = 0; r < [_tableView numberOfRowsInSection:0]-1; r++) {
+            // TODOGROUP this will not scale well
             NSMutableSet *usersInGroup = [NSMutableSet setWithArray:_thread.groupModel.groupMemberIds];
             NSMutableArray *contactPhoneNumbers = [[NSMutableArray alloc] init];
             for(PhoneNumber* number in [[contacts objectAtIndex:(NSUInteger)r] parsedPhoneNumbers]) {
@@ -211,13 +212,16 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
     
     if (picture_camera) {
         //There is a photo
-        _groupImageButton.imageView.image = picture_camera;
-        _groupImageButton.imageView.layer.cornerRadius = 40.0f;
-        _groupImageButton.imageView.clipsToBounds = YES;
+        [self setupGroupImageButton:picture_camera];
         
     }
-    
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)setupGroupImageButton:(UIImage*)image {
+    _groupImageButton.imageView.image = image;
+    _groupImageButton.imageView.layer.cornerRadius = 40.0f;
+    _groupImageButton.imageView.clipsToBounds = YES;
 }
 
 #pragma mark - Table view data source
