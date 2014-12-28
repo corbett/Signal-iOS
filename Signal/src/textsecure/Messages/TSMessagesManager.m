@@ -238,6 +238,16 @@
                 [gThread saveWithTransaction:transaction];
                 [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction];
             }
+            else if(content.group.type==PushMessageContentGroupContextTypeQuit) {
+                NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
+                gThread.groupModel = model;
+                // remove the sender's id from the group model members
+                NSMutableArray *newGroupMembers = [NSMutableArray arrayWithArray:gThread.groupModel.groupMemberIds];
+                DDLogDebug(@"removing member: %@",message.source);
+                [newGroupMembers removeObject:message.source];
+                [gThread saveWithTransaction:transaction];
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction];
+            }
             else {
                 incomingMessage = [[TSIncomingMessage alloc] initWithTimestamp:timeStamp inThread:gThread authorId:message.source messageBody:body attachments:attachments];
                 [incomingMessage saveWithTransaction:transaction];
