@@ -795,7 +795,7 @@ typedef enum : NSUInteger {
                      withTitle:nil
              cancelButtonTitle:@"Cancel"
         destructiveButtonTitle:nil
-             otherButtonTitles:@[@"Update group", @"Leave group", @"Delete thread"]
+             otherButtonTitles:@[@"Update group" ]//, @"Leave group", @"Delete thread"] // TODOGROUP leave
                       tapBlock:^(DJWActionSheet *actionSheet, NSInteger tappedButtonIndex) {
                           if (tappedButtonIndex == actionSheet.cancelButtonIndex) {
                               NSLog(@"User Cancelled");
@@ -875,9 +875,7 @@ typedef enum : NSUInteger {
 }
 
 
-- (IBAction)unwindGroupUpdated:(UIStoryboardSegue *)segue{
-    NewGroupViewController *ngc = [segue sourceViewController];
-    GroupModel* newGroupModel = [ngc groupModel];
+- (void) updateGroupModelTo:(GroupModel*)newGroupModel {
     [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         TSGroupThread* gThread = [TSGroupThread getOrCreateThreadWithGroupModel:newGroupModel transaction:transaction];
         gThread.groupModel = newGroupModel;
@@ -890,9 +888,17 @@ typedef enum : NSUInteger {
         else {
             [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
         }
-
+        
         self.thread = gThread;
     }];
+
+}
+
+
+- (IBAction)unwindGroupUpdated:(UIStoryboardSegue *)segue{
+    NewGroupViewController *ngc = [segue sourceViewController];
+    GroupModel* newGroupModel = [ngc groupModel];
+    [self updateGroupModelTo:newGroupModel];
 }
 
 

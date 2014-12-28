@@ -236,7 +236,7 @@
                 NSString* updateGroupInfo = [gThread.groupModel getInfoStringAboutUpdateTo:model];
                 gThread.groupModel = model;
                 [gThread saveWithTransaction:transaction];
-                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction]; // TODO change this
+                [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction];
             }
             else {
                 incomingMessage = [[TSIncomingMessage alloc] initWithTimestamp:timeStamp inThread:gThread authorId:message.source messageBody:body attachments:attachments];
