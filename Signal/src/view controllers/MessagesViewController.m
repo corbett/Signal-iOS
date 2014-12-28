@@ -163,21 +163,27 @@ typedef enum : NSUInteger {
 {
     
     self.title = self.thread.name;
-    if(isGroupConversation && ![((TSGroupThread*)_thread).groupModel.groupMemberIds containsObject:[SignalKeyingStorage.localNumber toE164]]) {
-        [self inputToolbar].hidden= YES; // user has requested they leave the group. further sends disallowed
-    }
-    
-    if (!isGroupConversation && [self isRedPhoneReachable]) {
+    if (!isGroupConversation ) {
         UIBarButtonItem * lockButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"lock"] style:UIBarButtonItemStylePlain target:self action:@selector(showFingerprint)];
-        UIBarButtonItem * callButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"call_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(callAction)];
-        [callButton setImageInsets:UIEdgeInsetsMake(0, -10, 0, -50)];
-        UIBarButtonItem *negativeSeparator = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
-        negativeSeparator.width = -8;
+        if ([self isRedPhoneReachable]) {
+            UIBarButtonItem * callButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"call_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(callAction)];
+            [callButton setImageInsets:UIEdgeInsetsMake(0, -10, 0, -50)];
+            UIBarButtonItem *negativeSeparator = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
+            negativeSeparator.width = -8;
         
-        self.navigationItem.rightBarButtonItems = @[negativeSeparator, lockButton, callButton];
+            self.navigationItem.rightBarButtonItems = @[negativeSeparator, lockButton, callButton];
+        }
+        else {
+            self.navigationItem.rightBarButtonItems = @[lockButton];
+        }
     } else {
-        UIBarButtonItem *groupMenuButton =  [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"settings_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(didPressGroupMenuButton:)];
-        self.navigationItem.rightBarButtonItem = groupMenuButton;
+        if(![((TSGroupThread*)_thread).groupModel.groupMemberIds containsObject:[SignalKeyingStorage.localNumber toE164]]) {
+            [self inputToolbar].hidden= YES; // user has requested they leave the group. further sends disallowed
+        }
+        else {
+            UIBarButtonItem *groupMenuButton =  [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"settings_tab"] style:UIBarButtonItemStylePlain target:self action:@selector(didPressGroupMenuButton:)];
+            self.navigationItem.rightBarButtonItem = groupMenuButton;
+        }
     }
 }
 
@@ -879,7 +885,7 @@ typedef enum : NSUInteger {
 - (void) leaveGroup {
     [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
         TSGroupThread* gThread = (TSGroupThread*)_thread;
-        [gThread.groupModel.groupMemberIds removeObject:[SignalKeyingStorage.localNumber toE164]];
+        gThread.groupModel.groupMemberIds = nil;
         [gThread saveWithTransaction:transaction];
         TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:gThread messageBody:@"" attachments:[[NSMutableArray alloc] init]];
         message.groupMetaMessage = TSGroupMessageQuit;
