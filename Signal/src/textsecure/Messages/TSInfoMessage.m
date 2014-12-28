@@ -42,6 +42,8 @@
             return @"Media messages are currently not supported.";
         case TSInfoMessageUserNotRegistered:
             return @"The user is not registered.";
+        case TSInfoMessageTypeGroupQuit:
+            return @"You have left the group.";
         case TSInfoMessageTypeGroupUpdate:
             return _customMessage != nil ? _customMessage : @"Updated the group";
         default:

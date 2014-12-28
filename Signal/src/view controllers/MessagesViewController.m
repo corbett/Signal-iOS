@@ -12,6 +12,7 @@
 #import "FullImageViewController.h"
 #import "FingerprintViewController.h"
 #import "NewGroupViewController.h"
+#import "SignalKeyingStorage.h"
 
 #import "JSQCallCollectionViewCell.h"
 #import "JSQCall.h"
@@ -105,6 +106,7 @@ typedef enum : NSUInteger {
 - (void)setupWithThread:(TSThread *)thread{
     self.thread = thread;
     isGroupConversation = [self.thread isKindOfClass:[TSGroupThread class]];
+   
 }
 
 - (void)viewDidLoad {
@@ -120,7 +122,7 @@ typedef enum : NSUInteger {
         [self.messageMappings updateWithTransaction:transaction];
     }];
     
-    [self initializeNavigationBar];
+    [self initializeToolbars];
     [self initializeCollectionViewLayout];
     
     
@@ -157,12 +159,13 @@ typedef enum : NSUInteger {
 
 #pragma mark - Initiliazers
 
--(void)initializeNavigationBar
+-(void)initializeToolbars
 {
     
     self.title = self.thread.name;
-    
-    
+    if(isGroupConversation && ![((TSGroupThread*)_thread).groupModel.groupMemberIds containsObject:[SignalKeyingStorage.localNumber toE164]]) {
+        [self inputToolbar].hidden= YES; // user has requested they leave the group. further sends disallowed
+    }
     
     if (!isGroupConversation && [self isRedPhoneReachable]) {
         UIBarButtonItem * lockButton = [[UIBarButtonItem alloc]initWithImage:[UIImage imageNamed:@"lock"] style:UIBarButtonItemStylePlain target:self action:@selector(showFingerprint)];
@@ -698,7 +701,7 @@ typedef enum : NSUInteger {
         [self.uiDatabaseConnection readWithBlock:^(YapDatabaseReadTransaction *transaction) {
             TSGroupThread* gThread = (TSGroupThread*)self.thread;
             self.thread = [TSGroupThread threadWithGroupModel:gThread.groupModel transaction:transaction];
-            self.title = self.thread.name;
+            [self initializeToolbars];
         }];
     }
     // Process the notification(s),
@@ -795,7 +798,7 @@ typedef enum : NSUInteger {
                      withTitle:nil
              cancelButtonTitle:@"Cancel"
         destructiveButtonTitle:nil
-             otherButtonTitles:@[@"Update group" ]//, @"Leave group", @"Delete thread"] // TODOGROUP leave
+             otherButtonTitles:@[@"Update group", @"Leave group"] //@"Delete thread"] // TODOGROUP delete thread
                       tapBlock:^(DJWActionSheet *actionSheet, NSInteger tappedButtonIndex) {
                           if (tappedButtonIndex == actionSheet.cancelButtonIndex) {
                               NSLog(@"User Cancelled");
@@ -804,12 +807,10 @@ typedef enum : NSUInteger {
                           }else {
                               switch (tappedButtonIndex) {
                                   case 0:
-                                      DDLogDebug(@"update group picked");
                                       [self performSegueWithIdentifier:kUpdateGroupSegueIdentifier sender:self];
-
                                       break;
                                   case 1:
-                                      DDLogDebug(@"leave group picket");
+                                      [self leaveGroup];
                                       break;
                                   case 2:
                                       DDLogDebug(@"delete thread");
@@ -874,6 +875,18 @@ typedef enum : NSUInteger {
     }];
 }
 
+
+- (void) leaveGroup {
+    [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+        TSGroupThread* gThread = (TSGroupThread*)_thread;
+        [gThread.groupModel.groupMemberIds removeObject:[SignalKeyingStorage.localNumber toE164]];
+        [gThread saveWithTransaction:transaction];
+        TSOutgoingMessage *message = [[TSOutgoingMessage alloc] initWithTimestamp:[NSDate ows_millisecondTimeStamp] inThread:gThread messageBody:@"" attachments:[[NSMutableArray alloc] init]];
+        message.groupMetaMessage = TSGroupMessageQuit;
+        [[TSMessagesManager sharedManager] sendMessage:message inThread:gThread];
+        
+    }];
+}
 
 - (void) updateGroupModelTo:(GroupModel*)newGroupModel {
     [self.editingDatabaseConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {

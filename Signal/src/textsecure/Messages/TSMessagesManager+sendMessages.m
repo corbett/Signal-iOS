@@ -240,6 +240,12 @@ dispatch_queue_t sendingQueue() {
     if(message.groupMetaMessage==TSGroupMessageDeliver) {
         [self saveMessage:message withState:message.messageState];
     }
+    else if(message.groupMetaMessage==TSGroupMessageQuit) {
+        [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+            
+            [[[TSInfoMessage alloc] initWithTimestamp:message.timeStamp inThread:thread messageType:TSInfoMessageTypeGroupQuit] saveWithTransaction:transaction];
+        }];
+    }
     else {
         [self.dbConnection readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
             

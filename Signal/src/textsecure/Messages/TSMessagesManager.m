@@ -223,7 +223,7 @@
             if([attachments count]==1) {
                 NSString* avatarId  = [attachments firstObject];
                 TSAttachment *avatar = [TSAttachment fetchObjectWithUniqueID:avatarId];
-                if ([avatar isKindOfClass:[TSAttachmentStream class]]) { //TODOGROUP this may not be downloaded yet
+                if ([avatar isKindOfClass:[TSAttachmentStream class]]) { 
                     TSAttachmentStream *stream = (TSAttachmentStream*)avatar;
                     if ([stream isImage]) {
                         groupAvatar = [stream image];
