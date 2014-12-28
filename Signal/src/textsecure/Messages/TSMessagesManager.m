@@ -245,6 +245,7 @@
                 NSMutableArray *newGroupMembers = [NSMutableArray arrayWithArray:gThread.groupModel.groupMemberIds];
                 DDLogDebug(@"removing member: %@",message.source);
                 [newGroupMembers removeObject:message.source];
+                gThread.groupModel.groupMemberIds = newGroupMembers;
                 [gThread saveWithTransaction:transaction];
                 [[[TSInfoMessage alloc] initWithTimestamp:timeStamp inThread:gThread messageType:TSInfoMessageTypeGroupUpdate customMessage:updateGroupInfo] saveWithTransaction:transaction];
             }
