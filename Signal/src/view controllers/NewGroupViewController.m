@@ -225,7 +225,8 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
     UIImage *picture_camera = [info objectForKey:UIImagePickerControllerOriginalImage];
     
     if (picture_camera) {
-        [self setupGroupImageButton:[picture_camera scaledToMaxPixels:100]];
+        [self setupGroupImageButton:picture_camera];
+        //[self setupGroupImageButton:[picture_camera scaledToMaxPixels:100]];
     }
     [self dismissViewControllerAnimated:YES completion:nil];
 }
