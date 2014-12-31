@@ -12,4 +12,6 @@
 
 - (UIImage *)normalizedImage;
 - (UIImage *)resizedWithQuality:(CGInterpolationQuality)quality rate:(CGFloat)rate;
+- (UIImage *)scaledToMaxPixels:(NSInteger)pixels;
+
 @end

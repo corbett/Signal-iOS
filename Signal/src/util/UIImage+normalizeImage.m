@@ -36,4 +36,22 @@
     return resized;
 }
 
+- (UIImage *)scaledToMaxPixels:(NSInteger)pixels {
+    UIImage *resized = nil;
+    CGFloat scale = 1.0/MAX(self.size.width, self.size.height);
+    
+    CGFloat width = self.size.width * scale;
+    CGFloat height = self.size.height * scale;
+    
+    UIGraphicsBeginImageContext(CGSizeMake(width, height));
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetInterpolationQuality(context, kCGInterpolationNone);
+    [self drawInRect:CGRectMake(0, 0, width, height)];
+    resized = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return resized;
+    
+}
+
 @end

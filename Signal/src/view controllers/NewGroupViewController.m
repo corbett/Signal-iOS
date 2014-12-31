@@ -19,6 +19,8 @@
 #import "SecurityUtils.h"
 #import "SignalKeyingStorage.h"
 
+#import "UIImage+normalizeImage.h"
+
 #import "UIUtil.h"
 #import "DJWActionSheet.h"
 #import <MobileCoreServices/UTCoreTypes.h>
@@ -223,8 +225,7 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
     UIImage *picture_camera = [info objectForKey:UIImagePickerControllerOriginalImage];
     
     if (picture_camera) {
-        [self setupGroupImageButton:picture_camera];
-        
+        [self setupGroupImageButton:[picture_camera scaledToMaxPixels:100]];
     }
     [self dismissViewControllerAnimated:YES completion:nil];
 }
