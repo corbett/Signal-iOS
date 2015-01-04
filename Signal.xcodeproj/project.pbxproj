@@ -284,6 +284,7 @@
 		A1C32D5117A06544000A904E /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1C32D4D17A0652C000A904E /* AddressBook.framework */; };
 		A56977911A351BC400173BF2 /* ScanIdentityBarcodeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A569778E1A351BC400173BF2 /* ScanIdentityBarcodeViewController.m */; };
 		A56977921A351BC400173BF2 /* PresentIdentityQRCodeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A569778F1A351BC400173BF2 /* PresentIdentityQRCodeViewController.m */; };
+		A5CF01A71A5A08C700283471 /* TSGroupMessageStorageTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A5CF01A61A5A08C700283471 /* TSGroupMessageStorageTests.m */; };
 		A5D0699B1A50E9CB004CB540 /* ShowGroupMembersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A5D069991A50E9CB004CB540 /* ShowGroupMembersViewController.m */; };
 		AA0C8E498E2046B0B81EEE6E /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8313AE91B4954215858A5662 /* libPods.a */; };
 		B6019E971A2492AB001118DF /* NSDate+millisecondTimeStamp.mm in Sources */ = {isa = PBXBuildFile; fileRef = B6019E961A2492AB001118DF /* NSDate+millisecondTimeStamp.mm */; };
@@ -887,6 +888,7 @@
 		A569778E1A351BC400173BF2 /* ScanIdentityBarcodeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScanIdentityBarcodeViewController.m; sourceTree = "<group>"; };
 		A569778F1A351BC400173BF2 /* PresentIdentityQRCodeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PresentIdentityQRCodeViewController.m; sourceTree = "<group>"; };
 		A56977901A351BC400173BF2 /* PresentIdentityQRCodeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PresentIdentityQRCodeViewController.h; sourceTree = "<group>"; };
+		A5CF01A61A5A08C700283471 /* TSGroupMessageStorageTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSGroupMessageStorageTests.m; sourceTree = "<group>"; };
 		A5D069991A50E9CB004CB540 /* ShowGroupMembersViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShowGroupMembersViewController.m; sourceTree = "<group>"; };
 		A5D0699A1A50E9CB004CB540 /* ShowGroupMembersViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShowGroupMembersViewController.h; sourceTree = "<group>"; };
 		B6019E951A2492AB001118DF /* NSDate+millisecondTimeStamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+millisecondTimeStamp.h"; sourceTree = "<group>"; };
@@ -2310,6 +2312,7 @@
 		B6B095DD1A1D25C5008BFAA6 /* textsecure */ = {
 			isa = PBXGroup;
 			children = (
+				A5CF01A61A5A08C700283471 /* TSGroupMessageStorageTests.m */,
 				B6B095DE1A1D25C5008BFAA6 /* CryptographyTests.mm */,
 				B6B095DF1A1D25C5008BFAA6 /* TextSecureKitTests.m */,
 				B6B095E01A1D25C5008BFAA6 /* TSMessageStorageTests.m */,
@@ -3485,6 +3488,7 @@
 				A157077917F0CD6D007C2BD6 /* CryptoToolsTest.m in Sources */,
 				BFB074C119A4BCA400F2947C /* FutureUtilTest.m in Sources */,
 				B684A46D19C3446200B11029 /* PushManagerTest.m in Sources */,
+				A5CF01A71A5A08C700283471 /* TSGroupMessageStorageTests.m in Sources */,
 				76EB05A918170B33006006FC /* RtpSocket.m in Sources */,
 				765052B0182AC9B5008313E1 /* DialerButtonView.m in Sources */,
 				76EB062B18170B33006006FC /* BadState.m in Sources */,
@@ -3579,7 +3583,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__ARC_BRIDGE_CAST_NONARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -3621,7 +3625,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-fobjc-arc-exceptions";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -3724,7 +3728,7 @@
 					"$(inherited)",
 				);
 				PRODUCT_NAME = SignalTests;
-				PROVISIONING_PROFILE = "a377b8e6-d43e-485d-8830-bc7bfa3d1731";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				VALID_ARCHS = "arm64 armv7s armv7 i386 x86_64";
 			};
@@ -3750,7 +3754,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__ARC_BRIDGE_CAST_NONARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -3792,7 +3796,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fobjc-arc-exceptions";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -3818,7 +3822,7 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__ARC_BRIDGE_CAST_NONARC = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_GENERATE_TEST_COVERAGE_FILES = NO;
@@ -3857,7 +3861,7 @@
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-fobjc-arc-exceptions",
 				);
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -4013,7 +4017,7 @@
 					"$(inherited)",
 				);
 				PRODUCT_NAME = SignalTests;
-				PROVISIONING_PROFILE = "a377b8e6-d43e-485d-8830-bc7bfa3d1731";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				VALID_ARCHS = "arm64 armv7s armv7 i386 x86_64";
 			};
@@ -4061,7 +4065,7 @@
 					"$(inherited)",
 				);
 				PRODUCT_NAME = SignalTests;
-				PROVISIONING_PROFILE = "a377b8e6-d43e-485d-8830-bc7bfa3d1731";
+				PROVISIONING_PROFILE = "459e6419-c73f-45ad-8a87-aa51ee016ad6";
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				VALID_ARCHS = "arm64 armv7s armv7 i386 x86_64";
 			};
