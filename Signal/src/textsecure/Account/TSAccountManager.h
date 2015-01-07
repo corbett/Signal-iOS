@@ -70,6 +70,22 @@ typedef void(^failedVerificationBlock)(NSError *error);
 
 + (void)registerForPushNotifications:(NSData*)pushToken success:(successCompletionBlock)success failure:(failedVerificationBlock)failureBlock;
 
+/**
+ *  Saves the push token for use in redphone deregistration
+ *
+ *  @param pushToken Apple's Push Token
+ */
++ (void)setPushToken:(NSData*)pushToken;
+
+
+/**
+ *  Gets the push token for use in redphone deregistration
+ *
+ *  @returns pushToken Apple's Push Token
+ */
++ (NSData*)getPushToken;
+
+
 #endif
 
 + (NSError*)errorForRegistrationFailure:(TSRegistrationFailure)failureType HTTPStatusCode:(long)HTTPStatus;

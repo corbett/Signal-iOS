@@ -68,6 +68,7 @@
 + (RPAPICall*)registerPushNotificationWithPushToken:(NSData*)pushToken {
     RPAPICall *apiCall = [self defaultAPICall];
     apiCall.method     = HTTP_PUT;
+    [TSAccountManager setPushToken:pushToken];
     apiCall.endPoint   = [NSString stringWithFormat:@"/apn/%@", pushToken.encodedAsHexString];
     return apiCall;
 }
@@ -90,7 +91,8 @@
 + (RPAPICall*)unregister {
     RPAPICall *apiCall         = [self defaultAPICall];
     apiCall.method             = HTTP_DELETE;
-    apiCall.endPoint           = [NSString stringWithFormat:@"/apn/%i", [TSAccountManager getOrGenerateRegistrationId]];
+    NSData* pushToken          = [TSAccountManager getPushToken];
+    apiCall.endPoint           = [NSString stringWithFormat:@"/apn/%@", pushToken.encodedAsHexString];
     DDLogDebug(@"delete call %@",apiCall.endPoint);
     return apiCall;
 }

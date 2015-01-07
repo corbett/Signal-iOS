@@ -192,8 +192,8 @@ typedef enum {
                 [TSAccountManager unregisterTextSecureWithSuccess:^{
                     
                     [[RPServerRequestsManager sharedInstance]performRequest:[RPAPICall unregister] success:^(NSURLSessionDataTask *task, id responseObject) {
-                        [[TSStorageManager sharedManager] wipe];
-                        exit(0);
+                        //[[TSStorageManager sharedManager] wipe];
+                        //exit(0);
                     } failure:^(NSURLSessionDataTask *task, NSError *error) {
                         
                         DDLogError(@"Redphone registration failed with information %@", error.description);

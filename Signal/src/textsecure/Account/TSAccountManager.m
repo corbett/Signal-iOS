@@ -68,6 +68,26 @@
     return registrationID;
 }
 
+
++ (void)setPushToken:(NSData*)pushToken {
+    YapDatabaseConnection *dbConn = [[TSStorageManager sharedManager] newDatabaseConnection];
+    [dbConn readWriteWithBlock:^(YapDatabaseReadWriteTransaction *transaction) {
+        [transaction setObject:pushToken
+                        forKey:TSStorageLocalPushToken
+                  inCollection:TSStorageUserAccountCollection];
+    }];
+}
+
++ (NSData*)getPushToken {
+    YapDatabaseConnection *dbConn = [[TSStorageManager sharedManager] newDatabaseConnection];
+    __block NSData* pushToken;
+    [dbConn readWithBlock:^(YapDatabaseReadTransaction *transaction) {
+        pushToken  = [transaction objectForKey:TSStorageLocalPushToken inCollection:TSStorageUserAccountCollection];
+    }];
+    return pushToken;
+}
+
+
 + (void)registerForPushNotifications:(NSData *)pushToken success:(successCompletionBlock)success failure:(failedVerificationBlock)failureBlock{
     
     NSString *stringToken = [[pushToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<> "]];

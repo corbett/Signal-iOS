@@ -17,6 +17,7 @@
 #define TSStorageServerAuthToken       @"TSStorageServerAuthToken"
 #define TSStorageServerSignalingKey    @"TSStorageServerSignalingKey"
 #define TSStorageLocalRegistrationId   @"TSStorageLocalRegistrationId"
+#define TSStorageLocalPushToken        @"TSStorageLocalPushToken"
 
 /**
  *  Preferences exposed to the user
