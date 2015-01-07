@@ -12,6 +12,7 @@
 #import "RPAPICall.h"
 #import "SignalUtil.h"
 #import "SignalKeyingStorage.h"
+#import "TSAccountManager.h"
 #import "Util.h"
 
 #define CLAIMED_INTEROP_VERSION_IN_INITIATE_SIGNAL 1
@@ -89,7 +90,8 @@
 + (RPAPICall*)unregister {
     RPAPICall *apiCall         = [self defaultAPICall];
     apiCall.method             = HTTP_DELETE;
-    apiCall.endPoint           = @"/apn";
+    apiCall.endPoint           = [NSString stringWithFormat:@"/apn/%i", [TSAccountManager getOrGenerateRegistrationId]];
+    DDLogDebug(@"delete call %@",apiCall.endPoint);
     return apiCall;
 }
 

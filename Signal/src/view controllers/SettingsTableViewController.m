@@ -190,13 +190,21 @@ typedef enum {
                 
             case kUnregisterCell:
                 [TSAccountManager unregisterTextSecureWithSuccess:^{
-                    [[TSStorageManager sharedManager] wipe];
-                    exit(0);
+                    
+                    [[RPServerRequestsManager sharedInstance]performRequest:[RPAPICall unregister] success:^(NSURLSessionDataTask *task, id responseObject) {
+                        [[TSStorageManager sharedManager] wipe];
+                        exit(0);
+                    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                        
+                        DDLogError(@"Redphone registration failed with information %@", error.description);
+                        SignalAlertView(@"Failed to unregister RedPhone component of Signal", @"");
+                    }];
+                    
+                    
                 } failure:^(NSError *error) {
-                    SignalAlertView(@"Failed to unregister", @"");
+                    SignalAlertView(@"Failed to unregister TextSecure component of Signal", @"");
                 }];
                 break;
-                
             default:
                 break;
         }
