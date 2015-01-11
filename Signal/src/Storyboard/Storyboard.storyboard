@@ -1320,7 +1320,7 @@ A0 09 9A FF A8 8A 09 99</string>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="m6j-Wp-Kgl" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1342.5" y="62.25"/>
+            <point key="canvasLocation" x="-2152.5" y="967.5"/>
         </scene>
         <!--Registration View Controller-->
         <scene sceneID="okO-46-HuB">
@@ -1525,6 +1525,28 @@ A0 09 9A FF A8 8A 09 99</string>
                                     <segue destination="63r-gX-zar" kind="unwind" unwindAction="unwindToInitial:" id="Cs8-mu-nrN"/>
                                 </connections>
                             </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="We will send you a verification code you can enter here. You can also click on the link we sent with that code." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="4" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" adjustsLetterSpacingToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JsF-oL-JY5">
+                                <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="74" id="mZc-lU-CLB">
+                                        <variation key="heightClass=regular-widthClass=compact" constant="123"/>
+                                    </constraint>
+                                </constraints>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="17"/>
+                                <color key="textColor" red="0.50588235290000005" green="0.50588235290000005" blue="0.50588235290000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                                <variation key="default">
+                                    <mask key="constraints">
+                                        <exclude reference="mZc-lU-CLB"/>
+                                    </mask>
+                                </variation>
+                                <variation key="heightClass=regular-widthClass=compact" ambiguous="YES" misplaced="YES">
+                                    <rect key="frame" x="62" y="641" width="297" height="123"/>
+                                    <mask key="constraints">
+                                        <include reference="mZc-lU-CLB"/>
+                                    </mask>
+                                </variation>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -1573,6 +1595,7 @@ A0 09 9A FF A8 8A 09 99</string>
                                 <exclude reference="O6t-0o-mk5"/>
                                 <exclude reference="7IK-hd-tli"/>
                                 <exclude reference="qJb-ZJ-J5r"/>
+                                <exclude reference="JsF-oL-JY5"/>
                             </mask>
                             <mask key="constraints">
                                 <exclude reference="MVu-wT-IQ7"/>
@@ -1619,6 +1642,7 @@ A0 09 9A FF A8 8A 09 99</string>
                                 <include reference="O6t-0o-mk5"/>
                                 <include reference="7IK-hd-tli"/>
                                 <include reference="qJb-ZJ-J5r"/>
+                                <include reference="JsF-oL-JY5"/>
                             </mask>
                             <mask key="constraints">
                                 <include reference="MVu-wT-IQ7"/>
@@ -1988,7 +2012,7 @@ A0 09 9A FF A8 8A 09 99</string>
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Hgl-9i-kQr" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="442.5" y="62.25"/>
+            <point key="canvasLocation" x="-490.5" y="66.75"/>
         </scene>
         <!--Contacts-->
         <scene sceneID="P9O-s1-2L3">
@@ -3851,7 +3875,7 @@ Licensed under the GPLv3</string>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="eOz-Mr-Nmp" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-321" y="62.25"/>
+            <point key="canvasLocation" x="-2925" y="940.5"/>
         </scene>
     </scenes>
     <resources>
@@ -3879,7 +3903,7 @@ Licensed under the GPLv3</string>
         <image name="twitter.png" width="50" height="50"/>
     </resources>
     <inferredMetricsTieBreakers>
+        <segue reference="nHU-Zk-VvG"/>
         <segue reference="gZ1-lh-srF"/>
-        <segue reference="0BB-Wo-N9f"/>
     </inferredMetricsTieBreakers>
 </document>
