@@ -86,10 +86,12 @@
     return apiCall;
 }
 
-+ (RPAPICall*)unregister {
++ (RPAPICall*)unregisterWithPushToken:(NSData*)pushToken {
     RPAPICall *apiCall         = [self defaultAPICall];
     apiCall.method             = HTTP_DELETE;
-    apiCall.endPoint           = @"/apn";
+    apiCall.endPoint           = [NSString stringWithFormat:@"/apn/%@", pushToken.encodedAsHexString];
+    apiCall.parameters         = nil;
+    apiCall.requestSerializer  = [self basicAuthenticationSerializerEmpty];
     return apiCall;
 }
 
@@ -136,6 +138,13 @@
 
 + (AFHTTPRequestSerializer*)basicAuthenticationSerializer {
     AFHTTPRequestSerializer *serializer = [AFJSONRequestSerializer serializerWithWritingOptions:0];
+    [serializer setValue:[self computeBasicAuthorizationTokenForLocalNumber:SignalKeyingStorage.localNumber andPassword:SignalKeyingStorage.serverAuthPassword]forHTTPHeaderField:@"Authorization"];
+    return serializer;
+}
+
+
++ (AFHTTPRequestSerializer*)basicAuthenticationSerializerEmpty {
+    AFJSONRequestSerializer *serializer = [AFJSONRequestSerializer serializerWithWritingOptions:0];
     [serializer setValue:[self computeBasicAuthorizationTokenForLocalNumber:SignalKeyingStorage.localNumber andPassword:SignalKeyingStorage.serverAuthPassword]forHTTPHeaderField:@"Authorization"];
     return serializer;
 }
