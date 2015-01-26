@@ -67,7 +67,7 @@ DEPENDENCIES:
   - AxolotlKit (~> 0.5)
   - DJWActionSheet
   - FFCircularProgressView (>= 0.1)
-  - JSQMessagesViewController (from `https://github.com/WhisperSystems/JSQMessagesViewController`, branch `JSignalQ`)
+  - JSQMessagesViewController (from `https://github.com/corbett/JSQMessagesViewController`, branch `callsgroups`)
   - libPhoneNumber-iOS (~> 0.7)
   - Mantle (~> 1.5)
   - OpenSSL (~> 1.0.200)
@@ -84,8 +84,8 @@ EXTERNAL SOURCES:
     :branch: master
     :git: https://github.com/corbett/APDropDownNavToolbar.git
   JSQMessagesViewController:
-    :branch: JSignalQ
-    :git: https://github.com/WhisperSystems/JSQMessagesViewController
+    :branch: callsgroups
+    :git: https://github.com/corbett/JSQMessagesViewController
   SocketRocket:
     :commit: 954750c018
     :git: https://github.com/square/SocketRocket.git
@@ -97,8 +97,8 @@ CHECKOUT OPTIONS:
     :commit: cf63307d5e3833b16caa9a07f3b5ea06359913f9
     :git: https://github.com/corbett/APDropDownNavToolbar.git
   JSQMessagesViewController:
-    :commit: 184f53b07b6a80709b9801d605f666fd61e297fb
-    :git: https://github.com/WhisperSystems/JSQMessagesViewController
+    :commit: a9cee62c81ec0e5269a17413fbcc1ddda14efd63
+    :git: https://github.com/corbett/JSQMessagesViewController
   SocketRocket:
     :commit: 954750c018
     :git: https://github.com/square/SocketRocket.git
