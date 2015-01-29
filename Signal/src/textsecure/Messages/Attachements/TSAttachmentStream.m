@@ -8,8 +8,7 @@
 
 #import "TSAttachmentStream.h"
 #import <AVFoundation/AVFoundation.h>
-#import <MobileCoreServices/MobileCoreServices.h>
-
+#import "MIMETypeUtil.h"
 NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
 
 @implementation TSAttachmentStream
@@ -53,20 +52,7 @@ NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
 }
 
 - (NSString*)filePath {
-    if ([self isVideo] || [self isAudio]) {
-        NSString *path = [[[[self class] attachmentsFolder] stringByAppendingFormat:@"/%@", self.uniqueId] stringByAppendingPathExtension:[self mediaExtensionFromMIME]];
-        NSURL *pathURL = [NSURL URLWithString:path];
-        // some media stuff done by the little whispers, should be refactored to be more elegant
-        NSString *mp3String = [NSString stringWithFormat:@"%@.mp3", [[pathURL URLByDeletingPathExtension] absoluteString]];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:mp3String]) {
-            return mp3String;
-        } else {
-            return path;
-        }
-    }
-    else {
-        return [[[self class] attachmentsFolder] stringByAppendingFormat:@"/%@", self.uniqueId];
-    }
+    return [MIMETypeUtil filePathForAttachment:self.uniqueId ofMIMEType:self.contentType inFolder:[[self class] attachmentsFolder]];
 }
 
 -(NSURL*) mediaURL {
@@ -74,23 +60,17 @@ NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
 }
 
 - (BOOL)isImage {
-    return [self.contentType containsString:@"image/"];
+    return [MIMETypeUtil isImage:self.contentType];
 }
 
 
--(NSString*)MIMETypeFromFileWithMediaExtension:(NSString*)filePath {
-    CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[filePath pathExtension], NULL);
-    CFStringRef MIMEType = UTTypeCopyPreferredTagWithClass (UTI, kUTTagClassMIMEType);
-    CFRelease(UTI);
-    return (__bridge NSString *)MIMEType;
-}
 
 - (BOOL)isVideo {
-    return [self.contentType containsString:@"video/"];
+    return [MIMETypeUtil isVideo:self.contentType];
 }
 
 -(BOOL)isAudio {
-    return [self.contentType containsString:@"audio/"];
+    return [MIMETypeUtil isAudio:self.contentType];
 }
 
 - (UIImage*)image {
