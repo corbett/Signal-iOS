@@ -15,6 +15,7 @@
 +(NSString*) getMIMETypeFromSupportedAudioExtension:(NSString*)supportedAudioExtension;
 +(NSString*) getMIMETypeFromSupportedImageExtension:(NSString*)supportedImageExtension;
 
-+(NSString*) getSupportedImageMIMETypeFromImageData:(UIImage*)image;
++(NSString*) getSupportedImageMIMETypeFromImage:(UIImage*)image;
++(BOOL) getIsSupportedTypeFromImage:(UIImage*)image;
 
 @end

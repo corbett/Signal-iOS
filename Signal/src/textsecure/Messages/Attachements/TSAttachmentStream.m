@@ -7,7 +7,6 @@
 //
 
 #import "TSAttachmentStream.h"
-#import "UIImage+contentTypes.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 

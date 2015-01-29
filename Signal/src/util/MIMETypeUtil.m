@@ -1,4 +1,4 @@
-#import MIMETypeUtil.h
+#import "MIMETypeUtil.h"
 #import "UIImage+contentTypes.h"
 @implementation MIMETypeUtil
 
@@ -36,6 +36,7 @@ NSDictionary *supportedImageMIMETypesToExtensionTypes = @{@"image/jpeg":@"jpeg",
 														  @"image/x-tiff":@"tif",
 														  @"image/bmp":@"bmp",
 														  @"image/x-windows-bmp":@"bmp"
+                                                          };
 											
 											
 NSDictionary *supportedVideoExtensionTypesToMIMETypes = @{@"3gp":@"video/3gpp",
@@ -84,28 +85,28 @@ NSDictionary *supportedImageExtensionTypesToMIMETypes=@{@"png":@"image/png",
 
 #pragma mark uses file extensions or MIME types only
 +(BOOL) isSupportedVideoMIMEType:(NSString*)contentType {
-    return [supportedVideoMIMETypesToExtensionTypes hasKey:contentType];	
+    return [supportedVideoMIMETypesToExtensionTypes objectForKey:contentType]!=nil;
 }
 
 +(BOOL) isSupportedAudioMIMEType:(NSString*)contentType {
-    return [supportedAudioMIMETypesToExtensionTypes hasKey:contentType];		
+    return [supportedAudioMIMETypesToExtensionTypes objectForKey:contentType]!=nil;
 }
 
 +(BOOL) isSupportedImageMIMEType:(NSString*)contentType {
-    return [supportedImageMIMETypesToExtensionTypes hasKey:contentType];		
+    return [supportedImageMIMETypesToExtensionTypes objectForKey:contentType]!=nil;
 }
 
 
 +(BOOL) isSupportedVideoFile:(NSString*) filePath {
-    return [supportedVideoExtensionTypesToMIMETypes hasKey:[filePath pathExtension]];	
+    return [supportedVideoExtensionTypesToMIMETypes objectForKey:[filePath pathExtension]]!=nil;
 }
 
 +(BOOL) isSupportedAudioFile:(NSString*) filePath  {
-    return [supportedAudioExtensionTypesToMIMETypes hasKey:[filePath pathExtension]];		
+    return [supportedAudioExtensionTypesToMIMETypes objectForKey:[filePath pathExtension]]!=nil;
 }
 
 +(BOOL) isSupportedImageFile:(NSString*) filePath  {
-    return [supportedImageExtensionTypesToMIMETypes hasKey:[filePath pathExtension]];		
+    return [supportedImageExtensionTypesToMIMETypes objectForKey:[filePath pathExtension]]!=nil;
 }
 
 +(NSString*) getExtensionFromSupportedVideoMIMEType:(NSString*)supportedMIMEType {
