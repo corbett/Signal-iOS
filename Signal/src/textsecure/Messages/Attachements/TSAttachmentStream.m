@@ -9,6 +9,7 @@
 #import "TSAttachmentStream.h"
 #import "UIImage+contentTypes.h"
 #import <AVFoundation/AVFoundation.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
 
@@ -54,12 +55,15 @@ NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
 
 - (NSString*)filePath {
     if ([self isVideo] || [self isAudio]) {
-        NSString *path = [[[[self class] attachmentsFolder] stringByAppendingFormat:@"/%@", self.uniqueId] stringByAppendingPathExtension:[self mediaExtension]];
+        NSString *path = [[[[self class] attachmentsFolder] stringByAppendingFormat:@"/%@", self.uniqueId] stringByAppendingPathExtension:[self mediaExtensionFromMIME]];
         NSURL *pathURL = [NSURL URLWithString:path];
+        // some media stuff done by the little whispers, should be refactored to be more elegant
         NSString *mp3String = [NSString stringWithFormat:@"%@.mp3", [[pathURL URLByDeletingPathExtension] absoluteString]];
         if ([[NSFileManager defaultManager] fileExistsAtPath:mp3String]) {
             return mp3String;
-        } else return path;
+        } else {
+            return path;
+        }
     }
     else {
         return [[[self class] attachmentsFolder] stringByAppendingFormat:@"/%@", self.uniqueId];
@@ -74,8 +78,12 @@ NSString * const TSAttachementFileRelationshipEdge = @"TSAttachementFileEdge";
     return [self.contentType containsString:@"image/"];
 }
 
--(NSString*)mediaExtension {
-    return [[self.contentType stringByReplacingOccurrencesOfString:@"video/" withString:@""] stringByReplacingOccurrencesOfString:@"audio/" withString:@""];
+
+-(NSString*)MIMETypeFromFileWithMediaExtension:(NSString*)filePath {
+    CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)[filePath pathExtension], NULL);
+    CFStringRef MIMEType = UTTypeCopyPreferredTagWithClass (UTI, kUTTagClassMIMEType);
+    CFRelease(UTI);
+    return (__bridge NSString *)MIMEType;
 }
 
 - (BOOL)isVideo {
