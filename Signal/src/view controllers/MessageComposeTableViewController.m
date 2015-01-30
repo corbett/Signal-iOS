@@ -6,10 +6,11 @@
 //
 //
 
+#import "MessageComposeTableViewController.h"
 #import "Environment.h"
 #import "Contact.h"
 #import "PhoneNumberUtil.h"
-#import "MessageComposeTableViewController.h"
+#import "PreferencesUtil.h"
 #import "MessagesViewController.h"
 #import "SignalsViewController.h"
 #import "NotificationManifest.h"
@@ -26,7 +27,6 @@
 {
     UIButton* sendTextButton;
     NSString* currentSearchTerm;
-    
     NSArray* contacts;
     NSArray* searchResults;
 }
@@ -34,6 +34,9 @@
 @property (nonatomic, strong) UISearchController *searchController;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 @property (nonatomic, strong) UIBarButtonItem *addGroup;
+@property (nonatomic, strong) UIView *loadingBackgroundView;
+@property (nonatomic, strong) UIView *emptyBackgroundView;
+
 @end
 
 @implementation MessageComposeTableViewController
@@ -50,15 +53,6 @@
     
     
 
-    UIView* loadingView = [[UIView alloc] initWithFrame:self.tableView.frame];
-    UIImageView *loadingImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmpty"]];
-    [loadingImageView setBackgroundColor:[UIColor whiteColor]];
-    [loadingImageView setContentMode:UIViewContentModeCenter];
-    [loadingImageView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
-    [loadingImageView  setFrame:self.tableView.frame];
-    [loadingView addSubview:loadingImageView];
-    
-    self.tableView.backgroundView = loadingView;
     self.tableView.backgroundView.opaque = YES;
     
     self.tableView.tableFooterView = [[UIView alloc]initWithFrame:CGRectZero];
@@ -66,6 +60,65 @@
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
+}
+
+
+-(void) viewDidAppear:(BOOL)animated  {
+    [super viewDidAppear:animated];
+    [self refreshContacts];// todo remove
+    if([Environment.preferences getIsRefreshingContactsAllServices]) {
+        [self showLoadingBackgroundView:YES];
+    }
+    else if([contacts count]==0) {
+        [self showEmptyBackgroundView:YES];
+    }
+
+}
+
+-(void) createLoadingAndBackgroundViews {
+    // TODO: tweak this and we will want to add buttons and spinners and stuff
+    _loadingBackgroundView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    UIImageView *loadingImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmpty"]];
+    [loadingImageView setBackgroundColor:[UIColor whiteColor]];
+    [loadingImageView setContentMode:UIViewContentModeCenter];
+    [loadingImageView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
+    [loadingImageView  setFrame:self.tableView.frame];
+    [_loadingBackgroundView addSubview:loadingImageView];
+    
+    
+    _emptyBackgroundView = [[UIView alloc] initWithFrame:self.tableView.frame];
+    UIImageView *emptyImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmpty"]];
+    [emptyImageView setBackgroundColor:[UIColor whiteColor]];
+    [emptyImageView setContentMode:UIViewContentModeCenter];
+    [emptyImageView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
+    [emptyImageView  setFrame:self.tableView.frame];
+    [_emptyBackgroundView addSubview:loadingImageView];
+}
+
+-(void) showLoadingBackgroundView:(BOOL)show {
+    if(!show) {
+        self.tableView.hidden = NO;
+        self.tableView.backgroundView = _loadingBackgroundView;
+        self.tableView.backgroundView.opaque = YES;
+        // todo animate spinner
+    }
+    else {
+        self.tableView.hidden = YES;
+        self.tableView.backgroundView = nil;
+    }
+}
+
+
+-(void) showEmptyBackgroundView:(BOOL)show {
+    if(!show) {
+        self.tableView.hidden = NO;
+        self.tableView.backgroundView = _emptyBackgroundView;
+        self.tableView.backgroundView.opaque = YES;
+    }
+    else {
+        self.tableView.hidden = YES;
+        self.tableView.backgroundView = nil;
+    }
 }
 
 #pragma mark - Initializers
@@ -147,8 +200,9 @@
     // search by contact name or number
     NSPredicate *resultPredicate = [NSPredicate predicateWithFormat:@"(fullName contains[c] %@) OR (allPhoneNumbers contains[c] %@)", searchText, searchText];
     searchResults = [contacts filteredArrayUsingPredicate:resultPredicate];
-    if (!searchResults.count && _searchController.searchBar.text.length == 0) searchResults = contacts;
-    
+    if (!searchResults.count && _searchController.searchBar.text.length == 0) {
+        searchResults = contacts;
+    }
     NSString *formattedNumber = [PhoneNumber tryParsePhoneNumberFromUserSpecifiedText:searchText].toE164;
     
     // text to a non-signal number if we have no results and a valid phone #
@@ -331,13 +385,25 @@
 - (void)contactRefreshFailed {
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:TIMEOUT message:TIMEOUT_CONTACTS_DETAIL delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", @"") otherButtonTitles:nil];
     [alert show];
-    [self.refreshControl endRefreshing];
+    [self updateAfterRefreshTry];
 }
 
 - (void)contactsDidRefresh {
     [self updateSearchResultsForSearchController:self.searchController];
     [self.tableView reloadData];
+    [self updateAfterRefreshTry];
+}
+
+- (void) updateAfterRefreshTry {
     [self.refreshControl endRefreshing];
+    
+    [self showLoadingBackgroundView:NO];
+    if([contacts count]==0) {
+        [self showEmptyBackgroundView:YES];
+    }
+    else {
+        [self showEmptyBackgroundView:NO];
+    }
 }
 
 - (void)refreshContacts {
