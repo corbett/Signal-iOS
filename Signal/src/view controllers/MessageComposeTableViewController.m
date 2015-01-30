@@ -50,12 +50,8 @@
     [self initializeSearch];
 
     self.searchController.searchBar.hidden = NO;
-    
-    
-
-    self.tableView.backgroundView.opaque = YES;
-    
     self.tableView.tableFooterView = [[UIView alloc]initWithFrame:CGRectZero];
+    [self createLoadingAndBackgroundViews];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -65,14 +61,48 @@
 
 -(void) viewDidAppear:(BOOL)animated  {
     [super viewDidAppear:animated];
-    [self refreshContacts];// todo remove
-    if([Environment.preferences getIsRefreshingContactsAllServices]) {
-        [self showLoadingBackgroundView:YES];
+    if([contacts count]==0) {
+        if([Environment.preferences getIsRefreshingContactsAllServices]) {
+            [self showLoadingBackgroundView:YES];
+        }
+        else {
+            [self showEmptyBackgroundView:YES];
+        }
     }
-    else if([contacts count]==0) {
-        [self showEmptyBackgroundView:YES];
+    else if([Environment.preferences getIsRefreshingContactsAllServices]) {
+        self.tableView.contentOffset = CGPointMake(0, -self.refreshControl.frame.size.height);
+        [self.refreshControl beginRefreshing];
     }
+}
 
+-(UILabel*) createLabelWithFirstLine:(NSString*) firstLine andSecondLine:(NSString*)secondLine {
+    UILabel *label = [[UILabel alloc] init];
+    label.textColor = [UIColor grayColor];
+    label.font = [UIFont ows_regularFontWithSize:18.f];
+    label.textAlignment = NSTextAlignmentCenter;
+    label.numberOfLines = 4;
+    
+    NSMutableAttributedString *fullLabelString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n%@",firstLine,secondLine]];
+    
+    [fullLabelString addAttribute:NSFontAttributeName value:[UIFont ows_boldFontWithSize:15.f] range:NSMakeRange(0,firstLine.length)];
+    [fullLabelString addAttribute:NSFontAttributeName value:[UIFont ows_regularFontWithSize:14.f] range:NSMakeRange(firstLine.length + 1, secondLine.length)];
+    [fullLabelString addAttribute:NSForegroundColorAttributeName value:[UIColor blackColor] range:NSMakeRange(0,firstLine.length)];
+    [fullLabelString addAttribute:NSForegroundColorAttributeName value:[UIColor ows_darkGrayColor] range:NSMakeRange(firstLine.length + 1, secondLine.length)];
+    label.attributedText = fullLabelString;
+   //250, 66, 140
+    [label setFrame:CGRectMake(self.tableView.frame.size.width/2.0f-250/2.0f, 100+140, 250, 66)];
+    return label;
+}
+
+-(UIButton*) createButtonWithTitle:(NSString*)title {
+    NSDictionary* buttonTextAttributes = @{NSFontAttributeName:[UIFont ows_regularFontWithSize:15.0f],
+                                           NSForegroundColorAttributeName:[UIColor ows_materialBlueColor]};
+    UIButton* button = [[UIButton alloc] initWithFrame:CGRectMake(0,0,65,24)];
+    NSMutableAttributedString *attributedTitle = [[NSMutableAttributedString alloc] initWithString:title];
+    [attributedTitle setAttributes:buttonTextAttributes range:NSMakeRange(0, [attributedTitle length])];
+    [button setAttributedTitle:attributedTitle forState:UIControlStateNormal];
+    [button.titleLabel setTextAlignment:NSTextAlignmentCenter];
+    return button;
 }
 
 -(void) createLoadingAndBackgroundViews {
@@ -81,42 +111,76 @@
     UIImageView *loadingImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmpty"]];
     [loadingImageView setBackgroundColor:[UIColor whiteColor]];
     [loadingImageView setContentMode:UIViewContentModeCenter];
-    [loadingImageView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
-    [loadingImageView  setFrame:self.tableView.frame];
-    [_loadingBackgroundView addSubview:loadingImageView];
+    [loadingImageView  setFrame:CGRectMake(self.tableView.frame.size.width/2.0f-115.0f/2.0f, 100, 115, 110)];
+    loadingImageView.contentMode = UIViewContentModeCenter;
+    loadingImageView.contentMode = UIViewContentModeScaleAspectFit;
     
+    UIActivityIndicatorView *loadingProgressView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    [loadingProgressView setFrame:CGRectMake(self.tableView.frame.size.width/2.0f-loadingProgressView.frame.size.width/2.0f, 100+110/2.0f-loadingProgressView.frame.size.height/2.0f, loadingProgressView.frame.size.width, loadingProgressView.frame.size.height)];
+    [loadingProgressView setHidesWhenStopped:NO];
+    [loadingProgressView startAnimating];
+    UILabel *loadingLabel = [self createLabelWithFirstLine:@"Loading your contacts." andSecondLine:@"Sit tight."];
+    [_loadingBackgroundView addSubview:loadingImageView];
+    [_loadingBackgroundView addSubview:loadingProgressView];
+    [_loadingBackgroundView addSubview:loadingLabel];
     
     _emptyBackgroundView = [[UIView alloc] initWithFrame:self.tableView.frame];
-    UIImageView *emptyImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmpty"]];
+    UIImageView *emptyImageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"uiEmptyContact"]];
     [emptyImageView setBackgroundColor:[UIColor whiteColor]];
     [emptyImageView setContentMode:UIViewContentModeCenter];
-    [emptyImageView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
-    [emptyImageView  setFrame:self.tableView.frame];
-    [_emptyBackgroundView addSubview:loadingImageView];
+    [emptyImageView  setFrame:CGRectMake(self.tableView.frame.size.width/2.0f-115.0f/2.0f, 100, 115, 110)];
+    emptyImageView.contentMode = UIViewContentModeCenter;
+    emptyImageView.contentMode = UIViewContentModeScaleAspectFit;
+    UILabel *emptyLabel = [self createLabelWithFirstLine:@"None of your contacts have Signal!" andSecondLine:@"Why don't you invite someone"];
+
+    UIButton *inviteContactButton = [self createButtonWithTitle:@"Invite contact"];
+    
+    [inviteContactButton addTarget:self action:@selector(sendText) forControlEvents:UIControlEventTouchUpInside];
+    [inviteContactButton setFrame:CGRectMake(self.tableView.frame.size.width/2.0f-inviteContactButton.frame.size.width/1.5f, self.tableView.frame.size.height - 200, 100, 66)];
+    [inviteContactButton.titleLabel setTextAlignment:NSTextAlignmentCenter];
+
+    [_emptyBackgroundView addSubview:emptyImageView];
+    [_emptyBackgroundView addSubview:emptyLabel];
+    [_emptyBackgroundView addSubview:inviteContactButton];
+
 }
 
+
 -(void) showLoadingBackgroundView:(BOOL)show {
-    if(!show) {
-        self.tableView.hidden = NO;
-        self.tableView.backgroundView = _loadingBackgroundView;
+    if(show) {
+        self.refreshControl.enabled = NO;
+        _addGroup =  self.navigationItem.rightBarButtonItem!=nil ? _addGroup : self.navigationItem.rightBarButtonItem;
+        self.navigationItem.rightBarButtonItem = nil;
+        self.searchController.searchBar.hidden = YES;
+        self.tableView.backgroundView =  _loadingBackgroundView;
         self.tableView.backgroundView.opaque = YES;
-        // todo animate spinner
     }
     else {
-        self.tableView.hidden = YES;
+        self.refreshControl.enabled = YES;
+        self.navigationItem.rightBarButtonItem =  self.navigationItem.rightBarButtonItem!=nil ? self.navigationItem.rightBarButtonItem : _addGroup;
+        self.searchController.searchBar.hidden = NO;
         self.tableView.backgroundView = nil;
     }
 }
 
 
 -(void) showEmptyBackgroundView:(BOOL)show {
-    if(!show) {
-        self.tableView.hidden = NO;
+
+    if(show) {
+        self.refreshControl.enabled = NO;
+        _addGroup =  self.navigationItem.rightBarButtonItem!=nil ? _addGroup : self.navigationItem.rightBarButtonItem;
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[[UIImage imageNamed:@"btnRefresh--white"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] style:UIBarButtonItemStylePlain target:self action:@selector(refreshContacts)];
+        self.navigationItem.rightBarButtonItem.imageInsets = UIEdgeInsetsMake(8,8,8,8);
+        
+   
+        self.searchController.searchBar.hidden = YES;
         self.tableView.backgroundView = _emptyBackgroundView;
         self.tableView.backgroundView.opaque = YES;
     }
     else {
-        self.tableView.hidden = YES;
+        self.refreshControl.enabled = YES;
+        self.navigationItem.rightBarButtonItem =  self.navigationItem.rightBarButtonItem!=nil ? self.navigationItem.rightBarButtonItem : _addGroup;
+        self.searchController.searchBar.hidden = NO;
         self.tableView.backgroundView = nil;
     }
 }
@@ -222,9 +286,12 @@
 #pragma mark - Send Normal Text to Unknown Contact
 
 - (void)sendText {
-    NSString *confirmMessage = @"Would you like to invite the following number to Signal: ";
-    confirmMessage = [confirmMessage stringByAppendingString:currentSearchTerm];
-    confirmMessage = [confirmMessage stringByAppendingString:@"?"];
+    NSString *confirmMessage = @"Invite a friend via insecure SMS?";
+    if([currentSearchTerm length]>0) {
+        confirmMessage =  @"Would you like to invite the following number to Signal: ";
+        confirmMessage = [confirmMessage stringByAppendingString:currentSearchTerm];
+        confirmMessage = [confirmMessage stringByAppendingString:@"?"];
+    }
     UIAlertController *alertController = [UIAlertController
                                           alertControllerWithTitle:@"Confirm"
                                                            message:confirmMessage
@@ -249,13 +316,12 @@
                                                MFMessageComposeViewController *picker = [[MFMessageComposeViewController alloc] init];
                                                picker.messageComposeDelegate = self;
                                                
-                                               picker.recipients = [NSArray arrayWithObject:currentSearchTerm];
+                                               picker.recipients = [currentSearchTerm length]> 0 ? [NSArray arrayWithObject:currentSearchTerm] : nil;
                                                picker.body = @"I'm inviting you to install Signal! Here is the link: https://itunes.apple.com/us/app/signal-private-messenger/id874139669?mt=8";
                                                [self presentViewController:picker animated:YES completion:[UIUtil modalCompletionBlock]];
                                             } else {
                                                // TODO: better backup for iPods (just don't support on)
                                                UIAlertView *notPermitted=[[UIAlertView alloc] initWithTitle:@"Alert" message:@"Your device doesn't support this feature." delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
-                                               
                                                [notPermitted show];
                                            }
                                        }];
@@ -264,7 +330,7 @@
     [alertController addAction:okAction];
     sendTextButton.hidden = YES;
     self.searchController.searchBar.text = @"";
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+ 
     [self presentViewController:alertController animated:YES completion:[UIUtil modalCompletionBlock]];
 }
 
@@ -303,18 +369,9 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if([contacts count] == 0) {
-        self.tableView.backgroundView.hidden = NO;
-        self.searchController.searchBar.hidden = YES;
-        _addGroup =  self.navigationItem.rightBarButtonItem!=nil ? _addGroup : self.navigationItem.rightBarButtonItem;
-        self.navigationItem.rightBarButtonItem = nil;
+    if([Environment.preferences getIsRefreshingContactsAllServices]) {
+        return 0;
     }
-    else {
-        self.tableView.backgroundView.hidden = YES;
-        self.searchController.searchBar.hidden = NO;
-        self.navigationItem.rightBarButtonItem =  self.navigationItem.rightBarButtonItem!=nil ? self.navigationItem.rightBarButtonItem : _addGroup;
-    }
-    
     if (self.searchController.active) {
         return (NSInteger)[searchResults count];
     } else {
@@ -410,6 +467,9 @@
     Environment *env = [Environment getCurrent];
     PhoneNumberDirectoryFilterManager *manager = [env phoneDirectoryManager];
     [manager forceUpdate];
+    if([contacts count]==0) {
+        [self showLoadingBackgroundView:YES];
+    }
 }
 
 #pragma mark - Navigation
