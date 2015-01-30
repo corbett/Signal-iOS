@@ -145,7 +145,7 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
 
 -(TSGroupModel*)makeGroup {
     NSString* title = _nameGroupTextField.text;
-    UIImage* img = _thread.groupModel.groupImage;
+    UIImage* img = self.groupImageButton.imageView.image;
     NSMutableArray* mut = [[NSMutableArray alloc]init];
     
     for (NSIndexPath* idx in _tableView.indexPathsForSelectedRows) {
