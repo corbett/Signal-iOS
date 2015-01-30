@@ -241,7 +241,7 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
 }
 
 -(void)setupGroupImageButton:(UIImage*)image {
-    [self.groupImageButton setImage:image forState:UIControlStateNormal];
+    [_groupImageButton setImage:image forState:UIControlStateNormal];
     _groupImageButton.imageView.layer.cornerRadius = CGRectGetWidth([_groupImageButton.imageView frame])/2.0f;
     _groupImageButton.imageView.layer.masksToBounds = YES;
     _groupImageButton.imageView.layer.borderColor = [[UIColor lightGrayColor] CGColor];
