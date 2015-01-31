@@ -15,7 +15,8 @@
 #import "TSInteraction.h"
 #import "TSStorageManager.h"
 #import "TSRecipient.h"
-
+#import "YapDatabaseExtension.h"
+#import "TSDatabaseSecondaryIndexes.h"
 NSString *TSInboxGroup                       = @"TSInboxGroup";
 NSString *TSArchiveGroup                     = @"TSArchiveGroup";
 
@@ -28,7 +29,6 @@ NSString *TSUnreadDatabaseViewExtensionName  = @"TSUnreadDatabaseViewExtensionNa
 @implementation TSDatabaseView
 
 + (BOOL)registerUnreadDatabaseView {
-    
     YapDatabaseView *unreadView = [[TSStorageManager sharedManager].database registeredExtension:TSUnreadDatabaseViewExtensionName];
     if (unreadView) {
         return YES;
