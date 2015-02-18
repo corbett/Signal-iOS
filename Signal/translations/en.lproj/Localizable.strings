@@ -98,3 +98,18 @@
 "TXT_SEARCH_PLACEHOLDER_TEXT" = "Search";
 "UNKNOWN_CONTACT_NAME" = "Unknown Caller";
 "WHISPER_NAV_BAR_TITLE" = "Inbox";
+
+"SETTINGS_ABOUT" = "About";
+"SETTINGS_VERSION" = "Version";
+"SETTINGS_SUPPORT" = "Support";
+"SETTINGS_COPYRIGHT" = "Copyright Open Whisper Systems \n Licensed under the GPLv3";
+"SETTINGS_SHARE_INSTALL" = "Share Install Link";
+"SETTINGS_INFORMATION_HEADER" = "Information";
+"SETTINGS_INVITE_HEADER" = "Invite";
+"SETTINGS_HELP_HEADER" = "Help";
+"SETTINGS_INVITE_TWITTER_TEXT" = "You can reach me on @whispersystems Signal, get it now."
+"SETTINGS_ADVANCED_TITLE" = "Advanced";
+"SETTINGS_ADVANCED_DEBUGLOG"= "Enable Debug Log";
+"SETTINGS_ADVANCED_SUBMIT_DEBUGLOG" = "Submit Debug Log";
+"FINGERPRINT_SHRED_KEYMATERIAL_CONFIRMATION" = "Are you sure wou want to shred the following? This action is irreversible.";
+"FINGERPRINT_SHRED_KEYMATERIAL_BUTTON" = "Shred all keying material";
