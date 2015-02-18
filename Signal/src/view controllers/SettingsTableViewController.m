@@ -34,7 +34,6 @@
 #import "TSStorageManager+IdentityKeyStore.h"
 
 #import "PrivacySettingsTableViewController.h"
-#import "MediaSettingsTableViewController.h"
 #import "AdvancedSettingsTableViewController.h"
 #import "AboutTableViewController.h"
 #import "PushManager.h"

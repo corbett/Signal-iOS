@@ -72,6 +72,7 @@
 "MAIN_MENU_OPTION_REPORT_BUG" = "Support";
 "MAIN_MENU_OPTION_SETTINGS" = "Settings";
 "OK" = "Ok";
+"CONFIRMATION_TITLE" = "Confirm";
 "PUSH_SETTINGS_MESSAGE" = "Signal requires push notification alerts and sounds to be enabled to work properly. Please change it in the Settings app >> Notification Center >> Signal.";
 "RECENT_NAV_BAR_TITLE" = "Call Log";
 "REGISTER_BUTTON_TITLE" = "REGISTER";
@@ -98,7 +99,6 @@
 "TXT_SEARCH_PLACEHOLDER_TEXT" = "Search";
 "UNKNOWN_CONTACT_NAME" = "Unknown Caller";
 "WHISPER_NAV_BAR_TITLE" = "Inbox";
-
 "SETTINGS_ABOUT" = "About";
 "SETTINGS_VERSION" = "Version";
 "SETTINGS_SUPPORT" = "Support";
@@ -113,3 +113,32 @@
 "SETTINGS_ADVANCED_SUBMIT_DEBUGLOG" = "Submit Debug Log";
 "FINGERPRINT_SHRED_KEYMATERIAL_CONFIRMATION" = "Are you sure wou want to shred the following? This action is irreversible.";
 "FINGERPRINT_SHRED_KEYMATERIAL_BUTTON" = "Shred all keying material";
+"TXT_DELETE_TITLE" = "Delete";
+"CAMERA_ROLL_SAVE_BUTTON" = "Save to Camera Roll";
+"CAMERA_ROLL_COPY_BUTTON" = "Copy";
+"NEW_GROUP_DEFAULT_TITLE" = "New Group";
+"LOADING_CONTACTS_LABEL_LINE1" = "Loading your contacts.";
+"LOADING_CONTACTS_LABEL_LINE2" = "Sit tight.";
+"EMPTY_CONTACTS_LABEL_LINE1" = "None of your contacts have Signal!";
+"EMPTY_CONTACTS_LABEL_LINE2" = "Why don't you invite someone";
+"EMPTY_CONTACTS_INVITE_BUTTON" = "Invite contact";
+"SEARCH_BYNAMEORNUMBER_PLACEHOLDER_TEXT" = "Search by name or number";
+"SEND_SMS_BUTTON" = "Send SMS to: ";
+"SEND_SMS_CONFIRM_TITLE" = "Invite a friend via insecure SMS?";
+"SEND_SMS_INVITE_TITLE" =  "Would you like to invite the following number to Signal: ";
+"SEND_SMS_INVITE_SUCCESS" = "You've invited your friend to use Signal!";
+"SEND_SMS_INVITE_FAILURE" = "You've invited your friend to use Signal!";
+"QUESTIONMARK_PUNCTUATION" = "?";
+"UNSUPPORTED_FEATURE_ERROR" = "Your device doesn't support this feature.";
+"SMS_INVITE_BODY" = "I'm inviting you to install Signal! Here is the link: https://itunes.apple.com/us/app/signal-private-messenger/id874139669?mt=8";
+"SEND_BUTTON_TITLE" = "Send";
+"UPDATE_BUTTON_TITLE" = "Update";
+"LEAVE_BUTTON_TITLE" = "Leave";
+"MEMBERS_BUTTON_TITLE" = "Members";
+"DELIVERED_MESSAGE_TEXT" = "Delivered";
+"SEND_AGAIN_BUTTON" = "Send again";
+"ACCEPT_IDENTITYKEY_QUESTION" = "Do you want to accept %@'s new identity key: %@";
+"ACCEPT_IDENTITYKEY_BUTTON" = "Accept new identity key";
+"COPY_IDENTITYKEY_BUTTON" = "Copy new identity key to pasteboard";
+"TAKE_MEDIA_BUTTON"= "Take Photo or Video";
+"CHOOSE_MEDIA_BUTTON" = "Choose from Library...";
