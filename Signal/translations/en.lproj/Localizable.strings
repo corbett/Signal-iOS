@@ -141,4 +141,5 @@
 "ACCEPT_IDENTITYKEY_BUTTON" = "Accept new identity key";
 "COPY_IDENTITYKEY_BUTTON" = "Copy new identity key to pasteboard";
 "TAKE_MEDIA_BUTTON"= "Take Photo or Video";
+"TAKE_PICTURE_BUTTON"= "Take a Picture";
 "CHOOSE_MEDIA_BUTTON" = "Choose from Library...";
