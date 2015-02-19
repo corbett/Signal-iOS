@@ -1231,6 +1231,7 @@ A0 09 9A FF A8 8A 09 99</string>
                     <navigationItem key="navigationItem" id="zty-sG-NJJ"/>
                     <connections>
                         <outlet property="qrCodeView" destination="I4l-hR-EdB" id="Fzf-BD-z9y"/>
+                        <outlet property="yourFingerprintLabel" destination="Psg-eI-6bn" id="1Ze-k1-zMv"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Zk1-cK-ftT" userLabel="First Responder" sceneMemberID="firstResponder"/>
