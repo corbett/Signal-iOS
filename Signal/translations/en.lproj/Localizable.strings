@@ -154,4 +154,10 @@
 "SETTINGS_HISTORYLOG_TITLE" = "History Log";
 "SETTINGS_DELETE_HISTORYLOG_CONFIRMATION" = "Are you sure you want to delete all your history (messages, attachments, call history ...) ? This action cannot be reverted.";
 "SETTINGS_DELETE_HISTORYLOG_CONFIRMATION_BUTTON" = "I'm sure.";
-
+"PUSH_MANAGER_VIEW" = "View";
+"PUSH_MANAGER_MARKREAD" = "Mark as read";
+"SCAN_KEY" = "Scan key";
+"SCAN_KEY_VERIFIED_TITLE" = "Verified!";
+"SCAN_KEY_VERIFIED_TEXT" = "The scanned fingerprint matches the one on the record.";
+"SCAN_KEY_CONFLICT_TITLE" = "Conflict!";
+"SCAN_KEY_CONFLICT_TEXT" = "The scanned fingerprint doesn't match the one on the record.";
