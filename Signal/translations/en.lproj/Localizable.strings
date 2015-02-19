@@ -199,6 +199,12 @@
 "ERROR_MESSAGE_INVALID_KEY_EXCEPTION" = "The recipient's key is not valid.";
 "ERROR_MESSAGE_WRONG_TRUSTED_IDENTITY_KEY" = "Identity key changed. Tap to verify new key.";
 "ERROR_MESSAGE_UNKNOWN_ERROR" = "An unknown error occured.";
+"REGISTRATION_TITLE_LABEL" = "Your Phone Number";
+"REGISTRATION_DEFAULT_COUNTRY_NAME" = "Country Code";
+"REGISTRATION_PHONENUMBER_BUTTON" = "Phone Number";
+"REGISTRATION_ENTERNUMBER_DEFAULT_TEXT" = "Enter Number";
+"REGISTRATION_VERIFY_DEVICE" = "Verify This Device";
+
 
 
 
