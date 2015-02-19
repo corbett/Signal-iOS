@@ -143,3 +143,15 @@
 "TAKE_MEDIA_BUTTON"= "Take Photo or Video";
 "TAKE_PICTURE_BUTTON"= "Take a Picture";
 "CHOOSE_MEDIA_BUTTON" = "Choose from Library...";
+"FAILED_RETRYING_DIRECTORY_DOWNLOAD" = "Failed to retrieve directory. Retrying in %f hours.";
+"SETTINGS_CLEAR_HISTORY" = "Clear History Logs";
+"SETTINGS_FINGERPRINT" = "Fingerprint";
+"SETTINGS_FINGERPRINT_COPY" = "Tap to copy.";
+"SETTINGS_FINGERPRINT_COPY_SUCCESS" = "Copied!";
+"SETTINGS_PRIVACY_TITLE" = "Privacy";
+"SETTINGS_SCREEN_SECURITY" = "Enable Screen Security";
+"SETTINGS_SECURITY_TITLE" = "Screen Security";
+"SETTINGS_HISTORYLOG_TITLE" = "History Log";
+"SETTINGS_DELETE_HISTORYLOG_CONFIRMATION" = "Are you sure you want to delete all your history (messages, attachments, call history ...) ? This action cannot be reverted.";
+"SETTINGS_DELETE_HISTORYLOG_CONFIRMATION_BUTTON" = "I'm sure.";
+
