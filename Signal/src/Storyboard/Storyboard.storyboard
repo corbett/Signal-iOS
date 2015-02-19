@@ -4839,6 +4839,7 @@ A0 09 9A FF A8 8A 09 99</string>
                         </variation>
                     </view>
                     <connections>
+                        <outlet property="addPeopleLabel" destination="daD-wf-IGn" id="ttm-D3-z4E"/>
                         <outlet property="groupImageButton" destination="Ul8-NY-i4c" id="QLc-T4-wUb"/>
                         <outlet property="nameGroupTextField" destination="gbm-B5-gCc" id="XC8-Ci-sl2"/>
                         <outlet property="tableView" destination="cFo-AT-Srf" id="NqG-W1-Vhy"/>
