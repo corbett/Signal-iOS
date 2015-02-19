@@ -161,3 +161,33 @@
 "SCAN_KEY_VERIFIED_TEXT" = "The scanned fingerprint matches the one on the record.";
 "SCAN_KEY_CONFLICT_TITLE" = "Conflict!";
 "SCAN_KEY_CONFLICT_TEXT" = "The scanned fingerprint doesn't match the one on the record.";
+"REGISTERED_NUMBER_TEXT" = "Registered Number:";
+"CONFIRM_ACCOUNT_DESTRUCTION_TITLE" = "Are you sure you want to destroy your account?";
+"CONFIRM_ACCOUNT_DESTRUCTION_TEXT" = "This will reset the application by deleting your messages and unregister you with the server. The app will close after deletion of data.";
+"PROCEED_BUTTON" = "Proceed";
+"UNREGISTER_REDPHONE_FAIL" = "Failed to unregister RedPhone component of Signal";
+"UNREGISTER_TEXTSECURE_FAIL" = "Failed to unregister TextSecure component of Signal";
+"NETWORK_STATUS_HEADER" = "Network Status";
+"NETWORK_STATUS_TEXT" = "You can check your network status by looking at the colored bar above your inbox.";
+"NETWORK_STATUS_CONNECTED" = "Connected";
+"NETWORK_STATUS_OFFLINE" = "Offline";
+"NETWORK_STATUS_CONNECTING" = "Connecting";
+
+"EMPTY_INBOX_FIRST_TITLE" = "Done. Done. Done.";
+"EMPTY_INBOX_FIRST_TEXT" = "Tip: add a conversation as a reminder!";
+"EMPTY_ARCHIVE_FIRST_TITLE" = "Start your first Signal conversation!";
+"EMPTY_ARCHIVE_FIRST_TEXT" = "Tap on the + button.";
+"EMPTY_INBOX_TITLE" = "Squeaky Freaking Clean."
+"EMPTY_INBOX_TEXT" = "None. Zero. Zilch. Nada.";
+"EMPTY_ARCHIVE_TITLE" = "Clean Up Your Conversations.";
+"EMPTY_ARCHIVE_TEXT" = "You can archive inactive conversations for later from your Inbox.";
+"GROUP_UPDATED" = "Group updated.";
+"GROUP_TITLE_CHANGED" = "Title is now '%@'. ";
+"GROUP_AVATAR_CHANGED" = "Avatar changed. ";
+"GROUP_MEMBER_LEFT" = " %@ left the group. ";
+"GROUP_MEMBER_JOINED" = " %@ joined the group. ";
+"ME_STRING" = "Me";
+"WARNING_STRING" = "Warning";
+"ATTACHMENT_DOWNLOADING" = "Attachment is downloading";
+
+
