@@ -189,5 +189,17 @@
 "ME_STRING" = "Me";
 "WARNING_STRING" = "Warning";
 "ATTACHMENT_DOWNLOADING" = "Attachment is downloading";
+"INCOMING_CALL" = "Incoming call";
+"OUTGOING_CALL" = "Outgoing call";
+"MISSED_CALL" = "Missed call";
+"ERROR_MESSAGE_NO_SESSION" = "No available session for contact.";
+"ERROR_MESSAGE_MISSING_KEY" = "Received a message with unknown PreKey.";
+"ERROR_MESSAGE_INVALID_MESSAGE" = "Received a corrupted message.";
+"ERROR_MESSAGE_INVALID_VERSION" = "Received a message not compatible with this version.";
+"ERROR_MESSAGE_DUPLICATE_MESSAGE" = "Received a duplicated message.";
+"ERROR_MESSAGE_INVALID_KEY_EXCEPTION" = "The recipient's key is not valid.";
+"ERROR_MESSAGE_WRONG_TRUSTED_IDENTITY_KEY" = "Identity key changed. Tap to verify new key.";
+"ERROR_MESSAGE_UNKNOWN_ERROR" = "An unknown error occured.";
+
 
 
