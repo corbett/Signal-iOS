@@ -215,7 +215,7 @@
 "NEW_GROUP_NAMEGROUP_REQUEST_DEFAULT" = "Name this group chat";
 "NEW_GROUP_REQUEST_ADDPEOPLE" = "Add people";
 "FINGERPRINT_INFO_THEIRS" = "Tap to scan another user's fingerprint";
-"FINGERPRINT_INFO_YOURS" = "Tap to scan another user's fingerprint";
+"FINGERPRINT_INFO_YOURS" = "Tap to display your fingerprint for another user";
 "FINGERPRINT_INFO_ABOUT" = "Compare both fingerprints to verify your contact's identity and the integrity of the message.";
 "FINGERPRINT_YOURS" = "Your Fingerprint";
 
