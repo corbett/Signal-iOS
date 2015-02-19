@@ -3035,7 +3035,8 @@ A0 09 9A FF A8 8A 09 99</string>
                                                 <exclude reference="aPy-KQ-lfQ"/>
                                             </mask>
                                         </variation>
-                                        <variation key="heightClass=regular-widthClass=compact">
+                                        <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
+                                            <rect key="frame" x="-1" y="0.0" width="401" height="32"/>
                                             <mask key="constraints">
                                                 <include reference="aPy-KQ-lfQ"/>
                                             </mask>
@@ -3707,7 +3708,9 @@ A0 09 9A FF A8 8A 09 99</string>
                     <connections>
                         <outlet property="challengeButton" destination="5Nx-nz-ht7" id="JO8-b7-GHV"/>
                         <outlet property="challengeTextField" destination="yK6-ad-ihc" id="cnh-li-Z6O"/>
+                        <outlet property="changeNumberButton" destination="IVn-LE-fmp" id="ciO-XU-zhq"/>
                         <outlet property="headerConstraint" destination="5bj-kr-L4s" id="mCo-eL-dVs"/>
+                        <outlet property="headerLabel" destination="e8Y-At-xEK" id="rFs-ii-khZ"/>
                         <outlet property="phoneNumberEntered" destination="wYz-da-3ZB" id="3Ah-VX-CXn"/>
                         <outlet property="requestCallSpinner" destination="lFE-KR-9iN" id="cAe-kr-tgj"/>
                         <outlet property="requestCodeAgainSpinner" destination="utk-2S-Qc7" id="9W8-ZF-1fI"/>
@@ -4476,7 +4479,8 @@ A0 09 9A FF A8 8A 09 99</string>
                                                     <exclude reference="dQN-ek-OOr"/>
                                                 </mask>
                                             </variation>
-                                            <variation key="heightClass=regular-widthClass=compact">
+                                            <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
+                                                <rect key="frame" x="346" y="-3" width="52" height="53"/>
                                                 <mask key="constraints">
                                                     <include reference="AOr-xI-am4"/>
                                                     <include reference="dQN-ek-OOr"/>
@@ -4726,7 +4730,7 @@ A0 09 9A FF A8 8A 09 99</string>
                                             <color key="textColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                             <nil key="highlightedColor"/>
                                             <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                                <rect key="frame" x="10" y="274" width="130" height="20.5"/>
+                                                <rect key="frame" x="10" y="274" width="130" height="21"/>
                                             </variation>
                                         </label>
                                     </subviews>
