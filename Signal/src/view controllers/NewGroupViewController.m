@@ -71,8 +71,8 @@ static NSString* const kUnwindToMessagesViewSegue = @"UnwindToMessagesViewSegue"
 
     if(_thread==nil) {
         self.navigationItem.rightBarButtonItem =  [[UIBarButtonItem alloc]initWithImage:[[UIImage imageNamed:@"add-conversation"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] style:UIBarButtonItemStylePlain target:self action:@selector(createGroup)];
+        self.navigationItem.rightBarButtonItem.imageInsets = UIEdgeInsetsMake(0, -10, 0, 10);
         self.navigationItem.title = NSLocalizedString(@"NEW_GROUP_DEFAULT_TITLE", @"");
-        
     }
     else {
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithTitle:NSLocalizedString(@"UPDATE_BUTTON_TITLE", @"") style:UIBarButtonItemStylePlain target:self action:@selector(updateGroup)];
