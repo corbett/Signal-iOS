@@ -4479,8 +4479,7 @@ A0 09 9A FF A8 8A 09 99</string>
                                                     <exclude reference="dQN-ek-OOr"/>
                                                 </mask>
                                             </variation>
-                                            <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                                <rect key="frame" x="346" y="-3" width="52" height="53"/>
+                                            <variation key="heightClass=regular-widthClass=compact">
                                                 <mask key="constraints">
                                                     <include reference="AOr-xI-am4"/>
                                                     <include reference="dQN-ek-OOr"/>
@@ -4621,7 +4620,7 @@ A0 09 9A FF A8 8A 09 99</string>
                         <viewControllerLayoutGuide type="bottom" id="kH6-9L-pzh"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="P0X-AM-Yjw">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="536"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ukg-om-VX3">
@@ -4729,9 +4728,6 @@ A0 09 9A FF A8 8A 09 99</string>
                                             <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                             <color key="textColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                             <nil key="highlightedColor"/>
-                                            <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                                <rect key="frame" x="10" y="274" width="130" height="21"/>
-                                            </variation>
                                         </label>
                                     </subviews>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -4906,8 +4902,8 @@ A0 09 9A FF A8 8A 09 99</string>
         <image name="speaker-inactive" width="80" height="80"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="xo7-5J-BJb"/>
         <segue reference="DR8-fx-0PD"/>
-        <segue reference="gZ1-lh-srF"/>
+        <segue reference="xo7-5J-BJb"/>
+        <segue reference="D0d-4f-lcI"/>
     </inferredMetricsTieBreakers>
 </document>
